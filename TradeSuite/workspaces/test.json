@@ -1,0 +1,117 @@
+{
+  "created_at": "2025-06-21T22:51:33.727853",
+  "datasets": [
+    "NQ_5s"
+  ],
+  "patterns": {
+    "ii_bars": "IIBarsPattern",
+    "double_wick": "DoubleWickPattern",
+    "hammer": "HammerPattern",
+    "engulfing_bullish": "EngulfingPattern",
+    "engulfing_bearish": "EngulfingPattern",
+    "doji_standard": "CustomPattern",
+    "doji_long_leg": "CustomPattern",
+    "strong_body": "CustomPattern",
+    "weak_body": "CustomPattern",
+    "momentum_breakout": "CustomPattern",
+    "momentum_reversal": "CustomPattern",
+    "high_volatility": "CustomPattern",
+    "low_volatility": "CustomPattern",
+    "support_bounce": "CustomPattern",
+    "resistance_rejection": "CustomPattern",
+    "three_white_soldiers": "CustomPattern",
+    "three_black_crows": "CustomPattern",
+    "four_price_doji": "CustomPattern",
+    "dragonfly_doji": "CustomPattern",
+    "gravestone_doji": "CustomPattern",
+    "volatility_expansion": "CustomPattern",
+    "volatility_contraction": "CustomPattern",
+    "trend_continuation": "CustomPattern",
+    "trend_reversal": "CustomPattern",
+    "gap_up": "CustomPattern",
+    "gap_down": "CustomPattern",
+    "consolidation": "CustomPattern",
+    "breakout": "CustomPattern",
+    "exhaustion": "CustomPattern",
+    "accumulation": "CustomPattern",
+    "distribution": "CustomPattern"
+  },
+  "strategies": {
+    "pattern": {
+      "40ca7b1a-60dc-40a8-bbe8-9bb6a5a4be5f": {
+        "id": "40ca7b1a-60dc-40a8-bbe8-9bb6a5a4be5f",
+        "name": "Strategy_40ca7b1a-60dc-40a8-bbe8-9bb6a5a4be5f",
+        "type": "pattern",
+        "created_at": "2025-06-21T22:49:57.117281",
+        "modified_at": "2025-06-21T22:50:00.853598",
+        "constraints": [],
+        "metadata": {},
+        "probability_metrics": {
+          "occurrence_count": 0,
+          "total_opportunities": 0,
+          "success_count": 0,
+          "failure_count": 0,
+          "probability": 0.6,
+          "confidence_interval": [
+            0.5499999999999999,
+            0.65
+          ],
+          "statistical_significance": 0.0,
+          "sample_size_adequate": true
+        },
+        "actions": [
+          {
+            "id": "20250621224956",
+            "name": "hammer_5m",
+            "pattern": "<patterns.candlestick_patterns.HammerPattern object at 0x000001E3AD5E5D10>",
+            "time_range": {
+              "value": 5,
+              "unit": "m"
+            },
+            "location_strategy": null,
+            "location_params": {},
+            "filters": []
+          }
+        ],
+        "combination_logic": "AND",
+        "weights": null,
+        "min_actions_required": 1,
+        "gates_and_logic": {
+          "location_gate": false,
+          "volatility_gate": false,
+          "regime_gate": false,
+          "bayesian_gate": false,
+          "exec_gates": false,
+          "alignment": false,
+          "master_equation": false,
+          "kelly_sizing": false,
+          "stop_loss": false,
+          "k_stop": 2.0,
+          "tail_risk": false,
+          "rolling_support_resistance": false,
+          "sr_window": 20,
+          "market_maker_reversion": false,
+          "sigma_r": 0.02,
+          "sigma_t": 0.01,
+          "epsilon": 0.0,
+          "mmrs_threshold": 0.5,
+          "pattern_confidence": false,
+          "kappa_conf": 2.0,
+          "tau_conf": 0.7,
+          "imbalance_memory": false,
+          "gamma_mem": 0.1,
+          "sigma_rev": 0.02,
+          "bayesian_tracking": false,
+          "min_state_probability": 0.3,
+          "exec_threshold": 0.5
+        },
+        "z_space_matrix": "<strategies.strategy_builders.ZSpaceMatrix object at 0x000001E3AD5E5E50>",
+        "bayesian_tracker": "<strategies.strategy_builders.BayesianStateTracker object at 0x000001E3AD5E5F90>",
+        "imbalance_memory": "<strategies.strategy_builders.ImbalanceMemorySystem object at 0x000001E3AD5E60D0>"
+      }
+    },
+    "risk": {},
+    "combined": {}
+  },
+  "results": {}
+}
