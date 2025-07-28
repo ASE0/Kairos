@@ -4,6 +4,8 @@ gui/strategy_optimizer_window.py
 Window for AI-powered strategy optimization using genetic algorithms
 """
 
+import logging
+logger = logging.getLogger(__name__)
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
@@ -116,9 +118,9 @@ class StrategyOptimizer:
         # Discover position sizing methods
         self.available_position_sizing = self._discover_position_sizing()
         
-        print(f"AI Optimizer: Discovered {len(self.available_patterns)} patterns, {len(self.available_filters)} filters, {len(self.available_gates)} gates")
-        print(f"Available patterns: {self.available_patterns}")
-        print(f"Available gates: {self.available_gates}")
+        logger.info(f"AI Optimizer: Discovered {len(self.available_patterns)} patterns, {len(self.available_filters)} filters, {len(self.available_gates)} gates")
+        logger.info(f"Available patterns: {self.available_patterns}")
+        logger.info(f"Available gates: {self.available_gates}")
     
     def _discover_patterns(self) -> List[str]:
         """Discover all available patterns from main hub"""
@@ -147,11 +149,11 @@ class StrategyOptimizer:
             # Only use patterns that exist in the registry and are main hub patterns
             available_patterns = [p for p in main_hub_patterns if p in all_patterns]
             
-            print(f"AI Optimizer: Discovered {len(available_patterns)} main hub patterns")
+            logger.info(f"AI Optimizer: Discovered {len(available_patterns)} main hub patterns")
             return available_patterns
             
         except Exception as e:
-            print(f"Error discovering patterns: {e}")
+            logger.info(f"Error discovering patterns: {e}")
             # Fallback to basic patterns
             return ['hammer', 'engulfing', 'ii_bars', 'double_wick', 'custom']
     
@@ -453,7 +455,7 @@ class StrategyOptimizer:
             return fitness
             
         except Exception as e:
-            print(f"Error evaluating genome: {e}")
+            logger.info(f"Error evaluating genome: {e}")
             return 0.0
     
     def _create_strategy_from_genome(self, genome: StrategyGenome) -> PatternStrategy:
@@ -488,7 +490,7 @@ class StrategyOptimizer:
             return strategy
             
         except Exception as e:
-            print(f"Warning: Could not create strategy using comprehensive factory: {e}")
+            logger.info(f"Warning: Could not create strategy using comprehensive factory: {e}")
             # Fallback to simplified strategy creation
             return self._create_simplified_strategy(genome)
     
@@ -531,7 +533,7 @@ class StrategyOptimizer:
             pattern = registry.create_pattern(pattern_name, **params)
             return pattern
         except Exception as e:
-            print(f"Warning: Could not create pattern '{pattern_name}' using registry: {e}")
+            logger.info(f"Warning: Could not create pattern '{pattern_name}' using registry: {e}")
             
             # Fallback to manual pattern creation
             from patterns.candlestick_patterns import (
@@ -949,12 +951,12 @@ class StrategyOptimizer:
 
     def refresh_components(self):
         """Refresh the component discovery to include any new patterns, filters, gates, etc."""
-        print("Refreshing AI Optimizer components...")
+        logger.info("Refreshing AI Optimizer components...")
         
         # Refresh the optimizer components
         self._discover_available_components()
         
-        print(f"AI Optimizer refreshed: {len(self.available_patterns)} patterns, {len(self.available_filters)} filters, {len(self.available_gates)} gates")
+        logger.info(f"AI Optimizer refreshed: {len(self.available_patterns)} patterns, {len(self.available_filters)} filters, {len(self.available_gates)} gates")
     
     def update_components_display(self):
         """Update the components display with current discoveries"""
@@ -1385,7 +1387,7 @@ class StrategyOptimizerWindow(QMainWindow):
 
     def refresh_components(self):
         """Refresh the component discovery to include any new patterns, filters, gates, etc."""
-        print("Refreshing AI Optimizer components...")
+        logger.info("Refreshing AI Optimizer components...")
         
         # Refresh the optimizer components
         self.optimizer.refresh_components()
@@ -1393,7 +1395,7 @@ class StrategyOptimizerWindow(QMainWindow):
         # Update the display
         self.update_components_display()
         
-        print(f"AI Optimizer refreshed: {len(self.optimizer.available_patterns)} patterns, {len(self.optimizer.available_filters)} filters, {len(self.optimizer.available_gates)} gates")
+        logger.info(f"AI Optimizer refreshed: {len(self.optimizer.available_patterns)} patterns, {len(self.optimizer.available_filters)} filters, {len(self.optimizer.available_gates)} gates")
     
     def update_components_display(self):
         """Update the components display with current discoveries"""

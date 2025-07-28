@@ -1,0 +1,5 @@
+Strategy config: {'name': 'SupportResistanceTest', 'actions': [{'name': 'Support/Resistance Band', 'location_strategy': 'Support/Resistance Band', 'location_params': {'sr_window': 20, 'sr_buffer_pts': 2.0, 'sr_sigma_r': 5.0, 'sr_sigma_t': 3.0, 'sr_gamma': 0.95, 'sr_tau_bars': 20}}], 'combination_logic': 'AND', 'min_actions_required': 1, 'gates_and_logic': {'location_gate': True}, 'location_gate_params': {'sr_window': 20, 'sr_buffer_pts': 2.0, 'sr_sigma_r': 5.0, 'sr_sigma_t': 3.0, 'sr_gamma': 0.95, 'sr_tau_bars': 20, 'gate_threshold': 0.1}}
+Actions: [{'name': 'Support/Resistance Band', 'location_strategy': 'Support/Resistance Band', 'location_params': {'sr_window': 20, 'sr_buffer_pts': 2.0, 'sr_sigma_r': 5.0, 'sr_sigma_t': 3.0, 'sr_gamma': 0.95, 'sr_tau_bars': 20}}]
+Data shape: (181, 5)
+Data columns: ['open', 'high', 'low', 'close', 'volume']
+Bar at index 5: {'open': np.float64(101.9), 'high': np.float64(102.5), 'low': np.float64(101.7), 'close': np.float64(102.3), 'volume': np.float64(2200.0)}

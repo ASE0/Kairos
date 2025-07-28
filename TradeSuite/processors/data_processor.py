@@ -51,9 +51,27 @@ class DataStripper:
             self.original_data = pd.read_csv(filepath)
             logger.info(f"Loaded {len(self.original_data)} rows from {filepath}")
             
-            # Apply column mapping
+            # Apply column mapping with space handling
             mapping = column_mapping or self.DEFAULT_COLUMN_MAP
-            self.original_data.rename(columns=mapping, inplace=True)
+            
+            # Create mapping with fallback for columns with leading/trailing spaces
+            actual_mapping = {}
+            for expected_col, target_col in mapping.items():
+                # Try exact match first
+                if expected_col in self.original_data.columns:
+                    actual_mapping[expected_col] = target_col
+                else:
+                    # Try to find column with leading/trailing spaces
+                    stripped_cols = {col.strip(): col for col in self.original_data.columns}
+                    if expected_col.strip() in stripped_cols:
+                        actual_col = stripped_cols[expected_col.strip()]
+                        actual_mapping[actual_col] = target_col
+                        logger.info(f"Mapping '{actual_col}' to '{target_col}'")
+            
+            # Apply mapping
+            if actual_mapping:
+                self.original_data.rename(columns=actual_mapping, inplace=True)
+                logger.info(f"Applied column mapping: {actual_mapping}")
             
             # Combine date and time columns if they exist
             if 'date' in self.original_data.columns and 'time' in self.original_data.columns:
@@ -129,95 +147,141 @@ class DataStripper:
         return all(col in self.processed_data.columns for col in required)
 
 
-class LCMDataFilter:
-    """Handles LCM-based data filtering and timeframe alignment"""
+class MultiTimeframeProcessor:
+    """Processes data into multiple timeframes without data loss"""
     
-    def __init__(self, base_lcm: int = 1):
-        self.base_lcm = base_lcm  # Base LCM in seconds
+    # Default column mapping for Sierra Chart data (same as DataStripper)
+    DEFAULT_COLUMN_MAP = {
+        'Date': 'date',
+        'Time': 'time',
+        'Open': 'open',
+        'High': 'high',
+        'Low': 'low',
+        'Last': 'close',
+        'Volume': 'volume',
+        '# of Trades': 'trades',
+        'OHLC Avg': 'ohlc_avg',
+        'HLC Avg': 'hlc_avg',
+        'HL Avg': 'hl_avg',
+        'Bid Volume': 'bid_volume',
+        'Ask Volume': 'ask_volume',
+        'Bid': 'bid',
+        'Ask': 'ask',
+        'IBH': 'ibh',
+        'IBL': 'ibl'
+    }
+    
+    def __init__(self):
+        self.original_data = None
+        self.timeframe_datasets = {}
+        self.metadata = {}
         
-    def calculate_lcm_points(self, timeframes: List[TimeRange], 
-                           lcm_multiples: int = 2) -> List[int]:
-        """Calculate which data points to keep based on LCM logic"""
-        # Convert timeframes to seconds
-        timeframe_seconds = [tf.to_seconds() for tf in timeframes]
+    def _map_columns(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Map columns to standard format using the same logic as DataStripper"""
+        data = data.copy()
         
-        # Find LCM of all timeframes
-        from math import gcd
-        from functools import reduce
+        # Create mapping with fallback for columns with leading/trailing spaces
+        mapping = {}
+        for expected_col, target_col in self.DEFAULT_COLUMN_MAP.items():
+            # Try exact match first
+            if expected_col in data.columns:
+                mapping[expected_col] = target_col
+            else:
+                # Try to find column with leading/trailing spaces
+                stripped_cols = {col.strip(): col for col in data.columns}
+                if expected_col.strip() in stripped_cols:
+                    actual_col = stripped_cols[expected_col.strip()]
+                    mapping[actual_col] = target_col
+                    logger.info(f"Mapping '{actual_col}' to '{target_col}'")
         
-        def lcm(a, b):
-            return abs(a * b) // gcd(a, b)
+        # Apply mapping
+        if mapping:
+            data = data.rename(columns=mapping)
+            logger.info(f"Applied column mapping: {mapping}")
         
-        overall_lcm = reduce(lcm, timeframe_seconds)
+        # Handle Sierra Chart date/time combination
+        if 'date' in data.columns and 'time' in data.columns:
+            data['datetime'] = pd.to_datetime(data['date'].astype(str) + ' ' + data['time'].astype(str))
+            data.set_index('datetime', inplace=True)
+            data.drop(['date', 'time'], axis=1, inplace=True)
+            logger.info("Combined Date and Time columns into datetime index")
         
-        # Calculate points to keep
-        keep_points = set()
+        return data
+    
+    def _ensure_required_columns(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Ensure required OHLCV columns exist with fallback logic"""
+        required_columns = ['open', 'high', 'low', 'close', 'volume']
+        missing_columns = [col for col in required_columns if col not in data.columns]
         
-        for tf_seconds in timeframe_seconds:
-            # Keep points at timeframe boundaries +/- lcm_multiples
-            for multiple in range(-lcm_multiples, lcm_multiples + 1):
-                point = tf_seconds + (multiple * self.base_lcm)
-                if point >= 0:
-                    keep_points.add(point)
+        if missing_columns:
+            logger.warning(f"Missing required columns: {missing_columns}")
+            logger.info(f"Available columns: {list(data.columns)}")
+            
+            # Try to find alternative column names
+            for col in missing_columns:
+                alternatives = [c for c in data.columns if col in c.lower()]
+                if alternatives:
+                    logger.info(f"Using '{alternatives[0]}' for '{col}' column")
+                    data[col] = data[alternatives[0]]
+                else:
+                    # Try more flexible matching
+                    flexible_alternatives = []
+                    for available_col in data.columns:
+                        available_col_lower = available_col.lower().strip()
+                        if col == 'close' and ('close' in available_col_lower or 'last' in available_col_lower):
+                            flexible_alternatives.append(available_col)
+                        elif col == 'open' and 'open' in available_col_lower:
+                            flexible_alternatives.append(available_col)
+                        elif col == 'high' and 'high' in available_col_lower:
+                            flexible_alternatives.append(available_col)
+                        elif col == 'low' and 'low' in available_col_lower:
+                            flexible_alternatives.append(available_col)
+                        elif col == 'volume' and 'volume' in available_col_lower:
+                            flexible_alternatives.append(available_col)
                     
-        return sorted(list(keep_points))
-    
-    def filter_data(self, data: pd.DataFrame, timeframes: List[TimeRange],
-                   lcm_multiples: int = 2) -> pd.DataFrame:
-        """Filter data based on LCM logic"""
-        if data.empty:
-            return data
-            
-        # Ensure we have a proper datetime index
+                    if flexible_alternatives:
+                        logger.info(f"Using flexible alternative '{flexible_alternatives[0]}' for '{col}' column")
+                        data[col] = data[flexible_alternatives[0]]
+                    else:
+                        raise ValueError(f"Missing required column '{col}' for multi-timeframe processing. Available columns: {list(data.columns)}")
+        
+        return data
+
+    def create_timeframe_datasets(self, data: pd.DataFrame, timeframes: List[TimeRange]) -> Dict[str, pd.DataFrame]:
+        """Create datasets for multiple timeframes from original data"""
+        logger.info(f"Creating multi-timeframe datasets for {len(timeframes)} timeframes")
+        
+        # Store original data
+        self.original_data = data.copy()
+        
+        # Map columns to standard format
+        data = self._map_columns(data)
+        
+        # Ensure required columns exist
+        data = self._ensure_required_columns(data)
+        
+        # Ensure we have a DatetimeIndex
         if not isinstance(data.index, pd.DatetimeIndex):
-            logger.warning("Data index is not a DatetimeIndex, attempting to convert...")
-            try:
-                data = data.copy()
-                data.index = pd.to_datetime(data.index)
-            except Exception as e:
-                logger.error(f"Failed to convert index to datetime: {e}")
-                return data
+            logger.info("Data index is not a DatetimeIndex, attempting to convert...")
+            if 'datetime' in data.columns:
+                data['datetime'] = pd.to_datetime(data['datetime'])
+                data.set_index('datetime', inplace=True)
+            elif 'date' in data.columns and 'time' in data.columns:
+                data['datetime'] = pd.to_datetime(data['date'].astype(str) + ' ' + data['time'].astype(str))
+                data.set_index('datetime', inplace=True)
+            else:
+                raise ValueError("Cannot create DatetimeIndex for multi-timeframe processing")
+        
+        # Create datasets for each timeframe
+        for timeframe in timeframes:
+            timeframe_str = f"{timeframe.value}{timeframe.unit}"
+            logger.info(f"Creating {timeframe_str} dataset...")
             
-        # Get points to keep
-        keep_points = self.calculate_lcm_points(timeframes, lcm_multiples)
-        
-        # Calculate seconds from start for each row
-        start_time = data.index[0]
-        seconds_from_start = (data.index - start_time).total_seconds()
-        
-        # Ensure seconds_from_start is a pandas Series
-        if not isinstance(seconds_from_start, pd.Series):
-            seconds_from_start = pd.Series(seconds_from_start, index=data.index)
-        
-        # Filter based on LCM points
-        mask = pd.Series(False, index=data.index)
-        
-        for point in keep_points:
-            # Find closest data points to each LCM point
-            distances = (seconds_from_start - point).abs()  # Keep as pandas Series
-            if not distances.empty:
-                closest_idx = distances.idxmin()
-                mask.loc[closest_idx] = True
-            
-        filtered_data = data[mask]
-        logger.info(f"Filtered data from {len(data)} to {len(filtered_data)} rows")
-        
-        return filtered_data
-    
-    def align_multi_timeframe_data(self, data: pd.DataFrame, 
-                                  timeframes: List[TimeRange]) -> Dict[str, pd.DataFrame]:
-        """Create aligned data for multiple timeframes"""
-        aligned_data = {}
-        
-        for tf in timeframes:
-            # Resample data to timeframe
-            tf_str = f"{tf.value}{tf.unit}"
-            
-            # Pandas resample string
+            # Convert timeframe to pandas resample string
             resample_map = {'s': 'S', 'm': 'T', 'h': 'H', 'd': 'D'}
-            resample_str = f"{tf.value}{resample_map.get(tf.unit, tf.unit)}"
+            resample_str = f"{timeframe.value}{resample_map.get(timeframe.unit, timeframe.unit)}"
             
-            # Resample with proper aggregation
+            # Resample data
             resampled = data.resample(resample_str).agg({
                 'open': 'first',
                 'high': 'max',
@@ -226,9 +290,84 @@ class LCMDataFilter:
                 'volume': 'sum'
             }).dropna()
             
-            aligned_data[tf_str] = resampled
-            
-        return aligned_data
+            self.timeframe_datasets[timeframe_str] = resampled
+            logger.info(f"Created {timeframe_str} dataset with {len(resampled)} rows")
+        
+        return self.timeframe_datasets
+
+    def get_original_data(self) -> Optional[pd.DataFrame]:
+        """Get the original data used for processing"""
+        return self.original_data
+
+    def get_timeframe_dataset(self, timeframe: str) -> Optional[pd.DataFrame]:
+        """Get dataset for a specific timeframe"""
+        return self.timeframe_datasets.get(timeframe)
+
+    def get_all_timeframes(self) -> List[str]:
+        """Get list of all available timeframes"""
+        return list(self.timeframe_datasets.keys())
+
+    def align_signals_across_timeframes(self, signals: Dict[str, pd.Series]) -> pd.DataFrame:
+        """Align signals from different timeframes to the highest resolution timeframe"""
+        if not signals:
+            return pd.DataFrame()
+        
+        # Find the highest resolution timeframe (smallest interval)
+        timeframe_seconds = {}
+        for tf_str in signals.keys():
+            # Parse timeframe string (e.g., "1m", "5m", "15m")
+            import re
+            match = re.match(r'(\d+)([smhd])', tf_str)
+            if match:
+                value = int(match.group(1))
+                unit = match.group(2)
+                # Convert to seconds
+                if unit == 's':
+                    seconds = value
+                elif unit == 'm':
+                    seconds = value * 60
+                elif unit == 'h':
+                    seconds = value * 3600
+                elif unit == 'd':
+                    seconds = value * 86400
+                else:
+                    continue
+                timeframe_seconds[tf_str] = seconds
+        
+        if not timeframe_seconds:
+            logger.warning("Could not parse timeframe strings")
+            return pd.DataFrame()
+        
+        # Find highest resolution (smallest seconds)
+        highest_res_tf = min(timeframe_seconds.keys(), key=lambda x: timeframe_seconds[x])
+        logger.info(f"Using {highest_res_tf} as highest resolution timeframe")
+        
+        # Get the highest resolution dataset
+        highest_res_data = self.timeframe_datasets.get(highest_res_tf)
+        if highest_res_data is None:
+            logger.error(f"Highest resolution dataset {highest_res_tf} not found")
+            return pd.DataFrame()
+        
+        # Align all signals to the highest resolution timeframe
+        aligned_signals = {}
+        for tf_str, signal_series in signals.items():
+            if tf_str == highest_res_tf:
+                # Already in correct timeframe
+                aligned_signals[tf_str] = signal_series
+            else:
+                # Need to resample to higher resolution
+                tf_data = self.timeframe_datasets.get(tf_str)
+                if tf_data is not None:
+                    # Forward fill the signal to higher resolution
+                    aligned_signal = signal_series.reindex(highest_res_data.index, method='ffill')
+                    aligned_signals[tf_str] = aligned_signal
+                    logger.info(f"Aligned {tf_str} signal to {highest_res_tf} timeframe")
+        
+        # Combine all signals
+        result_df = pd.DataFrame(aligned_signals)
+        logger.info(f"Aligned signals shape: {result_df.shape}")
+        
+        return result_df
 
 
 class PatternFilter:
@@ -428,7 +567,7 @@ class DatasetProcessor:
     
     def __init__(self):
         self.stripper = DataStripper()
-        self.lcm_filter = LCMDataFilter()
+        self.multi_timeframe_processor = MultiTimeframeProcessor()
         self.pattern_filter = PatternFilter()
         self.volatility_calc = VolatilityCalculator()
         self.processed_datasets = {}
@@ -445,14 +584,10 @@ class DatasetProcessor:
         if 'columns_to_keep' in processing_config:
             data = self.stripper.strip_columns(processing_config['columns_to_keep'])
             
-        # Apply LCM filter if timeframes specified
+        # Create timeframe datasets
         if 'timeframes' in processing_config:
             timeframes = [TimeRange(**tf) for tf in processing_config['timeframes']]
-            data = self.lcm_filter.filter_data(
-                data, 
-                timeframes,
-                processing_config.get('lcm_multiples', 2)
-            )
+            self.multi_timeframe_processor.create_timeframe_datasets(data, timeframes)
             
         # Apply pattern filters if specified
         if 'pattern_filters' in processing_config:

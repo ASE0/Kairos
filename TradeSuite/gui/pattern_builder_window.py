@@ -607,17 +607,6 @@ class PatternBuilderWindow(QMainWindow):
         volatility_widget.setLayout(volatility_layout)
         self.param_stack.addWidget(volatility_widget)
         
-        # Support/Resistance parameters
-        sr_widget = QWidget()
-        sr_layout = QFormLayout()
-        self.sr_tolerance = QDoubleSpinBox()
-        self.sr_tolerance.setRange(0.001, 0.05)
-        self.sr_tolerance.setValue(0.01)
-        self.sr_tolerance.setSingleStep(0.001)
-        sr_layout.addRow("Tolerance:", self.sr_tolerance)
-        sr_widget.setLayout(sr_layout)
-        self.param_stack.addWidget(sr_widget)
-        
         # Multi-bar parameters
         multibar_widget = QWidget()
         multibar_layout = QFormLayout()
@@ -695,18 +684,16 @@ class PatternBuilderWindow(QMainWindow):
                 self.param_stack.setCurrentIndex(5)  # Momentum parameters
             elif pattern_type in ['High Volatility', 'Low Volatility', 'Volatility Expansion', 'Volatility Contraction']:
                 self.param_stack.setCurrentIndex(6)  # Volatility parameters
-            elif pattern_type in ['Support Bounce', 'Resistance Rejection']:
-                self.param_stack.setCurrentIndex(7)  # Support/Resistance parameters
             elif pattern_type in ['Three White Soldiers', 'Three Black Crows']:
-                self.param_stack.setCurrentIndex(8)  # Multi-bar parameters
+                self.param_stack.setCurrentIndex(7)  # Multi-bar parameters
             elif pattern_type in ['Trend Continuation', 'Trend Reversal']:
-                self.param_stack.setCurrentIndex(9)  # Trend parameters
+                self.param_stack.setCurrentIndex(8)  # Trend parameters
             elif pattern_type in ['Gap Up', 'Gap Down']:
-                self.param_stack.setCurrentIndex(10)  # Gap parameters
+                self.param_stack.setCurrentIndex(9)  # Gap parameters
             elif pattern_type in ['Consolidation', 'Breakout', 'Exhaustion', 'Accumulation', 'Distribution']:
-                self.param_stack.setCurrentIndex(11)  # Market structure parameters
+                self.param_stack.setCurrentIndex(10)  # Market structure parameters
             else:
-                self.param_stack.setCurrentIndex(12)  # Default parameters
+                self.param_stack.setCurrentIndex(11)  # Default parameters
             self._update_preview()
             
     def _update_ratio_inputs(self):
@@ -805,8 +792,6 @@ class PatternBuilderWindow(QMainWindow):
             return f"Momentum threshold: {self.momentum_threshold.value()}"
         elif pattern_type in ['High Volatility', 'Low Volatility', 'Volatility Expansion', 'Volatility Contraction']:
             return f"Volatility threshold: {self.volatility_threshold.value()}"
-        elif pattern_type in ['Support Bounce', 'Resistance Rejection']:
-            return f"Tolerance: {self.sr_tolerance.value()}"
         elif pattern_type in ['Three White Soldiers', 'Three Black Crows']:
             return f"Bar count: {self.multibar_count.value()}"
         elif pattern_type in ['Trend Continuation', 'Trend Reversal']:

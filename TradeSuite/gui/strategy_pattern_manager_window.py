@@ -168,7 +168,8 @@ class StrategyPatternManagerWindow(QMainWindow):
             if hasattr(strategy, 'actions'):
                 details += "Actions:\n"
                 for i, action in enumerate(strategy.actions, 1):
-                    details += f"  {i}. {action.name} (Pattern: {action.pattern.name})\n"
+                    pattern_name = action.pattern.name if (hasattr(action, 'pattern') and action.pattern is not None and hasattr(action.pattern, 'name')) else '-'
+                    details += f"  {i}. {action.name} (Pattern: {pattern_name})\n"
         else:
             pattern = item_id
             details = f"Name: {pattern.name}\nType: {type(pattern).__name__}\n"

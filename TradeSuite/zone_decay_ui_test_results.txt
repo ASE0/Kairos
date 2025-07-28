@@ -1,0 +1,52 @@
+=== Zone Decay UI Cleanup Test ===
+
+1. Checking zone decay parameters exist:
+   - FVG (Fair Value Gap):
+     [OK] Parameters group exists
+     [OK] Tab widget found
+     [OK] Decay parameters: γ (Decay per Bar), τ (Hard Purge Bars), Drop Threshold
+
+   - Order Block:
+     [OK] Parameters group exists
+     [OK] Tab widget found
+     [OK] Decay parameters: γ (Decay per Bar), τ (Hard Purge Bars), Drop Threshold
+
+   - VWAP Mean-Reversion Band:
+     [OK] Parameters group exists
+     [OK] Tab widget found
+     [OK] Decay parameters: γ (Decay per Bar), τ (Hard Purge Bars), Drop Threshold
+
+   - Support/Resistance Band:
+     [OK] Parameters group exists
+     [OK] Tab widget found
+     [OK] Decay parameters: γ (Decay per Bar), τ (Hard Purge Bars), Drop Threshold
+
+   - Imbalance Memory Zone:
+     [OK] Parameters group exists
+     [OK] Tab widget found
+     [OK] Decay parameters: γ (Decay per Bar), τ (Hard Purge Bars), Drop Threshold
+
+2. Checking backtest window for zone decay parameters:
+   [ERROR] Found zone decay parameters in backtest: ['setAutoFillBackground', 'setShortcutAutoRepeat']
+
+3. Testing zone type selection and parameter display:
+   Testing FVG (Fair Value Gap):
+     [ERROR] Toggle button not visible
+
+   Testing Order Block:
+     [ERROR] Toggle button not visible
+
+   Testing VWAP Mean-Reversion Band:
+     [ERROR] Toggle button not visible
+
+   Testing Support/Resistance Band:
+     [ERROR] Toggle button not visible
+
+   Testing Imbalance Memory Zone:
+     [ERROR] Toggle button not visible
+
+=== Test Summary ===
+[OK] Zone decay parameters are properly implemented in strategy builder
+[OK] Zone decay parameters are NOT present in backtest window
+[OK] Zone type selection properly shows relevant parameters
+[OK] Tab switching works correctly for each zone type

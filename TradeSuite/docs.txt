@@ -1,0 +1,642 @@
+Comprehensive Spatiotemporal Trading Strategy - Complete Mathematical Framework
+
+Comprehensive Spatiotemporal Trading
+
+Strategy
+
+Complete Mathematical Framework
+
+Version 3.0: A unified mathematical architecture integrating multi‐timeframe analysis, probabilistic location
+
+modeling, Bayesian state tracking, momentum‐adaptive scoring, and volatility‐aware execution
+
+Table of Contents
+
+1. System Overview and Mathematical Flow
+
+2. Core Candlestick Quantification
+
+3. Z-Space Matrix Architecture
+
+4. Location Distribution Models
+
+5. Momentum-Adaptive Location Scoring
+
+6. Bayesian State Tracking System
+
+7. Volatility Integration Framework
+
+8. Pattern Recognition and Formation
+
+9. Market Maker Reversion Models
+
+10. Imbalance Memory System
+
+11. Execution Logic and Signal Synthesis
+
+12. Complete Parameter Reference
+
+13. Master Equations Summary
+
+1. System Overview and Mathematical Flow
+
+Processing math: 100%
+
+Explore our developer-friendly HTML to PDF API Printed using PDFCrowd HTML to PDF
+
+https://pdfcrowd.com/api/html-to-pdf-api/?ref=pdf
+
+https://pdfcrowd.com/?ref=pdf
+
+https://pdfcrowd.com/html-to-pdf/?ref=pdf
+
+1.1 Core Mathematical Pipeline
+
+Raw OHLCV Data
+
+↓
+
+Feature Extraction: Bₜ, Wᵘₜ, Wˡₜ, Dₜ
+
+↓
+
+Location Interaction: dₜ,ᵢ → Kᵢ(dₜ,ᵢ)
+
+↓
+
+Momentum Adjustment: Lₘₒₘₑₙₜᵤₘₜₒₜₐₗ = Lₜₒₜₐₗ × (1 + κₘ | M(t,y) |)
+
+↓
+
+Z-Space Matrix: S(t, x, y)
+
+↓
+
+Volatility Adjustment: Sₐdⱼ = S / (1 + κᵥ)
+
+↓
+
+Cross-TF Aggregation: Sₙₑₜ = ∑ αᵧ S(t, x, y)
+
+↓
+
+Bayesian Update: P(Hₜ | D₁:ₜ)
+
+↓
+
+Imbalance Memory Check: Rᵢₘbₐₗₐₙcₑ(p, t)
+
+↓
+
+Execution Decision: Execute = ∏ Conditions
+
+1.2 Component Relationships
+
+Key Relationships:
+
+Candlestick Features → Action Scores (Aᵢ): Patterns are quantified from OHLC
+
+Action Scores + Location Scores → Zone Strength (Sₜ,ᵢ): Context matters
+
+Zone Strengths + Momentum → Adjusted Strength: Market velocity modulates signals
+
+Zone Strengths → Z-Space Matrix: Spatiotemporal aggregation
+
+Z-Space + Volatility → Adjusted Scores: Risk normalization
+
+Adjusted Scores + Bayesian State + Memory → Execution: Final decision
+
+Processing math: 100%
+
+Explore our developer-friendly HTML to PDF API Printed using PDFCrowd HTML to PDF
+
+https://pdfcrowd.com/api/html-to-pdf-api/?ref=pdf
+
+https://pdfcrowd.com/?ref=pdf
+
+https://pdfcrowd.com/html-to-pdf-api/?ref=pdf
+
+2. Core Candlestick Quantification
+
+2.1 Real Body Size
+
+Equation:
+
+Bₜ = | Cₜ − Oₜ |
+
+Purpose: Measures the directional conviction of a candle
+
+Inputs:
+
+Cₜ = Close price at time t
+
+Oₜ = Open price at time t
+
+Output: Absolute body size in price units
+
+Relationships:
+
+Used in Doji-ness score: Dₜ = f(Bₜ / (Hₜ − Lₜ))
+
+Used in impulse penetration: dᵢₘₚ ₜ,ᵢ = f(W / B)
+
+Pattern detection: Engulfing requires B₂ > B₁
+
+Effect: Larger Bₜ → stronger directional signal → higher action score
+
+2.2 Wick Components
+
+Upper Wick:
+
+Wᵘₜ = Hₜ − max(Oₜ, Cₜ)
+
+Lower Wick:
+
+Wˡₜ = min(Oₜ, Cₜ) − Lₜ
+
+Purpose: Quantifies rejection from price extremes
+
+Inputs: High (Hₜ), Low (Lₜ), Open (Oₜ), Close (Cₜ)
+
+Relationships:
+
+Normalized for cross-TF comparison: Ẇₜ = Wₜ / (Hₜ − Lₜ)
+
+Critical in Doji scoring via symmetry term
+
+Drives impulse penetration multiplier
+
+Effect: Long wicks → price rejection → reversal potential
+
+2.3 Normalized Wicks
+
+Equations:
+
+Ẇᵘₜ = Wᵘₜ / (Hₜ − Lₜ)
+
+Ẇˡₜ = Wˡₜ / (Hₜ − Lₜ)
+
+Purpose: Enable comparison across different volatility regimes and timeframes
+
+Output: Values normalized to [0, 1]
+
+Critical Usage: Doji symmetry calculation
+
+2.4 Doji-ness Score
+
+Complete Equation:
+
+Dₜ = exp[−(Bₜ/(Hₜ − Lₜ))²/(2σ_b²)] × exp[−(Ẇᵘₜ − Ẇˡₜ)²/(2σ_w²)]
+
+Tunable Parameters:
+
+σ_b ∈ [0.01, 0.1]: Body size sensitivity  
+Default: 0.05
+
+σ_w ∈ [0.05, 0.2]: Wick symmetry requirement  
+Default: 0.1
+
+Mathematical Flow:
+
+Dₜ multiplies directly with location kernel output in per-zone strength:
+
+Sₜ,ᵢ = Dₜ × Kᵢ(dᵢₘₚ ₜ,ᵢ) × Cᵢ × (1 + κₘ ⋅ | M(t,y) |)
+
+2.5 Two-Bar Reversal Patterns
+
+Key Innovation:
+
+Two-bar reversal patterns (engulfing, piercing, etc.) generate a different type of strength signal than single-candle patterns. They represent momentum reversal rather than indecision.
+
+Two-Bar Pattern Strength:
+
+A₂bar =
+
+β_eng ⋅ (B₂ / B₁)  
+if Engulfing
+
+β_pierce ⋅ (C₂ − L₁) / B₁  
+if Piercing Line
+
+β_dcc ⋅ (H₁ − C₂) / B₁  
+if Dark Cloud Cover
+
+WHERE TWO-BAR PATTERNS ARE USED:
+
+Two-bar reversal patterns generate action scores (Aᵢ) that feed into the Z-space matrix differently than Doji patterns:
+
+1. Input: Two consecutive candles' OHLC data  
+2. Process: Pattern detection + relative size calculation  
+3. Output: An action strength A₂bar that replaces Dₜ in the per-zone strength formula  
+4. Usage: Sₜ,ᵢ = A₂bar × Kᵢ(dᵢₘₚ ₜ,ᵢ) × Cᵢ × (1 + κₘ ⋅ | M(t,y) |)
+
+2.6 Penetration Depth Models
+
+2.6.1 Basic Penetration Depth
+
+dₜ,ᵢ =
+
+0 if candle does not enter zone i  
+[min(max{Oₜ, Cₜ, Hₜ, Lₜ}, Hᵢ) − Lᵢ] / (Hᵢ − Lᵢ) otherwise
+
+Purpose: Measures how deeply price penetrates a location zone
+
+Inputs: Candle OHLC values, Zone boundaries [Lᵢ, Hᵢ]
+
+Output: Depth ratio ∈ [0, 1]
+
+Usage: Input to skew-normal kernel Kᵢ(x)
+
+2.6.2 Impulse-Based Penetration (For Spike Detection)
+
+dᵢₘₚ ₜ,ᵢ =
+
+\[
+\bigl(\tfrac{Hₜ−Lₜ}{\bar R}\bigr)^γ ⋅ \bigl(\tfrac{Wᵘₜ+Wˡₜ}{Bₜ+ε}\bigr)^δ ⋅ dₜ,ᵢ
+\]
+
+Components and Parameters:
+
+Range Ratio: (Hₜ − Lₜ)/\bar R, with  
+\bar R = (1/N) ∑_{j=1}^N (H_{t−j}−L_{t−j})
+
+Wick-to-Body Ratio: (Wᵘₜ+Wˡₜ)/(Bₜ+ε), ε=0.0001
+
+γ ∈ [1.0, 3.0]: Default 2.0
+
+δ ∈ [0.5, 2.0]: Default 1.5
+
+3. Z-Space Matrix Architecture
+
+3.1 Mathematical Definition
+
+Domain: S: ℝ⁺ × ℝ × T → ℝ
+
+Dimensions:  
+t ∈ ℝ⁺: Time coordinate  
+x ∈ ℝ: Price coordinate  
+y ∈ T: Timeframe from set T = {1M, 5M, 15M, 1H, 4H, 1D}
+
+3.2 Core Strength Equation
+
+Master Z-Space Equation:
+
+S(t,x,y) = ∑_{i=1}^N wᵢ ⋅ Aᵢ(x,y) ⋅ Lᵢ(x,y) + βᵥ ⋅ V(x,y)
+
+Component Breakdown:
+
+Aᵢ(x,y): Action strength from pattern i  
+Lᵢ(x,y): Location-based weight from zone i  
+V(x,y) = w₁⋅σₜ(x,y) + w₂⋅ATRₜ(x,y)  
+wᵢ: Pattern importance weights  
+βᵥ: Volatility influence weight
+
+3.3 Dynamic Update Mechanism
+
+S(t+Δt,x,y) = γ ⋅ S(t,x,y) + (1−γ)[A_new(x,y)⋅L(x,y) + C(y)⋅1_series]
+
+γ ∈ [0, 1]: Default 0.95
+
+C(y) cluster bonus:
+
+0.5 if 3 consecutive similar candles  
+1.0 if 5 consecutive  
+1.5 if 7+  
+0 otherwise
+
+3.4 Cross-Timeframe Aggregation
+
+Net Strength Score:
+
+S_net(t) = ∑_{y∈T} αᵧ ⋅ S(t,x_current,y)
+
+Normalization: ∑αᵧ = 1
+
+Execution threshold, volatility adjustment:
+
+S_adj = S_net / (1 + κᵥ)
+
+4. Location Distribution Models
+
+4.1 Dual-Layer FVG Architecture
+
+4.1.1 Base Distribution
+
+L_base(x) =
+
+0 if x < x₀  
+1/(x₁−x₀) if x₀ ≤ x ≤ x₁  
+0 if x > x₁
+
+Where:
+
+x₀ = x_FVG start + ε  
+x₁ = x_FVG end − ε  
+ε ∈ [1, 5] points
+
+4.1.2 Micro-Comb Peaks
+
+C(x) = ∑_{k=1}^N exp[−(x−xₖ)²/(2σ²)]
+
+xₖ = x₀ + k⋅(x₁−x₀)/(N+1)
+
+N ∈ [1, 10]: Default 3  
+σ ∈ [0.01, 0.5]: Default 0.1
+
+4.1.3 Combined Location Strength
+
+L_total(x) = β₁⋅L_base(x) + β₂⋅C(x)
+
+4.2 Directional Skew Model
+
+L_skew(x) = L_base(x)⋅[1 + λ(x−x₀)], λ∈[−2, 2]
+
+4.3 Skew-Normal Kernel Function
+
+Kᵢ(x) = [2/ωᵢ] ϕ((x−ξᵢ)/ωᵢ) Φ(αᵢ(x−ξᵢ)/ωᵢ)
+
+4.4 Stacked Location Zones
+
+L_stacked(x) = ∑_{z∈zones} γ_z ⋅ L_z(x)
+
+L_adjusted(x,y) = L_stacked(x)⋅(1 + δᵧ)
+
+5. Momentum-Adaptive Location Scoring
+
+5.1 Momentum Score Calculation
+
+M(t,y) = (1/n) ∑_{i=1}^n |rᵢ| ⋅ sign(rᵢ),  
+rᵢ = (Cᵢ − C_{i−1})/C_{i−1}
+
+Regime(t,y):  
+"explosive" if |M|>2σₘ  
+"trending" if σₘ<|M|≤2σₘ  
+"normal" if |M|≤σₘ
+
+5.2 Dynamic FVG Acceptance Region
+
+x₀^{adj}=x₀ − φ|M|(x₁−x₀)  
+x₁^{adj}=x₁ + φ|M|(x₁−x₀), φ∈[0, 0.5]
+
+5.3 Momentum-Weighted Location Score
+
+L_momentum_total(x) = L_total(x)⋅(1 + κₘ|M(t,y)|)
+
+6. Bayesian State Tracking System
+
+6.1 Extended State Space with Velocity
+
+States = {(d,v): d∈{Bull,Bear,Neutral}, v∈{Explosive,Normal,Exhausted}}
+
+6.2 Bayesian Update Mechanism
+
+P(H^{(d,v)}_t | D₁:ₜ) =
+[P(Dₜ|H^{(d,v)}_t,Vₜ) ⋅ P(H^{(d,v)}_{t−1})]
+/ ∑_{H′}[P(Dₜ|H′,Vₜ) ⋅ P(H′_{t−1})]
+
+6.3 Multi-Timeframe Hypothesis Structure
+
+Priors from 4H,1D; Evidence from 15M,5M,1M
+
+6.4 Likelihood Function
+
+P(Dₜ|H^{(d,v)}_t,Vₜ) = ∏_{e∈Evidence} P(e|H^{(d,v)}_t,Vₜ)^{w_e}
+
+Weights:  
+Strength: 0.4  
+Patterns: 0.3  
+Location: 0.2  
+Volume: 0.1  
+Momentum: 0.15
+
+6.5 Hidden Markov Model Extension
+
+State transition α_T(z) = ∑_{z′} α_{T−1}(z′) Π_{z′,z} ℓ_T(z)
+
+Π: 9×9 matrix for (direction, velocity) pairs
+
+7. Volatility Integration Framework
+
+7.1 Realized Volatility
+
+σₜ = √[(1/N) ∑(rᵢ − \bar r)²], rᵢ=log(Pᵢ/P_{i−1})
+
+7.1.2 Average True Range
+
+ATRₜ = (1/n) ∑TRᵢ,  
+TRᵢ=max(Hᵢ−Lᵢ,|Hᵢ−C_{i−1}|,|Lᵢ−C_{i−1}|)
+
+7.2 GARCH(1,1) Model
+
+σₜ² = ω + αε_{t−1}² + βσ_{t−1}²  
+ω>0, α,β≥0, α+β<1  
+Typical: ω=0.00001, α=0.05, β=0.94
+
+7.3 Volatility-Adjusted Scoring
+
+S_adj(t,x,y) = S(t,x,y)/(1+κ⋅V(x,y)),  
+V(x,y)=w₁σₜ(x,y)+w₂ATRₜ(x,y)
+
+7.4 Fat Tail Risk Management
+
+Generalized Pareto:  
+F(x|ξ,β)=1−[1+ξ(x/β)]^{−1/ξ}  
+Expected Shortfall ES(u)=(β+uξ)/(1−ξ)
+
+7.5 Volatility Execution Filters
+
+Z_vol(t)=(σₜ−μ_σ)/σ_σ, reject if Z_vol>ε_vol (≈2.5)
+
+8. Pattern Recognition and Formation
+
+8.1 Pattern Confidence Scoring
+
+q(p)_T = σ(κ(Corr_T−τ)),  
+Corr_T=(y_T·m)/(|y_T||m|)
+
+8.2 Dynamic Strength Adjustment
+
+S_adj = S_agg × (1−η q^opposite)
+
+8.3 Two-Bar Reversal Patterns
+
+See table of Bar 1 and Bar 2 conditions for Engulfing, Piercing, Dark Cloud, Tweezers.
+
+8.4 Multi-Candle Series Detection
+
+Similar if ||fₜ−f_{t−1}||<δ,  
+S_series=S_base×(1+C(y))
+
+9. Market Maker Reversion Models
+
+9.1 Support/Resistance Band Detection
+
+R_supₜ = max_{i=t−W…t} Hᵢ,  
+R_infₜ = min_{i=t−W…t} Lᵢ
+
+9.2 Market Maker Reversion Score
+
+Mₜ = exp[−((Lₜ−R_infₜ)²)/(2σ_r²)] × exp[−ϵ²/(2σₜ²)]
+
+9.3 Temporal Symmetry Analysis
+
+R_MM=1−(Δt_rise−Δt_fall)/(Δt_rise+Δt_fall)
+
+9.4 Umbrella Pattern Detection
+
+Sym_umbrella=exp[−(P_left+P_right−2P_head)²/(2σ²)]
+
+10. Imbalance Memory System
+
+10.1 Imbalance Event Storage
+
+Store when move>τ_imbalance, with decay e^{−γ_mem·age}
+
+10.2 Reversion Expectation Score
+
+R_imbalance(p,t)=∑wᵢ exp[−((p−p_imb,i)²)/(2σ_rev²)] e^{−γ_mem(t−tᵢ)}
+
+Enhanced: M_enhancedₜ = Mₜ + ω_mem R_imbalance
+
+11. Execution Logic and Signal Synthesis
+
+11.1 Master Execution Condition
+
+Execute = 1_{S_net>θ}×1_{Location}×1_{Hypothesis}×1_{Volatility}×1_{Range}×1_{Momentum}
+
+11.2 Detailed Execution Criteria
+
+See table of criteria: Strength θ∈[50,100], Min comb hits κ≥2, p_entry>0.6, Z_vol<2.5, δ_range=5pt, etc.
+
+11.3 Execution Strength with Alignment
+
+S_exec(t)=S_net(t)⋅C_align(t)⋅1_{MMRS_enhanced(t)>τ}
+
+C_align(t)=exp[−(1/|T|)∑_{y∈T}(μᵧ−μ̄)²/σᵧ²]
+
+11.4 Position Sizing
+
+Kelly: f*=(p⋅b−q)/b × 1/σₜ
+
+11.5 Risk Management
+
+Stop Distance = k_stop⋅ATRₜ⋅√h  
+Target = min_{y∈T} R_opposite(y)
+
+12. Complete Parameter Reference
+
+Category Parameter Symbol Range Default Effect of Increase
+
+Candlestick Body sensitivity σ_b [0.01,0.1] 0.05 Fewer Dojis detected  
+Wick symmetry σ_w [0.05,0.2] 0.1 Stricter symmetry required  
+Impulse sensitivity γ [1.0,3.0] 2.0 Larger moves weighted more  
+Wick-to-body δ [0.5,2.0] 1.5 Wick size matters more  
+
+Location Model  
+Min penetration ε [1,5] pts 2 Deeper entry required  
+Comb peak count N [1,10] 3 More granular detection  
+Peak sharpness σ [0.01,0.5] 0.1 Narrower reaction zones  
+FVG skew λ [−2,2] 0 Stronger directional bias  
+
+Momentum  
+FVG expansion factor φ [0,0.5] 0.2 Shallower entries OK  
+Momentum influence κₘ [0,2] 0.5 Momentum matters more  
+Momentum threshold σₘ [0.5,2] ATR 1.0 Higher=less explosive  
+
+System TF weights αᵧ [0,1] Varies Higher TF dominates bias  
+Execution threshold θ [0,100] 70 Fewer, stronger signals  
+Memory decay γ [0.9,0.99] 0.95 Longer historical influence  
+Cluster bonus C(y) [0,2] 0.5 Series patterns amplified  
+Location decay τ [5,200] bars 50 Zones stay active longer  
+
+Volatility  
+Vol influence κ [0.1,2.0] 0.5 More vol dampening  
+Vol spike limit ε_vol [2.0,3.0] 2.5 More conservative  
+GARCH α [0.01,0.1] 0.05 More reactive to shocks  
+GARCH β [0.9,0.99] 0.94 More persistent vol  
+
+Pattern  
+Min correlation τ [0.6,0.9] 0.75 Stricter pattern match  
+Confidence steep κ [5,20] 10 Sharper on/off  
+Pattern influence η [0,1] 0.5 Stronger pattern impact  
+
+Market Maker  
+Spatial std dev σ_r [1,10] pts 5 Wider acceptance range  
+Temporal std dev σ_t [1,10] bars 3 More timing tolerance  
+
+Memory  
+Imbalance threshold τ_imbalance [50,200] pts 100 Larger moves remembered  
+Memory decay γ_mem [0.001,0.1] 0.01 Faster forgetting  
+Memory weight ω_mem [0,1] 0.3 Historical levels matter more  
+Reversion width σ_rev [5,50] pts 20 Wider zone influence  
+
+Execution  
+Min comb hits κ [1,N] 2 Stricter zone validation  
+Entry probability p_entry [0.5,0.8] 0.6 Higher confidence required  
+
+12.2 Parameter Relationships
+
+σ_b and σ_w: Define Doji strictness  
+γ and δ: Control spike detection sensitivity  
+β₁+β₂≈1 for balanced scoring  
+αᵧ sum to 1  
+κ and ε_vol: Control volatility filtering  
+φ and κₘ: Control momentum adaptation  
+γ_mem and ω_mem: Balance memory vs decay  
+
+12.3 Optimization Guidelines
+
+Priority:  
+1. High Impact: θ, αᵧ, p_entry, κₘ  
+2. Medium Impact: ε, κ, σ_b, σ_w, φ  
+3. Fine Tuning: All others  
+
+Methods: Grid Search, Bayesian Optimization, Walk-Forward Analysis
+
+13. Master Equations Summary
+
+13.1 The Complete Strength Score Equation
+
+Per-Zone Strength:
+
+Sₜ,ᵢ = A_pattern × Kᵢ(dᵢₘₚ ₜ,ᵢ) × Lₘₒₘₑₙₜᵤₘₜₒₜₐₗ(x) × Cᵢ
+
+13.2 The Complete Z-Space Matrix
+
+S(t,x,y) = ∑_{i=1}^N wᵢ ⋅ Sₜ,ᵢ + βᵥ ⋅ V(x,y)
+
+Dynamic Update:
+
+S(t+Δt,x,y)=γ ⋅ S(t,x,y)⋅(1−η q^{opposite})+(1−γ)[A_new⋅L+C(y)⋅1_series]
+
+13.3 The Complete Execution Signal
+
+S_net(t)=∑_{y∈T}αᵧ⋅S(t,x_current,y)
+
+S_adj(t)=S_net(t)/(1+κ V(t))
+
+S_exec(t)=S_adj(t)⋅C_align(t)⋅1_{MMRS_enhanced(t)>τ}
+
+13.4 The Complete Location Score
+
+L_final(x,y)=\bigl[\sum_{z∈zones}γ_zL_z(x)\bigr]⋅(1+δᵧ)⋅(1+κₘ|M(t,y)|)
+
+13.5 The Complete Volatility Integration
+
+Volatility Score:
+
+V(x,y)=w₁⋅σₜ(x,y)+w₂⋅ATRₜ(x,y)
+
+With GARCH Evolution:
+
+σₜ²=ω+αε_{t−1}²+βσ_{t−1}²
+
+Execution Filter:
+
+Trade Allowed = 1_{Z_vol(t)<ε_vol}
+
+This document represents a complete mathematical specification of the Spatiotemporal Trading Strategy.
+
+Version 3.0 includes momentum-adaptive scoring, imbalance memory, and extended state spaces.
+
+All equations, parameters, and relationships are defined for direct implementation.

@@ -13,13 +13,16 @@ from typing import Dict, List, Optional
 import logging
 import json
 from datetime import datetime
+import os
 
-from processors.data_processor import DataStripper, LCMDataFilter, VolatilityCalculator
+from processors.data_processor import DataStripper, MultiTimeframeProcessor, VolatilityCalculator
 from processors.data_source_integration import EnhancedDataStripper, DataSourceDetector
 from core.data_structures import TimeRange, DatasetMetadata, VolatilityProfile
 
 logger = logging.getLogger(__name__)
 
+RECENT_DATASET_DIR = os.path.join(os.path.dirname(__file__), '..', 'recent_dataset')
+RECENT_DATASET_PATH = os.path.join(RECENT_DATASET_DIR, 'most_recent.csv')
 
 class DataStripperWindow(QMainWindow):
     """Window for stripping and processing data"""
@@ -29,17 +32,19 @@ class DataStripperWindow(QMainWindow):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Data Stripper & Processor")
-        self.setGeometry(200, 200, 1000, 700)
+        self.setWindowTitle("Data Stripper")
+        self.setGeometry(100, 100, 1200, 800)
 
-        # Data processor with multi-source support
-        self.stripper = EnhancedDataStripper()
-        self.lcm_filter = LCMDataFilter()
+        # Initialize components
+        self.stripper = DataStripper()
+        self.multi_timeframe_processor = MultiTimeframeProcessor()
         self.volatility_calc = VolatilityCalculator()
 
-        # Current data
+        # Data storage
         self.current_data = None
         self.processed_data = None
+        self.resampled_data = {}
+        self.current_metadata = None
         self.detected_source = None
 
         # Setup UI
@@ -520,31 +525,20 @@ class DataStripperWindow(QMainWindow):
         group = QGroupBox("Processing Options")
         layout = QVBoxLayout()
 
-        # LCM Filter
-        lcm_layout = QHBoxLayout()
+        # Multi-timeframe Processing
+        mtf_layout = QHBoxLayout()
 
-        self.enable_lcm = QCheckBox("Enable LCM Filter")
+        self.enable_lcm = QCheckBox("Enable Multi-Timeframe Processing")
         self.enable_lcm.setChecked(True)
-        lcm_layout.addWidget(self.enable_lcm)
+        mtf_layout.addWidget(self.enable_lcm)
 
-        lcm_layout.addWidget(QLabel("LCM Multiples:"))
-        self.lcm_multiples = QSpinBox()
-        self.lcm_multiples.setRange(1, 10)
-        self.lcm_multiples.setValue(2)
-        lcm_layout.addWidget(self.lcm_multiples)
-
-        layout.addLayout(lcm_layout)
-
-        # Timeframes
-        tf_layout = QHBoxLayout()
-
-        tf_layout.addWidget(QLabel("Timeframes:"))
+        mtf_layout.addWidget(QLabel("Timeframes:"))
         self.timeframes_edit = QLineEdit()
         self.timeframes_edit.setPlaceholderText("e.g., 5s,1m,5m,15m,1h")
         self.timeframes_edit.setText("1m,5m,15m")
-        tf_layout.addWidget(self.timeframes_edit)
+        mtf_layout.addWidget(self.timeframes_edit)
 
-        layout.addLayout(tf_layout)
+        layout.addLayout(mtf_layout)
 
         # Date range filter
         date_layout = QHBoxLayout()
@@ -743,20 +737,22 @@ class DataStripperWindow(QMainWindow):
                         column_mapping[old.strip()] = new.strip()
 
             # Load data with enhanced loader
-            self.current_data = self.stripper.load_data(file_path, source, column_mapping)
+            self.current_data = self.stripper.load_data(file_path, column_mapping)
 
-            # Get source info
-            source_info = self.stripper.get_source_info()
+            # Use detected source for info
+            source_info = {'source': self.detected_source or 'unknown'}
 
             # Show metadata if from Zorro
-            if source_info['source'] == 'zorro' and source_info['metadata']:
-                metadata = source_info['metadata']
-                if metadata.get('patterns'):
-                    self.source_info.append(f"\nFound patterns: {', '.join(metadata['patterns'])}")
-                if metadata.get('indicators'):
-                    self.source_info.append(f"\nFound indicators: {', '.join(metadata['indicators'])}")
-                if metadata.get('timeframe'):
-                    self.source_info.append(f"\nTimeframe: {metadata['timeframe']}")
+            if source_info['source'] == 'zorro':
+                # For Zorro, we would need to check if there are pattern columns
+                pattern_cols = [col for col in self.current_data.columns if 'pattern' in col.lower()]
+                if pattern_cols:
+                    self.source_info.append(f"\nFound patterns: {', '.join(pattern_cols)}")
+                
+                indicator_cols = [col for col in self.current_data.columns 
+                                if any(ind in col.lower() for ind in ['sma', 'ema', 'rsi', 'macd'])]
+                if indicator_cols:
+                    self.source_info.append(f"\nFound indicators: {', '.join(indicator_cols)}")
 
             # Update preview
             self._update_preview()
@@ -765,6 +761,14 @@ class DataStripperWindow(QMainWindow):
             self.process_btn.setEnabled(True)
 
             self.status_bar.showMessage(f"Loaded {len(self.current_data)} rows from {source_info['source']}")
+
+            # After loading, save a copy to recent_dataset
+            if not os.path.exists(RECENT_DATASET_DIR):
+                os.makedirs(RECENT_DATASET_DIR)
+            try:
+                self.current_data.to_csv(RECENT_DATASET_PATH, index=False)
+            except Exception as e:
+                print(f"[WARNING] Could not save recent dataset: {e}")
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to load file: {str(e)}")
@@ -796,20 +800,16 @@ Date Range: {self.current_data.index.min()} to {self.current_data.index.max()}
         self.stats_label.setText(stats_text.strip())
 
     def process_data(self):
-        """Process the loaded data"""
+        """Process the loaded data and resample to all requested timeframes"""
         if self.current_data is None:
             return
 
         try:
-            # Start with loaded data
             self.processed_data = self.current_data.copy()
-
-            # Create metadata
             metadata = DatasetMetadata(
                 name=self.dataset_name.text() or "processed_data",
                 rows_original=len(self.current_data)
             )
-
             # Strip columns if specified
             if self.columns_to_keep.text():
                 columns = [col.strip() for col in self.columns_to_keep.text().split(',')]
@@ -857,6 +857,9 @@ Date Range: {self.current_data.index.min()} to {self.current_data.index.max()}
 
             # Apply time period filter if enabled
             if self.enable_time_filter.isChecked() and self.time_periods_list.count() > 0:
+                # Ensure index is DatetimeIndex before time filter
+                if not isinstance(self.processed_data.index, pd.DatetimeIndex):
+                    self.processed_data.index = pd.to_datetime(self.processed_data.index)
                 time_masks = []
 
                 for i in range(self.time_periods_list.count()):
@@ -884,7 +887,7 @@ Date Range: {self.current_data.index.min()} to {self.current_data.index.max()}
                         combined_mask = combined_mask | mask
                     self.processed_data = self.processed_data[combined_mask]
 
-            # Apply LCM filter if enabled
+            # Apply multi-timeframe processing if enabled
             if self.enable_lcm.isChecked() and self.timeframes_edit.text():
                 try:
                     # Parse timeframes
@@ -901,26 +904,34 @@ Date Range: {self.current_data.index.min()} to {self.current_data.index.max()}
                                 timeframes.append(TimeRange(value, unit))
 
                     if timeframes:
-                        logger.info(f"Applying LCM filter with {len(timeframes)} timeframes")
+                        logger.info(f"Creating multi-timeframe datasets with {len(timeframes)} timeframes")
                         logger.info(f"Data index type: {type(self.processed_data.index)}")
                         logger.info(f"Data shape: {self.processed_data.shape}")
-                        logger.info(f"Columns before LCM: {list(self.processed_data.columns)}")
+                        logger.info(f"Columns before processing: {list(self.processed_data.columns)}")
                         
                         # Ensure data has a proper datetime index
                         if not isinstance(self.processed_data.index, pd.DatetimeIndex):
                             logger.warning("Converting index to DatetimeIndex")
                             self.processed_data.index = pd.to_datetime(self.processed_data.index)
                         
-                        self.processed_data = self.lcm_filter.filter_data(
+                        # Create timeframe datasets without filtering original data
+                        self.resampled_data = self.multi_timeframe_processor.create_timeframe_datasets(
                             self.processed_data,
-                            timeframes,
-                            self.lcm_multiples.value()
+                            timeframes
                         )
                         
-                        logger.info(f"Columns after LCM: {list(self.processed_data.columns)}")
+                        # Use the highest resolution timeframe as the main processed data
+                        if self.resampled_data:
+                            # Find highest resolution (most rows)
+                            highest_res_tf = max(self.resampled_data.keys(), 
+                                               key=lambda x: len(self.resampled_data[x]))
+                            self.processed_data = self.resampled_data[highest_res_tf]
+                            logger.info(f"Using {highest_res_tf} as main timeframe with {len(self.processed_data)} rows")
+                        
+                        logger.info(f"Created {len(self.resampled_data)} timeframe datasets")
                 except Exception as e:
-                    logger.error(f"LCM filter error: {e}")
-                    QMessageBox.warning(self, "Warning", f"LCM filter failed: {str(e)}")
+                    logger.error(f"Multi-timeframe processing error: {e}")
+                    QMessageBox.warning(self, "Warning", f"Multi-timeframe processing failed: {str(e)}")
 
             # Calculate volatility
             logger.info(f"Calculating volatility with columns: {list(self.processed_data.columns)}")
@@ -959,11 +970,82 @@ Date Range: {self.current_data.index.min()} to {self.current_data.index.max()}
                                     
                                     Volatility: {volatility_profile.value} ({volatility_profile.category})
                                     """
+            
+            # Add multi-timeframe information if available
+            if hasattr(self, 'resampled_data') and self.resampled_data:
+                result_text += f"\n\nMulti-Timeframe Datasets Created:"
+                for tf_str, df in self.resampled_data.items():
+                    result_text += f"\n  {tf_str}: {len(df)} rows"
+                
+                if hasattr(self, 'multi_timeframe_processor') and self.multi_timeframe_processor.get_original_data() is not None:
+                    original_rows = len(self.multi_timeframe_processor.get_original_data())
+                    result_text += f"\n\nOriginal data preserved: {original_rows} rows"
+                    result_text += f"\nNo data was filtered or lost!"
 
             QMessageBox.information(self, "Processing Complete", result_text)
 
             # Enable save
             self.save_btn.setEnabled(True)
+
+            # --- PATCH: Robust DatetimeIndex creation before resampling ---
+            if not isinstance(self.processed_data.index, pd.DatetimeIndex):
+                cols = [c.strip().lower() for c in self.processed_data.columns]
+                col_map = {c.strip().lower(): c for c in self.processed_data.columns}
+                # Try 'datetime' column
+                if 'datetime' in cols:
+                    col = col_map['datetime']
+                    self.processed_data[col] = pd.to_datetime(self.processed_data[col])
+                    self.processed_data.set_index(col, inplace=True)
+                # Try 'date' + 'time' columns
+                elif 'date' in cols and 'time' in cols:
+                    date_col = col_map['date']
+                    time_col = col_map['time']
+                    self.processed_data['datetime'] = pd.to_datetime(
+                        self.processed_data[date_col].astype(str) + ' ' + self.processed_data[time_col].astype(str)
+                    )
+                    self.processed_data.set_index('datetime', inplace=True)
+                # Try just 'date' column
+                elif 'date' in cols:
+                    date_col = col_map['date']
+                    self.processed_data['datetime'] = pd.to_datetime(self.processed_data[date_col].astype(str))
+                    self.processed_data.set_index('datetime', inplace=True)
+                else:
+                    # Print debug info for user
+                    print('Available columns:', list(self.processed_data.columns))
+                    print('First 5 rows:', self.processed_data.head())
+                    QMessageBox.critical(self, "Error", f"No datetime information found for resampling!\nAvailable columns: {list(self.processed_data.columns)}\nPlease ensure your data has a 'datetime', or 'date' and 'time' columns.")
+                    raise Exception('No datetime information found for resampling!')
+
+            # --- PATCH: Resample to all requested timeframes ---
+            self.resampled_data = {}  # Dict of {interval_str: DataFrame}
+            timeframes = []
+            if self.timeframes_edit.text():
+                import re
+                for tf_str in self.timeframes_edit.text().split(','):
+                    tf_str = tf_str.strip()
+                    if tf_str:
+                        match = re.match(r'(\d+)([smhd])', tf_str)
+                        if match:
+                            value = int(match.group(1))
+                            unit = match.group(2)
+                            timeframes.append((tf_str, value, unit))
+            if timeframes:
+                for tf_str, value, unit in timeframes:
+                    resample_map = {'s': 'S', 'm': 'T', 'h': 'H', 'd': 'D'}
+                    resample_str = f"{value}{resample_map.get(unit, unit)}"
+                    df_resampled = self.processed_data.resample(resample_str).agg({
+                        'open': 'first',
+                        'high': 'max',
+                        'low': 'min',
+                        'close': 'last',
+                        'volume': 'sum'
+                    }).dropna()
+                    self.resampled_data[tf_str] = df_resampled
+                # Default to 1st interval for preview and downstream
+                first_tf = timeframes[0][0]
+                self.processed_data = self.resampled_data[first_tf]
+            else:
+                self.resampled_data = {'raw': self.processed_data}
 
             # Update preview with processed data
             self.current_data = self.processed_data
@@ -974,34 +1056,93 @@ Date Range: {self.current_data.index.min()} to {self.current_data.index.max()}
             logger.error(f"Processing error: {e}")
 
     def save_dataset(self):
-        """Save processed dataset"""
-        if self.processed_data is None:
+        """Save all timeframe datasets and register them in the workspace manager"""
+        if not hasattr(self, 'resampled_data') or not self.resampled_data:
+            QMessageBox.warning(self, "Warning", "No multi-timeframe data to save.")
             return
-
-        dataset_name = self.dataset_name.text()
-        if not dataset_name:
-            QMessageBox.warning(self, "Warning", "Please enter a dataset name")
-            return
-
-        # Use stored metadata or create new
-        if hasattr(self, 'current_metadata'):
-            metadata = self.current_metadata
-        else:
-            metadata = DatasetMetadata(
-                name=dataset_name,
-                rows_original=len(self.current_data) if self.current_data is not None else 0,
-                rows_processed=len(self.processed_data)
-            )
-
-        # Store selected date range in metadata
-        if hasattr(self, 'date_from') and hasattr(self, 'date_to'):
-            metadata.selected_date_range = (
-                self.date_from.dateTime().toPyDateTime().isoformat(),
-                self.date_to.dateTime().toPyDateTime().isoformat()
-            )
-
-        # Emit signal with processed data
-        self.data_processed.emit(dataset_name, self.processed_data, metadata)
-
-        QMessageBox.information(self, "Success", f"Dataset '{dataset_name}' saved")
-        self.close()
+        
+        try:
+            # Get original data from multi-timeframe processor
+            original_data = None
+            if hasattr(self, 'multi_timeframe_processor'):
+                original_data = self.multi_timeframe_processor.get_original_data()
+            
+            if original_data is None:
+                QMessageBox.warning(self, "Warning", "Original data not available for multi-timeframe saving.")
+                return
+            
+            # Convert timeframes to TimeRange objects
+            from core.data_structures import TimeRange
+            timeframes = []
+            for tf_str in self.resampled_data.keys():
+                import re
+                match = re.match(r'(\d+)([smhd])', tf_str)
+                if match:
+                    value = int(match.group(1))
+                    unit = match.group(2)
+                    timeframes.append(TimeRange(value, unit))
+            
+            # Save using workspace manager's multi-timeframe functionality
+            if self.parent() and hasattr(self.parent(), "workspace_manager"):
+                workspace_manager = self.parent().workspace_manager
+                
+                # Create metadata
+                metadata = getattr(self, "current_metadata", {})
+                if hasattr(metadata, 'to_dict'):
+                    metadata = metadata.to_dict()
+                elif not isinstance(metadata, dict):
+                    metadata = dict(metadata)
+                metadata.update({
+                    'source': 'data_stripper',
+                    'original_timeframes': [f"{tf.value}{tf.unit}" for tf in timeframes],
+                    'created_at': datetime.now().isoformat(),
+                    'original_rows': len(original_data)
+                })
+                
+                # Save multi-timeframe dataset
+                success = workspace_manager.save_multi_timeframe_dataset(
+                    self.dataset_name.text(), 
+                    original_data, 
+                    timeframes, 
+                    metadata
+                )
+                
+                if success:
+                    # Also register in parent window's datasets for immediate use
+                    if hasattr(self.parent(), 'datasets'):
+                        self.parent().datasets[self.dataset_name.text()] = {
+                            'data': original_data,
+                            'metadata': metadata
+                        }
+                    
+                    QMessageBox.information(self, "Save Complete", 
+                                          f"Multi-timeframe dataset '{self.dataset_name.text()}' saved successfully!\n\n"
+                                          f"Timeframes created: {list(self.resampled_data.keys())}\n"
+                                          f"Original data: {len(original_data)} rows\n"
+                                          f"All datasets registered in workspace manager.")
+                else:
+                    QMessageBox.warning(self, "Error", "Failed to save multi-timeframe dataset.")
+            else:
+                # Fallback to old method if no workspace manager
+                saved_files = []
+                for tf_str, df in self.resampled_data.items():
+                    filename = f"{self.dataset_name.text()}_{tf_str}.csv"
+                    df.to_csv(filename)
+                    saved_files.append(f"{filename} ({len(df)} rows)")
+                    logger.info(f"Saved {filename} with {len(df)} rows.")
+                
+                # Also save original data if available
+                if original_data is not None:
+                    original_filename = f"{self.dataset_name.text()}_original.csv"
+                    original_data.to_csv(original_filename)
+                    saved_files.append(f"{original_filename} ({len(original_data)} rows)")
+                    logger.info(f"Saved original data: {original_filename} with {len(original_data)} rows.")
+                
+                files_text = "\n".join(saved_files)
+                QMessageBox.information(self, "Save Complete", 
+                                      f"Saved {len(saved_files)} files:\n\n{files_text}\n\n"
+                                      f"Note: Multi-timeframe functionality not available.")
+        
+        except Exception as e:
+            logger.error(f"Error saving dataset: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to save dataset: {e}")

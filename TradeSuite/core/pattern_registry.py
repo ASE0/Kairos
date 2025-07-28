@@ -1,19 +1,18 @@
-"""Pattern Registry System
-Automatically discovers and registers new patterns, strategies, filters, and gates
+"""
+Pattern Registry
+===============
+Central registry for all trading components including microstructure strategies
 """
 
-import os
-import importlib
 import inspect
-from typing import Dict, List, Any, Type, Optional
 from dataclasses import dataclass
-from pathlib import Path
-from core.data_structures import TimeRange
+from typing import Dict, List, Type, Any, Optional
+import importlib
 
 
-@dataclass
+@dataclass 
 class PatternInfo:
-    """Information about a registered pattern"""
+    """Information about a pattern"""
     name: str
     class_type: Type
     module: str
@@ -23,9 +22,9 @@ class PatternInfo:
 
 @dataclass
 class FilterInfo:
-    """Information about a registered filter"""
+    """Information about a filter"""
     name: str
-    class_type: Type
+    class_type: Optional[Type]
     module: str
     parameters: Dict[str, Any]
     description: str = ""
@@ -33,9 +32,9 @@ class FilterInfo:
 
 @dataclass
 class GateInfo:
-    """Information about a registered gate"""
+    """Information about a gate"""
     name: str
-    class_type: Type
+    class_type: Optional[Type]
     module: str
     parameters: Dict[str, Any]
     description: str = ""
@@ -43,9 +42,9 @@ class GateInfo:
 
 @dataclass
 class StrategyInfo:
-    """Information about a registered strategy"""
+    """Information about a strategy"""
     name: str
-    class_type: Type
+    class_type: Optional[Type]
     module: str
     parameters: Dict[str, Any]
     description: str = ""
@@ -106,58 +105,88 @@ class PatternRegistry:
         
         # Custom patterns from workspace
         self._discover_custom_patterns()
+        
+        # Microstructure strategies (patterns in the GUI context)
+        try:
+            from strategies.microstructure_strategies import (
+                OrderFlowMomentumStrategy, MicrostructureMeanReversionStrategy,
+                LiquidityVacuumBreakoutStrategy
+            )
+            
+            microstructure_patterns = [
+                (OrderFlowMomentumStrategy, 'order_flow_momentum'),
+                (MicrostructureMeanReversionStrategy, 'microstructure_mean_reversion'),
+                (LiquidityVacuumBreakoutStrategy, 'liquidity_vacuum_breakout')
+            ]
+            
+            for pattern_class, name in microstructure_patterns:
+                self._register_pattern(pattern_class, name, 'strategies.microstructure_strategies')
+        except ImportError as e:
+            print(f"Warning: Could not import microstructure strategies: {e}")
+    
+    def _discover_main_hub_patterns(self):
+        """Discover patterns from main hub"""
+        try:
+            # This would be populated by the main hub when patterns are loaded
+            pass
+        except Exception as e:
+            print(f"Warning: Could not discover main hub patterns: {e}")
+    
+    def _discover_custom_patterns(self):
+        """Discover custom patterns from workspace"""
+        try:
+            # This would scan the workspaces directory for custom patterns
+            pass
+        except Exception as e:
+            print(f"Warning: Could not discover custom patterns: {e}")
     
     def _discover_filters(self):
         """Discover all available filters"""
         filter_types = [
-            # Volume filters
-            ('volume', 'Volume Filter', {
+            # Basic filters
+            ('volume_filter', 'Volume Filter', {
                 'min_volume': 1000,
-                'volume_ratio': 1.5,
-                'vwap_distance': 0.01
+                'volume_ratio': 1.5
             }),
-            
-            # Time filters
-            ('time', 'Time Filter', {
+            ('time_filter', 'Time Filter', {
                 'start_time': '09:30',
-                'end_time': '16:00',
-                'session': 'regular',
-                'day_of_week': [1, 2, 3, 4, 5]
+                'end_time': '16:00'
             }),
-            
-            # Volatility filters
-            ('volatility', 'Volatility Filter', {
-                'min_atr': 0.01,
-                'max_atr': 0.05,
-                'atr_percentile': 50
+            ('volatility_filter', 'Volatility Filter', {
+                'min_atr_ratio': 0.01,
+                'max_atr_ratio': 0.05
             }),
-            
-            # Momentum filters
-            ('momentum', 'Momentum Filter', {
-                'min_momentum': 0.001,
-                'rsi_range': [30, 70],
-                'macd_signal': 'bullish'
+            ('momentum_filter', 'Momentum Filter', {
+                'momentum_threshold': 0.02,
+                'rsi_range': [30, 70]
             }),
-            
-            # Price filters
-            ('price', 'Price Filter', {
-                'above_ma': 20,
-                'below_ma': 50,
-                'support_resistance': 0.02
-            }),
-            
-            # Market regime filters
-            ('regime', 'Market Regime Filter', {
-                'trending': True,
-                'ranging': True,
-                'volatile': True
+            ('price_filter', 'Price Filter', {
+                'min_price': 1.0,
+                'max_price': 1000.0
             }),
             
             # Advanced filters
-            ('advanced', 'Advanced Filter', {
-                'fvg_fill': True,
-                'order_block': True,
-                'liquidity_grab': True
+            ('regime_filter', 'Regime Filter', {
+                'allowed_regimes': ['trending', 'ranging'],
+                'confidence_threshold': 0.7
+            }),
+            ('correlation_filter', 'Correlation Filter', {
+                'correlation_threshold': 0.7,
+                'lookback_period': 20
+            }),
+            
+            # Microstructure filters
+            ('tick_frequency_filter', 'Tick Frequency Filter', {
+                'max_ticks_per_second': 50,
+                'min_book_depth': 100
+            }),
+            ('spread_filter', 'Spread Filter', {
+                'max_spread_ticks': 2,
+                'normal_spread_multiple': 5
+            }),
+            ('order_flow_filter', 'Order Flow Filter', {
+                'min_cvd_threshold': 1000,
+                'large_trade_ratio': 0.35
             })
         ]
         
@@ -169,8 +198,7 @@ class PatternRegistry:
         gate_types = [
             # Basic gates
             ('location_gate', 'Location Gate', {
-                'fvg_tolerance': 0.01,
-                'sr_tolerance': 0.02
+                'fvg_tolerance': 0.01
             }),
             ('volatility_gate', 'Volatility Gate', {
                 'min_atr_ratio': 0.01,
@@ -190,10 +218,6 @@ class PatternRegistry:
                 'fvg_tolerance': 0.01,
                 'fill_threshold': 0.5
             }),
-            ('support_resistance_gate', 'Support/Resistance Gate', {
-                'sr_tolerance': 0.02,
-                'breakout_threshold': 0.01
-            }),
             ('momentum_gate', 'Momentum Gate', {
                 'momentum_threshold': 0.02,
                 'rsi_range': [30, 70]
@@ -209,6 +233,31 @@ class PatternRegistry:
             ('correlation_gate', 'Correlation Gate', {
                 'correlation_threshold': 0.7,
                 'lookback_period': 20
+            }),
+            # Order Block gate (docs-compliant)
+            ('order_block_gate', 'Order Block', {
+                'ob_impulse_threshold': 0.02,   # Minimum impulse move [0.01, 0.1]
+                'ob_lookback': 10,              # Lookback for impulse detection [5, 50]
+                'ob_gamma': 0.95,               # Exponential decay per bar [0.8, 0.99]
+                'ob_tau_bars': 50,              # Hard purge after tau bars [5, 200]
+                'ob_buffer_points': 0.1         # Buffer points [0.01, 1.0], user-tunable
+            }),
+            
+            # Microstructure gates
+            ('market_environment_gate', 'Market Environment Gate', {
+                'allowed_states': ['TRENDING', 'RANGING'],
+                'min_confidence': 0.7,
+                'tick_window': 5000
+            }),
+            ('news_time_gate', 'News Time Gate', {
+                'avoid_major_news': True,
+                'avoid_secondary_news': False,
+                'exit_before_seconds': 30
+            }),
+            ('tick_validation_gate', 'Tick Validation Gate', {
+                'max_spread_multiple': 5,
+                'min_book_depth': 100,
+                'max_stale_time_ms': 1000
             })
         ]
         
@@ -232,6 +281,35 @@ class PatternRegistry:
                 ('conditional_strategy', 'Conditional Strategy', {
                     'combination_logic': 'OR',
                     'min_actions_required': 1
+                }),
+                
+                # Microstructure strategies
+                ('order_flow_momentum', 'Order Flow Momentum (OFM)', {
+                    'cvd_period': 1000,
+                    'imbalance_threshold': 1500,
+                    'large_trade_size': 10,
+                    'absorption_ratio': 400,
+                    'trail_ticks': 3
+                }),
+                ('microstructure_mean_reversion', 'Microstructure Mean Reversion (MMR)', {
+                    'sweep_threshold': 75,
+                    'book_imbalance': 3.0,
+                    'quiet_period': 200,
+                    'reversion_percent': 0.6,
+                    'max_heat': 4
+                }),
+                ('liquidity_vacuum_breakout', 'Liquidity Vacuum Breakout (LVB)', {
+                    'consolidation_ticks': 500,
+                    'volume_reduction': 0.3,
+                    'range_ticks': 5,
+                    'breakout_volume': 100,
+                    'target_multiple': 2.5
+                }),
+                ('master_control_layer', 'Master Control Layer', {
+                    'max_ticks_per_second': 50,
+                    'min_book_depth': 100,
+                    'max_spread': 2,
+                    'account_value': 100000
                 })
             ]
             
@@ -240,278 +318,105 @@ class PatternRegistry:
         except ImportError as e:
             print(f"Warning: Could not import strategies: {e}")
     
-    def _discover_custom_patterns(self):
-        """Discover custom patterns from workspace"""
-        custom_patterns_dir = Path("workspaces/patterns")
-        if custom_patterns_dir.exists():
-            for pattern_file in custom_patterns_dir.glob("*.py"):
-                try:
-                    # Import the custom pattern module
-                    module_name = f"workspaces.patterns.{pattern_file.stem}"
-                    module = importlib.import_module(module_name)
+    def get_pattern_names(self) -> List[str]:
+        """Get list of all pattern names"""
+        return list(self.patterns.keys())
+    
+    def get_filter_types(self) -> List[str]:
+        """Get list of all filter types"""
+        return list(self.filters.keys())
+    
+    def get_gate_types(self) -> List[str]:
+        """Get list of all gate types"""
+        return list(self.gates.keys())
+    
+    def get_strategy_types(self) -> List[str]:
+        """Get list of all strategy types"""
+        return list(self.strategies.keys())
+    
+    def get_pattern_info(self, name: str) -> Optional[PatternInfo]:
+        """Get pattern information by name"""
+        return self.patterns.get(name)
+    
+    def get_filter_info(self, filter_type: str) -> Optional[FilterInfo]:
+        """Get filter information by type"""
+        return self.filters.get(filter_type)
+    
+    def get_gate_info(self, gate_type: str) -> Optional[GateInfo]:
+        """Get gate information by type"""
+        return self.gates.get(gate_type)
+    
+    def get_strategy_info(self, strategy_type: str) -> Optional[StrategyInfo]:
+        """Get strategy information by type"""
+        return self.strategies.get(strategy_type)
+    
+    def create_pattern(self, name: str, **kwargs):
+        """Create a pattern instance by name"""
+        pattern_info = self.get_pattern_info(name)
+        if pattern_info and pattern_info.class_type:
+            return pattern_info.class_type(**kwargs)
+        return None
+    
+    def create_strategy(self, strategy_type: str, **kwargs):
+        """Create a strategy instance by type"""
+        strategy_info = self.get_strategy_info(strategy_type)
+        if strategy_info and strategy_info.class_type:
+            return strategy_info.class_type(**kwargs)
+        return None
+    
+    def get_pattern_parameters(self, name: str) -> Dict[str, Any]:
+        """Get default parameters for a pattern"""
+        pattern_info = self.get_pattern_info(name)
+        return pattern_info.parameters if pattern_info else {}
+    
+    def get_filter_parameters(self, filter_type: str) -> Dict[str, Any]:
+        """Get default parameters for a filter"""
+        filter_info = self.get_filter_info(filter_type)
+        return filter_info.parameters if filter_info else {}
+    
+    def get_gate_parameters(self, gate_type: str) -> Dict[str, Any]:
+        """Get default parameters for a gate"""
+        gate_info = self.get_gate_info(gate_type)
+        return gate_info.parameters if gate_info else {}
+    
+    def get_strategy_parameters(self, strategy_type: str) -> Dict[str, Any]:
+        """Get default parameters for a strategy"""
+        strategy_info = self.get_strategy_info(strategy_type)
+        return strategy_info.parameters if strategy_info else {}
+    
+    def _extract_class_parameters(self, class_type: Type) -> Dict[str, Any]:
+        """Extract parameters from class constructor"""
+        try:
+            signature = inspect.signature(class_type.__init__)
+            parameters = {}
+            
+            for name, param in signature.parameters.items():
+                if name == 'self':
+                    continue
                     
-                    # Look for pattern classes in the module
-                    for name, obj in inspect.getmembers(module):
-                        if inspect.isclass(obj) and hasattr(obj, 'get_strength'):
-                            # This looks like a pattern class
-                            self._register_pattern(obj, name.lower(), module_name)
-                except Exception as e:
-                    print(f"Warning: Could not load custom pattern {pattern_file}: {e}")
-    
-    def _discover_main_hub_patterns(self):
-        """Discover patterns from main hub if available"""
-        try:
-            # Import the main hub patterns directly
-            from gui.main_hub import TradingStrategyHub
+                # Get default value if available
+                if param.default != inspect.Parameter.empty:
+                    parameters[name] = param.default
+                else:
+                    # Try to infer type and provide reasonable default
+                    if param.annotation != inspect.Parameter.empty:
+                        if param.annotation == int:
+                            parameters[name] = 0
+                        elif param.annotation == float:
+                            parameters[name] = 0.0
+                        elif param.annotation == str:
+                            parameters[name] = ""
+                        elif param.annotation == bool:
+                            parameters[name] = False
+                        else:
+                            parameters[name] = None
+                    else:
+                        parameters[name] = None
             
-            # Create a temporary main hub instance to get the patterns
-            # We need to create a QApplication first
-            import sys
-            from PyQt6.QtWidgets import QApplication
-            
-            # Create QApplication if it doesn't exist
-            app = QApplication.instance()
-            if app is None:
-                app = QApplication(sys.argv)
-            
-            # Create main hub and load defaults
-            main_hub = TradingStrategyHub()
-            
-            # Register all patterns from main hub
-            for pattern_name, pattern_obj in main_hub.patterns.items():
-                if pattern_name not in self.patterns:  # Avoid duplicates
-                    self._register_main_hub_pattern(pattern_name, pattern_obj)
-            
-            print(f"Discovered {len(main_hub.patterns)} patterns from main hub")
-            
-            # Clean up
-            main_hub.close()
-            
+            return parameters
         except Exception as e:
-            print(f"Warning: Could not discover main hub patterns: {e}")
-            # Fallback: try to discover patterns without QApplication
-            self._discover_main_hub_patterns_fallback()
-    
-    def _discover_main_hub_patterns_fallback(self):
-        """Fallback method to discover main hub patterns without QApplication"""
-        try:
-            # Import the pattern classes directly
-            from patterns.candlestick_patterns import (
-                EngulfingPattern, IIBarsPattern, 
-                DoubleWickPattern, CustomPattern
-            )
-            from core.data_structures import TimeRange, OHLCRatio
-            
-            # Create the same patterns as in main hub
-            main_hub_patterns = {
-                # Basic patterns
-                'ii_bars': IIBarsPattern(timeframes=[TimeRange(5, 'm')]),
-                'double_wick': DoubleWickPattern(timeframes=[TimeRange(15, 'm')]),
-                'engulfing_bullish': EngulfingPattern(timeframes=[TimeRange(1, 'h')], pattern_type='bullish'),
-                'engulfing_bearish': EngulfingPattern(timeframes=[TimeRange(1, 'h')], pattern_type='bearish'),
-                
-                # Advanced patterns (simplified versions)
-                'doji_standard': CustomPattern(
-                    name="Doji_Standard",
-                    timeframes=[TimeRange(15, 'm')],
-                    ohlc_ratios=[OHLCRatio(body_ratio=0.1, upper_wick_ratio=0.4, lower_wick_ratio=0.4)]
-                ),
-                'strong_body': CustomPattern(
-                    name="Strong_Body",
-                    timeframes=[TimeRange(1, 'h')],
-                    ohlc_ratios=[OHLCRatio(body_ratio=0.7, upper_wick_ratio=0.15, lower_wick_ratio=0.15)]
-                ),
-                'weak_body': CustomPattern(
-                    name="Weak_Body",
-                    timeframes=[TimeRange(15, 'm')],
-                    ohlc_ratios=[OHLCRatio(body_ratio=0.2, upper_wick_ratio=0.4, lower_wick_ratio=0.4)]
-                ),
-                'momentum_breakout': CustomPattern(
-                    name="Momentum_Breakout",
-                    timeframes=[TimeRange(5, 'm')],
-                    ohlc_ratios=[OHLCRatio(body_ratio=0.6, upper_wick_ratio=0.2, lower_wick_ratio=0.2)]
-                ),
-                'momentum_reversal': CustomPattern(
-                    name="Momentum_Reversal",
-                    timeframes=[TimeRange(1, 'h')],
-                    ohlc_ratios=[OHLCRatio(body_ratio=0.5, upper_wick_ratio=0.25, lower_wick_ratio=0.25)]
-                ),
-                'high_volatility': CustomPattern(
-                    name="High_Volatility",
-                    timeframes=[TimeRange(5, 'm')],
-                    ohlc_ratios=[OHLCRatio(body_ratio=0.4, upper_wick_ratio=0.3, lower_wick_ratio=0.3)]
-                ),
-                'low_volatility': CustomPattern(
-                    name="Low_Volatility",
-                    timeframes=[TimeRange(1, 'h')],
-                    ohlc_ratios=[OHLCRatio(body_ratio=0.3, upper_wick_ratio=0.35, lower_wick_ratio=0.35)]
-                ),
-                'support_bounce': CustomPattern(
-                    name="Support_Bounce",
-                    timeframes=[TimeRange(15, 'm')],
-                    ohlc_ratios=[OHLCRatio(body_ratio=0.5, upper_wick_ratio=0.2, lower_wick_ratio=0.3)]
-                ),
-                'resistance_rejection': CustomPattern(
-                    name="Resistance_Rejection",
-                    timeframes=[TimeRange(15, 'm')],
-                    ohlc_ratios=[OHLCRatio(body_ratio=0.5, upper_wick_ratio=0.3, lower_wick_ratio=0.2)]
-                ),
-                'three_white_soldiers': CustomPattern(
-                    name="Three_White_Soldiers",
-                    timeframes=[TimeRange(1, 'h')],
-                    ohlc_ratios=[
-                        OHLCRatio(body_ratio=0.6, upper_wick_ratio=0.2, lower_wick_ratio=0.2),
-                        OHLCRatio(body_ratio=0.6, upper_wick_ratio=0.2, lower_wick_ratio=0.2),
-                        OHLCRatio(body_ratio=0.6, upper_wick_ratio=0.2, lower_wick_ratio=0.2)
-                    ],
-                    required_bars=3
-                ),
-                'three_black_crows': CustomPattern(
-                    name="Three_Black_Crows",
-                    timeframes=[TimeRange(1, 'h')],
-                    ohlc_ratios=[
-                        OHLCRatio(body_ratio=0.6, upper_wick_ratio=0.2, lower_wick_ratio=0.2),
-                        OHLCRatio(body_ratio=0.6, upper_wick_ratio=0.2, lower_wick_ratio=0.2),
-                        OHLCRatio(body_ratio=0.6, upper_wick_ratio=0.2, lower_wick_ratio=0.2)
-                    ],
-                    required_bars=3
-                ),
-                'four_price_doji': CustomPattern(
-                    name="Four_Price_Doji",
-                    timeframes=[TimeRange(30, 'm')],
-                    ohlc_ratios=[OHLCRatio(body_ratio=0.01, upper_wick_ratio=0.495, lower_wick_ratio=0.495)]
-                ),
-                'dragonfly_doji': CustomPattern(
-                    name="Dragonfly_Doji",
-                    timeframes=[TimeRange(15, 'm')],
-                    ohlc_ratios=[OHLCRatio(body_ratio=0.1, upper_wick_ratio=0.0, lower_wick_ratio=0.8)]
-                ),
-                'gravestone_doji': CustomPattern(
-                    name="Gravestone_Doji",
-                    timeframes=[TimeRange(15, 'm')],
-                    ohlc_ratios=[OHLCRatio(body_ratio=0.1, upper_wick_ratio=0.8, lower_wick_ratio=0.0)]
-                ),
-                'volatility_expansion': CustomPattern(
-                    name="Volatility_Expansion",
-                    timeframes=[TimeRange(5, 'm')],
-                    ohlc_ratios=[OHLCRatio(body_ratio=0.4, upper_wick_ratio=0.3, lower_wick_ratio=0.3)]
-                ),
-                'volatility_contraction': CustomPattern(
-                    name="Volatility_Contraction",
-                    timeframes=[TimeRange(1, 'h')],
-                    ohlc_ratios=[OHLCRatio(body_ratio=0.2, upper_wick_ratio=0.4, lower_wick_ratio=0.4)]
-                ),
-                'trend_continuation': CustomPattern(
-                    name="Trend_Continuation",
-                    timeframes=[TimeRange(30, 'm')],
-                    ohlc_ratios=[OHLCRatio(body_ratio=0.6, upper_wick_ratio=0.2, lower_wick_ratio=0.2)]
-                ),
-                'trend_reversal': CustomPattern(
-                    name="Trend_Reversal",
-                    timeframes=[TimeRange(1, 'h')],
-                    ohlc_ratios=[OHLCRatio(body_ratio=0.5, upper_wick_ratio=0.25, lower_wick_ratio=0.25)]
-                ),
-                'gap_up': CustomPattern(
-                    name="Gap_Up",
-                    timeframes=[TimeRange(15, 'm')],
-                    ohlc_ratios=[OHLCRatio(body_ratio=0.7, upper_wick_ratio=0.15, lower_wick_ratio=0.15)]
-                ),
-                'gap_down': CustomPattern(
-                    name="Gap_Down",
-                    timeframes=[TimeRange(15, 'm')],
-                    ohlc_ratios=[OHLCRatio(body_ratio=0.7, upper_wick_ratio=0.15, lower_wick_ratio=0.15)]
-                ),
-                'consolidation': CustomPattern(
-                    name="Consolidation",
-                    timeframes=[TimeRange(1, 'h')],
-                    ohlc_ratios=[OHLCRatio(body_ratio=0.3, upper_wick_ratio=0.35, lower_wick_ratio=0.35)]
-                ),
-                'breakout': CustomPattern(
-                    name="Breakout",
-                    timeframes=[TimeRange(30, 'm')],
-                    ohlc_ratios=[OHLCRatio(body_ratio=0.6, upper_wick_ratio=0.2, lower_wick_ratio=0.2)]
-                ),
-                'exhaustion': CustomPattern(
-                    name="Exhaustion",
-                    timeframes=[TimeRange(1, 'h')],
-                    ohlc_ratios=[OHLCRatio(body_ratio=0.4, upper_wick_ratio=0.3, lower_wick_ratio=0.3)]
-                ),
-                'accumulation': CustomPattern(
-                    name="Accumulation",
-                    timeframes=[TimeRange(4, 'h')],
-                    ohlc_ratios=[OHLCRatio(body_ratio=0.4, upper_wick_ratio=0.3, lower_wick_ratio=0.3)]
-                ),
-                'distribution': CustomPattern(
-                    name="Distribution",
-                    timeframes=[TimeRange(4, 'h')],
-                    ohlc_ratios=[OHLCRatio(body_ratio=0.4, upper_wick_ratio=0.3, lower_wick_ratio=0.3)]
-                )
-            }
-            
-            # Register all patterns
-            for pattern_name, pattern_obj in main_hub_patterns.items():
-                if pattern_name not in self.patterns:  # Avoid duplicates
-                    self._register_main_hub_pattern(pattern_name, pattern_obj)
-            
-            print(f"Discovered {len(main_hub_patterns)} patterns from main hub fallback")
-            
-        except Exception as e:
-            print(f"Warning: Could not discover main hub patterns (fallback): {e}")
-    
-    def _register_main_hub_pattern(self, pattern_name: str, pattern_obj):
-        """Register a pattern from the main hub"""
-        self.patterns[pattern_name] = PatternInfo(
-            name=pattern_name,
-            class_type=type(pattern_obj),
-            module='gui.main_hub',
-            parameters=self._extract_pattern_parameters(pattern_obj),
-            description=f"Main hub pattern: {pattern_name}"
-        )
-    
-    def _extract_pattern_parameters(self, pattern_obj) -> Dict[str, Any]:
-        """Extract parameters from a pattern object"""
-        params = {}
-        
-        # Extract common pattern attributes
-        if hasattr(pattern_obj, 'timeframes'):
-            params['timeframes'] = str(pattern_obj.timeframes)
-        
-        if hasattr(pattern_obj, 'name'):
-            params['name'] = pattern_obj.name
-        
-        if hasattr(pattern_obj, 'required_bars'):
-            params['required_bars'] = pattern_obj.required_bars
-        
-        # Extract custom pattern parameters
-        if hasattr(pattern_obj, 'ohlc_ratios'):
-            params['ohlc_ratios'] = str(pattern_obj.ohlc_ratios)
-        
-        if hasattr(pattern_obj, 'custom_formula'):
-            params['custom_formula'] = pattern_obj.custom_formula
-        
-        if hasattr(pattern_obj, 'advanced_features'):
-            params['advanced_features'] = str(pattern_obj.advanced_features)
-        
-        # Extract specific pattern parameters
-        if hasattr(pattern_obj, 'min_bars'):
-            params['min_bars'] = pattern_obj.min_bars
-        
-        if hasattr(pattern_obj, 'min_wick_ratio'):
-            params['min_wick_ratio'] = pattern_obj.min_wick_ratio
-        
-        if hasattr(pattern_obj, 'max_body_ratio'):
-            params['max_body_ratio'] = pattern_obj.max_body_ratio
-        
-        if hasattr(pattern_obj, 'min_lower_wick_ratio'):
-            params['min_lower_wick_ratio'] = pattern_obj.min_lower_wick_ratio
-        
-        if hasattr(pattern_obj, 'max_upper_wick_ratio'):
-            params['max_upper_wick_ratio'] = pattern_obj.max_upper_wick_ratio
-        
-        if hasattr(pattern_obj, 'pattern_type'):
-            params['pattern_type'] = pattern_obj.pattern_type
-        
-        return params
+            print(f"Warning: Could not extract parameters for {class_type}: {e}")
+            return {}
     
     def _register_pattern(self, pattern_class: Type, name: str, module: str):
         """Register a pattern"""
@@ -556,95 +461,8 @@ class PatternRegistry:
             description=f"Strategy: {name}"
         )
     
-    def _extract_class_parameters(self, cls: Type) -> Dict[str, Any]:
-        """Extract parameters from a class constructor"""
-        try:
-            sig = inspect.signature(cls.__init__)
-            params = {}
-            for name, param in sig.parameters.items():
-                if name != 'self' and param.default != inspect.Parameter.empty:
-                    params[name] = param.default
-            return params
-        except:
-            return {}
-    
-    def get_pattern_names(self) -> List[str]:
-        """Get all registered pattern names"""
-        return list(self.patterns.keys())
-    
-    def get_filter_types(self) -> List[str]:
-        """Get all registered filter types"""
-        return list(self.filters.keys())
-    
-    def get_gate_types(self) -> List[str]:
-        """Get all registered gate types"""
-        return list(self.gates.keys())
-    
-    def get_strategy_types(self) -> List[str]:
-        """Get all registered strategy types"""
-        return list(self.strategies.keys())
-    
-    def get_pattern_info(self, name: str) -> Optional[PatternInfo]:
-        """Get information about a pattern"""
-        return self.patterns.get(name)
-    
-    def get_filter_info(self, filter_type: str) -> Optional[FilterInfo]:
-        """Get information about a filter"""
-        return self.filters.get(filter_type)
-    
-    def get_gate_info(self, gate_type: str) -> Optional[GateInfo]:
-        """Get information about a gate"""
-        return self.gates.get(gate_type)
-    
-    def get_strategy_info(self, strategy_type: str) -> Optional[StrategyInfo]:
-        """Get information about a registered strategy"""
-        return self.strategies.get(strategy_type)
-    
-    def create_pattern(self, pattern_name: str, **kwargs) -> Any:
-        """Create a pattern instance with parameters"""
-        if pattern_name not in self.patterns:
-            # If pattern is not in the registry, create a default CustomPattern
-            from patterns.candlestick_patterns import CustomPattern
-            timeframes = kwargs.get('timeframes', [TimeRange(15, 'm')])
-            return CustomPattern(name=pattern_name, timeframes=timeframes, ohlc_ratios=[])
-        
-        pattern_info = self.patterns[pattern_name]
-        
-        # Handle timeframes parameter
-        timeframes = kwargs.pop('timeframes', [TimeRange(15, 'm')])
-        if isinstance(timeframes, list) and timeframes and isinstance(timeframes[0], str):
-            # Convert string timeframes to TimeRange objects
-            tf_objects = []
-            for tf_str in timeframes:
-                import re
-                match = re.match(r'(\d+)([smhd])', tf_str)
-                if match:
-                    value = int(match.group(1))
-                    unit = match.group(2)
-                    tf_objects.append(TimeRange(value, unit))
-                else:
-                    tf_objects.append(TimeRange(15, 'm'))
-            timeframes = tf_objects
-        
-        try:
-            if pattern_info.class_type:
-                # For specific registered classes, instantiate them
-                if pattern_info.class_type.__name__ == 'CustomPattern':
-                    return pattern_info.class_type(name=pattern_name, timeframes=timeframes, ohlc_ratios=kwargs.get('ohlc_ratios', []))
-                else:
-                    return pattern_info.class_type(timeframes=timeframes, **kwargs)
-            else:
-                # Fallback for patterns defined only by module/type
-                from patterns.candlestick_patterns import CustomPattern
-                return CustomPattern(name=pattern_name, timeframes=timeframes, ohlc_ratios=[])
-                
-        except Exception as e:
-            print(f"Error creating pattern '{pattern_name}': {e}")
-            from patterns.candlestick_patterns import CustomPattern
-            return CustomPattern(name=pattern_name, timeframes=[TimeRange(15, 'm')], ohlc_ratios=[])
-    
-    def refresh(self):
-        """Re-discover all components"""
+    def refresh_components(self):
+        """Refresh component discovery"""
         self.patterns.clear()
         self.filters.clear()
         self.gates.clear()

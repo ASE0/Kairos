@@ -4,6 +4,8 @@ gui/risk_manager_window.py
 Window for creating risk management strategies
 """
 
+import logging
+logger = logging.getLogger(__name__)
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
@@ -179,7 +181,7 @@ class RiskManagerWindow(QMainWindow):
         # Stop method
         self.stop_method = QComboBox()
         self.stop_method.addItems(['Fixed Percentage', 'ATR Based', 'Pattern Based', 
-                                  'Support/Resistance', 'Trailing Stop'])
+                                  'Trailing Stop'])
         self.stop_method.currentTextChanged.connect(self._on_stop_method_changed)
         layout.addRow("Stop Method:", self.stop_method)
         
@@ -190,7 +192,8 @@ class RiskManagerWindow(QMainWindow):
         fixed_widget = QWidget()
         fixed_layout = QFormLayout()
         self.stop_loss_pct = QDoubleSpinBox()
-        self.stop_loss_pct.setRange(0.1, 10.0)
+        self.stop_loss_pct.setMinimum(-1e9)
+        self.stop_loss_pct.setMaximum(1e9)
         self.stop_loss_pct.setValue(2.0)
         self.stop_loss_pct.setSingleStep(0.1)
         self.stop_loss_pct.setSuffix("%")
@@ -202,11 +205,13 @@ class RiskManagerWindow(QMainWindow):
         atr_widget = QWidget()
         atr_layout = QFormLayout()
         self.atr_period = QSpinBox()
-        self.atr_period.setRange(5, 50)
+        self.atr_period.setMinimum(-1000000000)
+        self.atr_period.setMaximum(1000000000)
         self.atr_period.setValue(14)
         atr_layout.addRow("ATR Period:", self.atr_period)
         self.atr_multiplier = QDoubleSpinBox()
-        self.atr_multiplier.setRange(0.5, 5.0)
+        self.atr_multiplier.setMinimum(-1e9)
+        self.atr_multiplier.setMaximum(1e9)
         self.atr_multiplier.setValue(2.0)
         self.atr_multiplier.setSingleStep(0.1)
         atr_layout.addRow("ATR Multiplier:", self.atr_multiplier)
@@ -217,7 +222,8 @@ class RiskManagerWindow(QMainWindow):
         pattern_widget = QWidget()
         pattern_layout = QFormLayout()
         self.pattern_buffer = QDoubleSpinBox()
-        self.pattern_buffer.setRange(0, 0.01)
+        self.pattern_buffer.setMinimum(-1e9)
+        self.pattern_buffer.setMaximum(1e9)
         self.pattern_buffer.setValue(0.001)
         self.pattern_buffer.setSingleStep(0.0001)
         self.pattern_buffer.setDecimals(4)
@@ -225,32 +231,18 @@ class RiskManagerWindow(QMainWindow):
         pattern_widget.setLayout(pattern_layout)
         self.stop_settings_stack.addWidget(pattern_widget)
         
-        # Support/Resistance
-        sr_widget = QWidget()
-        sr_layout = QFormLayout()
-        self.sr_lookback = QSpinBox()
-        self.sr_lookback.setRange(10, 200)
-        self.sr_lookback.setValue(50)
-        sr_layout.addRow("Lookback Bars:", self.sr_lookback)
-        self.sr_buffer = QDoubleSpinBox()
-        self.sr_buffer.setRange(0, 0.01)
-        self.sr_buffer.setValue(0.001)
-        self.sr_buffer.setSingleStep(0.0001)
-        self.sr_buffer.setDecimals(4)
-        sr_layout.addRow("Buffer:", self.sr_buffer)
-        sr_widget.setLayout(sr_layout)
-        self.stop_settings_stack.addWidget(sr_widget)
-        
         # Trailing stop
         trail_widget = QWidget()
         trail_layout = QFormLayout()
         self.trail_activation = QDoubleSpinBox()
-        self.trail_activation.setRange(0.5, 5.0)
+        self.trail_activation.setMinimum(-1e9)
+        self.trail_activation.setMaximum(1e9)
         self.trail_activation.setValue(1.5)
         self.trail_activation.setSingleStep(0.1)
         trail_layout.addRow("Activation (R):", self.trail_activation)
         self.trail_distance = QDoubleSpinBox()
-        self.trail_distance.setRange(0.1, 5.0)
+        self.trail_distance.setMinimum(-1e9)
+        self.trail_distance.setMaximum(1e9)
         self.trail_distance.setValue(1.0)
         self.trail_distance.setSingleStep(0.1)
         self.trail_distance.setSuffix("%")
@@ -270,7 +262,8 @@ class RiskManagerWindow(QMainWindow):
         time_layout = QHBoxLayout(self.time_stop_widget)
         time_layout.addWidget(QLabel("Exit after:"))
         self.time_stop_bars = QSpinBox()
-        self.time_stop_bars.setRange(1, 100)
+        self.time_stop_bars.setMinimum(-1000000000)
+        self.time_stop_bars.setMaximum(1000000000)
         self.time_stop_bars.setValue(20)
         time_layout.addWidget(self.time_stop_bars)
         time_layout.addWidget(QLabel("bars"))
@@ -302,7 +295,8 @@ class RiskManagerWindow(QMainWindow):
         rr_widget = QWidget()
         rr_layout = QFormLayout()
         self.risk_reward_ratio = QDoubleSpinBox()
-        self.risk_reward_ratio.setRange(0.5, 10.0)
+        self.risk_reward_ratio.setMinimum(-1e9)
+        self.risk_reward_ratio.setMaximum(1e9)
         self.risk_reward_ratio.setValue(2.0)
         self.risk_reward_ratio.setSingleStep(0.1)
         rr_layout.addRow("Risk/Reward Ratio:", self.risk_reward_ratio)
@@ -313,7 +307,8 @@ class RiskManagerWindow(QMainWindow):
         atr_profit_widget = QWidget()
         atr_profit_layout = QFormLayout()
         self.profit_atr_multiple = QDoubleSpinBox()
-        self.profit_atr_multiple.setRange(1.0, 10.0)
+        self.profit_atr_multiple.setMinimum(-1e9)
+        self.profit_atr_multiple.setMaximum(1e9)
         self.profit_atr_multiple.setValue(3.0)
         self.profit_atr_multiple.setSingleStep(0.5)
         atr_profit_layout.addRow("ATR Multiple:", self.profit_atr_multiple)
@@ -324,7 +319,8 @@ class RiskManagerWindow(QMainWindow):
         resistance_widget = QWidget()
         resistance_layout = QFormLayout()
         self.resistance_lookback = QSpinBox()
-        self.resistance_lookback.setRange(10, 200)
+        self.resistance_lookback.setMinimum(-1000000000)
+        self.resistance_lookback.setMaximum(1000000000)
         self.resistance_lookback.setValue(50)
         resistance_layout.addRow("Lookback Bars:", self.resistance_lookback)
         resistance_widget.setLayout(resistance_layout)
@@ -334,12 +330,14 @@ class RiskManagerWindow(QMainWindow):
         trail_profit_widget = QWidget()
         trail_profit_layout = QFormLayout()
         self.profit_trail_trigger = QDoubleSpinBox()
-        self.profit_trail_trigger.setRange(0.5, 5.0)
+        self.profit_trail_trigger.setMinimum(-1e9)
+        self.profit_trail_trigger.setMaximum(1e9)
         self.profit_trail_trigger.setValue(1.0)
         self.profit_trail_trigger.setSingleStep(0.1)
         trail_profit_layout.addRow("Trigger (R):", self.profit_trail_trigger)
         self.profit_trail_distance = QDoubleSpinBox()
-        self.profit_trail_distance.setRange(0.1, 2.0)
+        self.profit_trail_distance.setMinimum(-1e9)
+        self.profit_trail_distance.setMaximum(1e9)
         self.profit_trail_distance.setValue(0.5)
         self.profit_trail_distance.setSingleStep(0.1)
         self.profit_trail_distance.setSuffix("%")
@@ -359,13 +357,15 @@ class RiskManagerWindow(QMainWindow):
         partial_layout = QFormLayout(self.partial_widget)
         
         self.partial_1_pct = QSpinBox()
-        self.partial_1_pct.setRange(10, 90)
+        self.partial_1_pct.setMinimum(-1000000000)
+        self.partial_1_pct.setMaximum(1000000000)
         self.partial_1_pct.setValue(50)
         self.partial_1_pct.setSuffix("%")
         partial_layout.addRow("First partial %:", self.partial_1_pct)
         
         self.partial_1_target = QDoubleSpinBox()
-        self.partial_1_target.setRange(0.5, 5.0)
+        self.partial_1_target.setMinimum(-1e9)
+        self.partial_1_target.setMaximum(1e9)
         self.partial_1_target.setValue(1.0)
         self.partial_1_target.setSingleStep(0.1)
         partial_layout.addRow("At R multiple:", self.partial_1_target)
@@ -397,7 +397,8 @@ class RiskManagerWindow(QMainWindow):
         risk_widget = QWidget()
         risk_layout = QFormLayout()
         self.risk_per_trade = QDoubleSpinBox()
-        self.risk_per_trade.setRange(0.1, 5.0)
+        self.risk_per_trade.setMinimum(-1e9)
+        self.risk_per_trade.setMaximum(1e9)
         self.risk_per_trade.setValue(1.0)
         self.risk_per_trade.setSingleStep(0.1)
         self.risk_per_trade.setSuffix("%")
@@ -409,7 +410,8 @@ class RiskManagerWindow(QMainWindow):
         dollar_widget = QWidget()
         dollar_layout = QFormLayout()
         self.fixed_dollar = QSpinBox()
-        self.fixed_dollar.setRange(100, 100000)
+        self.fixed_dollar.setMinimum(-1000000000)
+        self.fixed_dollar.setMaximum(1000000000)
         self.fixed_dollar.setValue(1000)
         self.fixed_dollar.setSingleStep(100)
         self.fixed_dollar.setPrefix("$")
@@ -421,7 +423,8 @@ class RiskManagerWindow(QMainWindow):
         kelly_widget = QWidget()
         kelly_layout = QFormLayout()
         self.kelly_fraction = QDoubleSpinBox()
-        self.kelly_fraction.setRange(0.1, 1.0)
+        self.kelly_fraction.setMinimum(-1e9)
+        self.kelly_fraction.setMaximum(1e9)
         self.kelly_fraction.setValue(0.25)
         self.kelly_fraction.setSingleStep(0.05)
         kelly_layout.addRow("Kelly Fraction:", self.kelly_fraction)
@@ -432,7 +435,8 @@ class RiskManagerWindow(QMainWindow):
         vol_widget = QWidget()
         vol_layout = QFormLayout()
         self.vol_target = QDoubleSpinBox()
-        self.vol_target.setRange(1.0, 50.0)
+        self.vol_target.setMinimum(-1e9)
+        self.vol_target.setMaximum(1e9)
         self.vol_target.setValue(10.0)
         self.vol_target.setSingleStep(1.0)
         self.vol_target.setSuffix("%")
@@ -444,7 +448,8 @@ class RiskManagerWindow(QMainWindow):
         equal_widget = QWidget()
         equal_layout = QFormLayout()
         self.max_positions = QSpinBox()
-        self.max_positions.setRange(1, 20)
+        self.max_positions.setMinimum(-1000000000)
+        self.max_positions.setMaximum(1000000000)
         self.max_positions.setValue(5)
         equal_layout.addRow("Max Positions:", self.max_positions)
         equal_widget.setLayout(equal_layout)
@@ -458,7 +463,8 @@ class RiskManagerWindow(QMainWindow):
         max_pos_layout = QHBoxLayout()
         max_pos_layout.addWidget(QLabel("Max position size:"))
         self.max_position_pct = QDoubleSpinBox()
-        self.max_position_pct.setRange(1.0, 100.0)
+        self.max_position_pct.setMinimum(-1e9)
+        self.max_position_pct.setMaximum(1e9)
         self.max_position_pct.setValue(10.0)
         self.max_position_pct.setSingleStep(1.0)
         self.max_position_pct.setSuffix("% of portfolio")
@@ -505,8 +511,7 @@ class RiskManagerWindow(QMainWindow):
             'Fixed Percentage': 0,
             'ATR Based': 1,
             'Pattern Based': 2,
-            'Support/Resistance': 3,
-            'Trailing Stop': 4
+            'Trailing Stop': 3
         }
         self.stop_settings_stack.setCurrentIndex(index_map.get(method, 0))
         
@@ -576,10 +581,12 @@ class RiskManagerWindow(QMainWindow):
         
     def _save_strategy(self):
         """Save the risk strategy"""
-        name = self.strategy_name.text()
+        name = self.strategy_name.text().strip()
         if not name:
             QMessageBox.warning(self, "Warning", "Please enter a strategy name")
             return
+            
+        logger.info(f"[DEBUG] Creating risk strategy with name: '{name}'")
             
         # Get exit patterns
         exit_patterns = []
@@ -601,6 +608,8 @@ class RiskManagerWindow(QMainWindow):
             exit_patterns=exit_patterns
         )
         
+        logger.info(f"[DEBUG] Created strategy with name: '{strategy.name}', ID: '{strategy.id}'")
+        
         # Emit signal
         self.risk_strategy_created.emit(strategy)
         
@@ -613,7 +622,6 @@ class RiskManagerWindow(QMainWindow):
             'Fixed Percentage': 'fixed',
             'ATR Based': 'atr',
             'Pattern Based': 'pattern',
-            'Support/Resistance': 'support',
             'Trailing Stop': 'trailing'
         }
         return method_map.get(self.stop_method.currentText(), 'fixed')

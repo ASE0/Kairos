@@ -11,12 +11,48 @@ import pandas as pd
 import numpy as np
 from typing import Dict, List, Optional
 from datetime import datetime
+from copy import deepcopy
 
 from core.data_structures import BaseStrategy, ProbabilityMetrics
 from strategies.strategy_builders import Action, PatternStrategy, StrategyFactory, BacktestEngine
 from patterns.candlestick_patterns import CandlestickPattern
 from core.pattern_registry import registry
 
+DEFAULT_LOCATION_PARAMS = {
+    # Candlestick parameters
+    "sigma_b": 0.05,      # Body sensitivity [0.01, 0.1]
+    "sigma_w": 0.10,      # Wick symmetry [0.05, 0.2]
+    
+    # Impulse parameters
+    "gamma": 2.0,         # Range ratio exponent [1.0, 3.0]
+    "delta": 1.5,         # Wick-to-body exponent [0.5, 2.0]
+    "epsilon": 1e-4,      # Small constant
+    
+    # Location parameters
+    "beta1": 0.7,         # Base weight [0.6, 0.8]
+    "beta2": 0.3,         # Comb weight [0.2, 0.4]
+    "N": 3,               # Peak count [1, 10]
+    "sigma": 0.1,         # Peak width [0.01, 0.5]
+    "lambda_skew": 0.0,   # Skew parameter [-2, 2]
+    
+    # Momentum parameters
+    "kappa_m": 0.5,       # Momentum factor [0, 2]
+    "phi": 0.2,           # Expansion factor [0, 0.5]
+    
+    # Volatility parameters
+    "kappa_v": 0.5,       # Volatility factor [0.1, 2.0]
+    
+    # Execution parameters
+    "gate_threshold": 0.7,  # Execution threshold [50, 100]
+    "lookback": 100,        # Lookback period
+    
+    # Legacy parameters (kept for compatibility)
+    "sr_window": 20, "sr_threshold": 0.015, "lambda_skew": 0.0,
+    "gamma_z": 1.0, "delta_y": 0.0, "omega_mem": 1.0,
+    "kernel_xi": 0.5, "kernel_alpha": 2.0, "comb_N": 3,
+    "comb_beta1": 0.4, "comb_beta2": 0.6, "impulse_gamma": 2.0,
+    "impulse_delta": 1.0, "gate_threshold": 0.4,
+}
 
 class StrategyBuilderWindow(QMainWindow):
     """Window for building trading strategies"""
@@ -248,784 +284,1362 @@ class StrategyBuilderWindow(QMainWindow):
             }
             QToolBar {
                 background-color: #3c3c3c;
-                border: 1px solid #555555;
-                spacing: 3px;
-                padding: 3px;
+                border: none;
             }
             QToolButton {
-                background-color: #4a4a4a;
-                border: 1px solid #555555;
-                border-radius: 3px;
-                padding: 5px;
-                color: #ffffff;
+                color: #0078d4;
+                font-weight: bold;
             }
             QToolButton:hover {
-                background-color: #5a5a5a;
-            }
-            QStatusBar {
-                background-color: #3c3c3c;
-                color: #ffffff;
-                border-top: 1px solid #555555;
-            }
-            QProgressBar {
-                border: 1px solid #555555;
-                border-radius: 3px;
-                text-align: center;
-                background-color: #3c3c3c;
-                color: #ffffff;
-            }
-            QProgressBar::chunk {
-                background-color: #0078d4;
-                border-radius: 2px;
-            }
-            QSlider::groove:horizontal {
-                border: 1px solid #555555;
-                height: 8px;
-                background-color: #3c3c3c;
-                border-radius: 4px;
-            }
-            QSlider::handle:horizontal {
-                background-color: #0078d4;
-                border: 1px solid #0078d4;
-                width: 16px;
-                border-radius: 8px;
-                margin: -4px 0;
-            }
-            QSlider::handle:horizontal:hover {
-                background-color: #1a8fd4;
-            }
-            QDateTimeEdit, QTimeEdit, QDateEdit {
-                background-color: #3c3c3c;
-                border: 1px solid #555555;
-                padding: 5px;
-                color: #ffffff;
-                border-radius: 3px;
-            }
-            QDateTimeEdit::drop-down, QTimeEdit::drop-down, QDateEdit::drop-down {
-                border: none;
-                background-color: #4a4a4a;
-            }
-            QCalendarWidget {
-                background-color: #3c3c3c;
-                color: #ffffff;
-            }
-            QCalendarWidget QToolButton {
-                background-color: #4a4a4a;
-                border: 1px solid #555555;
-                border-radius: 3px;
-                padding: 5px;
-                color: #ffffff;
-            }
-            QCalendarWidget QMenu {
-                background-color: #3c3c3c;
-                border: 1px solid #555555;
-                color: #ffffff;
-            }
-            QCalendarWidget QSpinBox {
-                background-color: #3c3c3c;
-                border: 1px solid #555555;
-                color: #ffffff;
+                color: #4ba3e6;
             }
         """)
 
     def _setup_ui(self):
-        """Setup UI layout"""
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
+        """Setup the main UI components"""
+        # --- Main Layout ---
+        main_widget = QWidget()
+        main_layout = QHBoxLayout(main_widget)
 
-        # Main scroll area
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-
-        # Main content widget
-        content_widget = QWidget()
-        layout = QVBoxLayout(content_widget)
-
-        # Strategy name
-        name_layout = QHBoxLayout()
-        name_layout.addWidget(QLabel("Strategy Name:"))
-        self.strategy_name = QLineEdit()
-        self.strategy_name.setPlaceholderText("e.g., VWAP Bounce Strategy")
-        name_layout.addWidget(self.strategy_name)
-        layout.addLayout(name_layout)
-
-        # Main content area
-        content_layout = QHBoxLayout()
-
-        # Left panel - Action builder
+        # --- Left Panel: Action Builder ---
         left_panel = self._create_action_builder()
-        content_layout.addWidget(left_panel, 2)
+        main_layout.addWidget(left_panel, 1)
 
-        # Right panel - Strategy composition
-        right_panel = self._create_strategy_panel()
-        content_layout.addWidget(right_panel, 3)
-
-        layout.addLayout(content_layout)
-
-        # Bottom panel - Testing and validation
-        bottom_panel = self._create_testing_panel()
-        layout.addWidget(bottom_panel)
-
-        # Set content widget to scroll area
-        scroll_area.setWidget(content_widget)
-
-        # Main layout for central widget
-        main_layout = QVBoxLayout(central_widget)
-        main_layout.addWidget(scroll_area)
-
-        # Set size policies for resizable window
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self.setMinimumSize(800, 600)  # Minimum size to ensure usability
+        # --- Right Panel: Strategy and Testing ---
+        right_layout = QVBoxLayout()
+        strategy_panel = self._create_strategy_panel()
+        testing_panel = self._create_testing_panel()
+        right_layout.addWidget(strategy_panel, 1)
+        right_layout.addWidget(testing_panel, 2)
+        main_layout.addLayout(right_layout, 2)
+        
+        self.setCentralWidget(main_widget)
 
     def _create_action_builder(self) -> QWidget:
-        """Create action builder panel"""
-        panel = QGroupBox("Action Builder")
+        """Create the action builder panel"""
+        action_group = QGroupBox("Action Builder")
         layout = QVBoxLayout()
 
-        # Pattern selection
-        pattern_layout = QFormLayout()
-
+        form_layout = QGridLayout()
+        
+        form_layout.addWidget(QLabel("Action Name:"), 0, 0)
+        self.action_name_edit = QLineEdit()
+        self.action_name_edit.setPlaceholderText("e.g., 'Buy on Hammer'")
+        form_layout.addWidget(self.action_name_edit, 0, 1, 1, 2)
+        
+        form_layout.addWidget(QLabel("Pattern:"), 1, 0)
+        # Remove FVG from available_patterns for the pattern dropdown
+        filtered_patterns = [k for k in self.available_patterns.keys() if k.lower() not in ["fvg", "fvg (fair value gap)"]]
         self.pattern_combo = QComboBox()
-        self.pattern_combo.addItem("-- Select Pattern --")
-        # Populate from all available patterns in the parent window
-        if self.available_patterns:
-            for pattern_name in sorted(self.available_patterns.keys()):
-                self.pattern_combo.addItem(pattern_name)
-        else:
-            # Fallback to registry if parent patterns aren't available
-            for pattern_name in sorted(registry.get_pattern_names()):
-                self.pattern_combo.addItem(pattern_name)
-        pattern_layout.addRow("Pattern:", self.pattern_combo)
+        self.pattern_combo.addItems(["Location Only"] + filtered_patterns)
+        form_layout.addWidget(self.pattern_combo, 1, 1, 1, 2)
 
-        # Time range
-        time_layout = QHBoxLayout()
-        self.time_value = QSpinBox()
-        self.time_value.setRange(1, 1000)
-        self.time_value.setValue(5)
-        time_layout.addWidget(self.time_value)
-
-        self.time_unit = QComboBox()
-        self.time_unit.addItems(['s', 'm', 'h', 'd'])
-        self.time_unit.setCurrentIndex(1)  # minutes
-        time_layout.addWidget(self.time_unit)
-
-        pattern_layout.addRow("Time Range:", time_layout)
-
-        # Location strategy
-        self.location_combo = QComboBox()
-        self.location_combo.addItems([
-            'None', 'VWAP', 'POC (Point of Control)',
-            'Support/Resistance', 'FVG', 'Breaker Block',
-            'Moving Average', 'Bollinger Bands'
+        form_layout.addWidget(QLabel("Zone Gate:"), 2, 0)
+        self.location_gate_combo = QComboBox()
+        self.location_gate_combo.addItems([
+            "None", "FVG (Fair Value Gap)", "VWAP Mean-Reversion Band", "Support/Resistance Band", "Imbalance Memory Zone", "Order Block"
         ])
-        pattern_layout.addRow("Location:", self.location_combo)
+        form_layout.addWidget(self.location_gate_combo, 2, 1)
 
-        layout.addLayout(pattern_layout)
-
-        # Filters
-        filters_group = QGroupBox("Filters (Optional)")
-        filters_layout = QVBoxLayout()
-
-        # Volume filter
-        self.volume_filter_check = QCheckBox("Volume Filter")
-        filters_layout.addWidget(self.volume_filter_check)
-
-        self.volume_filter_widget = QWidget()
-        volume_layout = QHBoxLayout(self.volume_filter_widget)
-        volume_layout.addWidget(QLabel("Min Volume:"))
-        self.min_volume = QSpinBox()
-        self.min_volume.setRange(0, 10000000)
-        self.min_volume.setValue(100000)
-        self.min_volume.setSingleStep(10000)
-        volume_layout.addWidget(self.min_volume)
-        self.volume_filter_widget.setVisible(False)
-        filters_layout.addWidget(self.volume_filter_widget)
-
-        self.volume_filter_check.toggled.connect(self.volume_filter_widget.setVisible)
-
-        # Volatility filter
-        self.volatility_filter_check = QCheckBox("Volatility Filter")
-        filters_layout.addWidget(self.volatility_filter_check)
-
-        self.volatility_filter_widget = QWidget()
-        vol_layout = QHBoxLayout(self.volatility_filter_widget)
-        vol_layout.addWidget(QLabel("Range:"))
-        self.vol_min = QSpinBox()
-        self.vol_min.setRange(0, 100)
-        self.vol_min.setValue(20)
-        vol_layout.addWidget(self.vol_min)
-        vol_layout.addWidget(QLabel("to"))
-        self.vol_max = QSpinBox()
-        self.vol_max.setRange(0, 100)
-        self.vol_max.setValue(80)
-        vol_layout.addWidget(self.vol_max)
-        self.volatility_filter_widget.setVisible(False)
-        filters_layout.addWidget(self.volatility_filter_widget)
-
-        self.volatility_filter_check.toggled.connect(self.volatility_filter_widget.setVisible)
-
-        filters_group.setLayout(filters_layout)
-        layout.addWidget(filters_group)
-
-        # Add action button
-        self.add_action_btn = QPushButton("Add Action to Strategy")
-        self.add_action_btn.clicked.connect(self._add_action)
-        layout.addWidget(self.add_action_btn)
-
+        # --- Location Gate Parameters ---
+        self.location_params_toggle_button = QToolButton()
+        self.location_params_toggle_button.setText("Edit Parameters ▼")
+        self.location_params_toggle_button.setCheckable(True)
+        self.location_params_toggle_button.setChecked(False)
+        self.location_params_toggle_button.setStyleSheet("QToolButton { border: none; }")
+        form_layout.addWidget(self.location_params_toggle_button, 2, 2)
+        
+        layout.addLayout(form_layout)
+        
+        # Create and add the location params group to the layout
+        self.location_params_group = self._create_location_params_group()
+        self.location_params_group.setVisible(False)
+        layout.addWidget(self.location_params_group)
+        
+        # Connect the toggle button to show/hide parameters
+        self.location_params_toggle_button.toggled.connect(self._toggle_params_visibility)
+        
+        # Connect the zone type combo box to update the tab and button visibility
+        self.location_gate_combo.currentTextChanged.connect(self._on_zone_type_changed)
+        
+        # --- Indicator Filters ---
+        indicator_filters_group = self._create_indicator_filters_group()
+        layout.addWidget(indicator_filters_group)
+        
+        layout.addWidget(QLabel("Time Range for Action:"))
+        time_range_layout = QHBoxLayout()
+        self.time_range_value = QSpinBox()
+        self.time_range_value.setRange(1, 1000)
+        self.time_range_unit = QComboBox()
+        self.time_range_unit.addItems(['minutes', 'hours', 'days'])
+        time_range_layout.addWidget(self.time_range_value)
+        time_range_layout.addWidget(self.time_range_unit)
+        layout.addLayout(time_range_layout)
+        
+        self.add_action_button = QPushButton("Add Action")
+        self.add_action_button.clicked.connect(self._add_action)
+        layout.addWidget(self.add_action_button)
+        
         layout.addStretch()
-
-        panel.setLayout(layout)
-        return panel
-
-    def _create_strategy_panel(self) -> QWidget:
-        """Create strategy composition panel"""
-        panel = QGroupBox("Strategy Composition")
-        layout = QVBoxLayout()
-
-        # Actions list
-        layout.addWidget(QLabel("Actions in Strategy:"))
+        
+        # --- Actions List ---
+        layout.addWidget(QLabel("Current Actions:"))
         self.actions_list = QListWidget()
         layout.addWidget(self.actions_list)
+        
+        button_layout = QHBoxLayout()
+        self.remove_action_button = QPushButton("Remove Selected Action")
+        self.remove_action_button.clicked.connect(self._remove_action)
+        clear_button = QPushButton("Clear All")
+        clear_button.clicked.connect(self._clear_actions)
+        button_layout.addWidget(self.remove_action_button)
+        button_layout.addWidget(clear_button)
+        layout.addLayout(button_layout)
+        
+        action_group.setLayout(layout)
+        self._toggle_location_params_button("None") # Set initial state
 
-        # Action controls
-        action_controls = QHBoxLayout()
+        # Connect signal for when the selected action changes
+        self.actions_list.currentItemChanged.connect(self._display_action_details)
 
-        self.remove_action_btn = QPushButton("Remove Selected")
-        self.remove_action_btn.clicked.connect(self._remove_action)
-        action_controls.addWidget(self.remove_action_btn)
+        return action_group
 
-        self.clear_actions_btn = QPushButton("Clear All")
-        self.clear_actions_btn.clicked.connect(self._clear_actions)
-        action_controls.addWidget(self.clear_actions_btn)
+    def _toggle_location_params_button(self, text):
+        """Show/hide the location params button based on combo box selection."""
+        is_zone_selected = (text != "None")
+        self.location_params_toggle_button.setVisible(is_zone_selected)
+        if not is_zone_selected:
+            # Also hide the group and uncheck the button if the gate is disabled
+            self.location_params_group.setVisible(False)
+            self.location_params_toggle_button.setChecked(False)
 
-        layout.addLayout(action_controls)
+    def _toggle_params_visibility(self, checked):
+        """Toggle the visibility of the parameters group box."""
+        self.location_params_group.setVisible(checked)
+        self.location_params_toggle_button.setText("Edit Parameters ▼" if not checked else "Edit Parameters ▲")
+        
+        # If showing parameters, switch to the correct tab for the selected zone type
+        if checked:
+            current_zone_type = self.location_gate_combo.currentText()
+            self._switch_to_zone_tab(current_zone_type)
 
-        # Strategy constraints
-        constraints_group = QGroupBox("Strategy Constraints")
-        constraints_layout = QFormLayout()
+    def _on_zone_type_changed(self, zone_type):
+        """Handle zone type selection change"""
+        # Update button visibility
+        self._toggle_location_params_button(zone_type)
+        
+        # If parameters are visible, switch to the relevant tab
+        if self.location_params_group.isVisible():
+            self._switch_to_zone_tab(zone_type)
+    
+    def _switch_to_zone_tab(self, zone_type):
+        """Switch to the appropriate tab based on zone type"""
+        tab_mapping = {
+            "FVG (Fair Value Gap)": 0,  # FVG tab
+            "VWAP Mean-Reversion Band": 1,  # VWAP tab
+            "Support/Resistance Band": 2,  # Support/Resistance tab
+            "Imbalance Memory Zone": 3,       # Imbalance tab
+            "Order Block": 4                  # Order Block tab
+        }
+        
+        if zone_type in tab_mapping:
+            # Get the tab widget from the location params group
+            for child in self.location_params_group.children():
+                if isinstance(child, QTabWidget):
+                    child.setCurrentIndex(tab_mapping[zone_type])
+                    break
 
-        # Min actions required
-        self.min_actions_spin = QSpinBox()
-        self.min_actions_spin.setRange(1, 10)
-        self.min_actions_spin.setValue(1)
-        constraints_layout.addRow("Min Actions Required:", self.min_actions_spin)
+    def _create_indicator_filters_group(self) -> QGroupBox:
+        """Creates the group box for indicator-based filters."""
+        group = QGroupBox("Indicator Filters")
+        layout = QVBoxLayout()
 
-        # Max time between actions
-        time_constraint_layout = QHBoxLayout()
-        self.max_time_spin = QSpinBox()
-        self.max_time_spin.setRange(1, 1000)
-        self.max_time_spin.setValue(30)
-        time_constraint_layout.addWidget(self.max_time_spin)
-        self.max_time_unit = QComboBox()
-        self.max_time_unit.addItems(['s', 'm', 'h'])
-        self.max_time_unit.setCurrentIndex(1)
-        time_constraint_layout.addWidget(self.max_time_unit)
-        constraints_layout.addRow("Max Time Between:", time_constraint_layout)
+        # Basic filters section
+        basic_filters_label = QLabel("Basic Filters:")
+        basic_filters_label.setStyleSheet("font-weight: bold; color: #ffffff;")
+        layout.addWidget(basic_filters_label)
 
-        constraints_group.setLayout(constraints_layout)
-        layout.addWidget(constraints_group)
+        # --- MA Filter ---
+        self.ma_filter_check = QCheckBox("Moving Average")
+        self.ma_filter_widget = QWidget()
+        ma_layout = QHBoxLayout(self.ma_filter_widget)
+        self.ma_period_spin = QSpinBox()
+        self.ma_period_spin.setRange(1, 200)
+        self.ma_period_spin.setValue(20)
+        self.ma_condition_combo = QComboBox()
+        self.ma_condition_combo.addItems(["above", "below", "near"])
+        ma_layout.addWidget(QLabel("Period:"))
+        ma_layout.addWidget(self.ma_period_spin)
+        ma_layout.addWidget(QLabel("Price is:"))
+        ma_layout.addWidget(self.ma_condition_combo)
+        ma_layout.setContentsMargins(10, 0, 0, 0)
+        self.ma_filter_widget.setVisible(False)
+        self.ma_filter_check.toggled.connect(self.ma_filter_widget.setVisible)
+        layout.addWidget(self.ma_filter_check)
+        layout.addWidget(self.ma_filter_widget)
 
-        # Create strategy button
-        self.create_strategy_btn = QPushButton("Create Strategy")
-        self.create_strategy_btn.clicked.connect(self._create_strategy)
-        layout.addWidget(self.create_strategy_btn)
+        # --- VWAP Filter ---
+        self.vwap_filter_check = QCheckBox("VWAP")
+        self.vwap_filter_widget = QWidget()
+        vwap_layout = QHBoxLayout(self.vwap_filter_widget)
+        self.vwap_condition_combo = QComboBox()
+        self.vwap_condition_combo.addItems(["above", "below", "near"])
+        vwap_layout.addWidget(QLabel("Price is:"))
+        vwap_layout.addWidget(self.vwap_condition_combo)
+        vwap_layout.setContentsMargins(10, 0, 0, 0)
+        self.vwap_filter_widget.setVisible(False)
+        self.vwap_filter_check.toggled.connect(self.vwap_filter_widget.setVisible)
+        layout.addWidget(self.vwap_filter_check)
+        layout.addWidget(self.vwap_filter_widget)
 
-        # --- Gates/Filters & Execution Logic Section ---
-        gates_group = QGroupBox("Gates/Filters & Execution Logic")
-        gates_layout = QFormLayout()
+        # --- Bollinger Bands Filter ---
+        self.bb_filter_check = QCheckBox("Bollinger Bands")
+        self.bb_filter_widget = QWidget()
+        bb_layout = QHBoxLayout(self.bb_filter_widget)
+        self.bb_period_spin = QSpinBox()
+        self.bb_period_spin.setRange(1, 200)
+        self.bb_period_spin.setValue(20)
+        self.bb_std_spin = QDoubleSpinBox()
+        self.bb_std_spin.setRange(0.5, 5.0)
+        self.bb_std_spin.setValue(2.0)
+        self.bb_condition_combo = QComboBox()
+        self.bb_condition_combo.addItems(["inside", "outside", "touching_upper", "touching_lower"])
+        bb_layout.addWidget(QLabel("Period:"))
+        bb_layout.addWidget(self.bb_period_spin)
+        bb_layout.addWidget(QLabel("Std Dev:"))
+        bb_layout.addWidget(self.bb_std_spin)
+        bb_layout.addWidget(QLabel("Price is:"))
+        bb_layout.addWidget(self.bb_condition_combo)
+        bb_layout.setContentsMargins(10, 0, 0, 0)
+        self.bb_filter_widget.setVisible(False)
+        self.bb_filter_check.toggled.connect(self.bb_filter_widget.setVisible)
+        layout.addWidget(self.bb_filter_check)
+        layout.addWidget(self.bb_filter_widget)
 
-        # Location gate
-        self.location_gate_check = QCheckBox("Location Gate (L_total)")
-        self.location_gate_check.setToolTip("Location filter using FVG, peaks, skew, etc.")
-        gates_layout.addRow(self.location_gate_check)
+        # Microstructure filters section
+        microstructure_filters_label = QLabel("Microstructure Filters:")
+        microstructure_filters_label.setStyleSheet("font-weight: bold; color: #ffffff; margin-top: 10px;")
+        layout.addWidget(microstructure_filters_label)
 
-        # Volatility gate
-        self.volatility_gate_check = QCheckBox("Volatility Gate (σ_t, ATR)")
-        self.volatility_gate_check.setToolTip("Volatility filter using realized vol, ATR, etc.")
-        gates_layout.addRow(self.volatility_gate_check)
+        # --- Tick Frequency Filter ---
+        self.tick_frequency_filter_check = QCheckBox("Tick Frequency Filter")
+        self.tick_frequency_filter_widget = QWidget()
+        tick_freq_layout = QHBoxLayout(self.tick_frequency_filter_widget)
+        self.max_ticks_per_second_spin = QSpinBox()
+        self.max_ticks_per_second_spin.setRange(10, 1000)
+        self.max_ticks_per_second_spin.setValue(50)
+        self.min_book_depth_spin = QSpinBox()
+        self.min_book_depth_spin.setRange(10, 1000)
+        self.min_book_depth_spin.setValue(100)
+        tick_freq_layout.addWidget(QLabel("Max Ticks/sec:"))
+        tick_freq_layout.addWidget(self.max_ticks_per_second_spin)
+        tick_freq_layout.addWidget(QLabel("Min Book Depth:"))
+        tick_freq_layout.addWidget(self.min_book_depth_spin)
+        tick_freq_layout.setContentsMargins(10, 0, 0, 0)
+        self.tick_frequency_filter_widget.setVisible(False)
+        self.tick_frequency_filter_check.toggled.connect(self.tick_frequency_filter_widget.setVisible)
+        layout.addWidget(self.tick_frequency_filter_check)
+        layout.addWidget(self.tick_frequency_filter_widget)
 
-        # Regime gate
-        self.regime_gate_check = QCheckBox("Regime Gate (Momentum/State)")
-        self.regime_gate_check.setToolTip("Regime filter using momentum, state, HMM, etc.")
-        gates_layout.addRow(self.regime_gate_check)
+        # --- Spread Filter ---
+        self.spread_filter_check = QCheckBox("Spread Filter")
+        self.spread_filter_widget = QWidget()
+        spread_layout = QHBoxLayout(self.spread_filter_widget)
+        self.max_spread_ticks_spin = QSpinBox()
+        self.max_spread_ticks_spin.setRange(1, 10)
+        self.max_spread_ticks_spin.setValue(2)
+        self.normal_spread_multiple_spin = QDoubleSpinBox()
+        self.normal_spread_multiple_spin.setRange(1.0, 10.0)
+        self.normal_spread_multiple_spin.setValue(5.0)
+        spread_layout.addWidget(QLabel("Max Spread (ticks):"))
+        spread_layout.addWidget(self.max_spread_ticks_spin)
+        spread_layout.addWidget(QLabel("Normal Multiple:"))
+        spread_layout.addWidget(self.normal_spread_multiple_spin)
+        spread_layout.setContentsMargins(10, 0, 0, 0)
+        self.spread_filter_widget.setVisible(False)
+        self.spread_filter_check.toggled.connect(self.spread_filter_widget.setVisible)
+        layout.addWidget(self.spread_filter_check)
+        layout.addWidget(self.spread_filter_widget)
 
-        # Bayesian state gate
+        # --- Order Flow Filter ---
+        self.order_flow_filter_check = QCheckBox("Order Flow Filter")
+        self.order_flow_filter_widget = QWidget()
+        order_flow_layout = QHBoxLayout(self.order_flow_filter_widget)
+        self.min_cvd_threshold_spin = QSpinBox()
+        self.min_cvd_threshold_spin.setRange(100, 10000)
+        self.min_cvd_threshold_spin.setValue(1000)
+        self.large_trade_ratio_spin = QDoubleSpinBox()
+        self.large_trade_ratio_spin.setRange(0.1, 1.0)
+        self.large_trade_ratio_spin.setValue(0.35)
+        self.large_trade_ratio_spin.setSingleStep(0.05)
+        order_flow_layout.addWidget(QLabel("Min CVD Threshold:"))
+        order_flow_layout.addWidget(self.min_cvd_threshold_spin)
+        order_flow_layout.addWidget(QLabel("Large Trade Ratio:"))
+        order_flow_layout.addWidget(self.large_trade_ratio_spin)
+        order_flow_layout.setContentsMargins(10, 0, 0, 0)
+        self.order_flow_filter_widget.setVisible(False)
+        self.order_flow_filter_check.toggled.connect(self.order_flow_filter_widget.setVisible)
+        layout.addWidget(self.order_flow_filter_check)
+        layout.addWidget(self.order_flow_filter_widget)
+
+        # Advanced filters section
+        advanced_filters_label = QLabel("Advanced Filters:")
+        advanced_filters_label.setStyleSheet("font-weight: bold; color: #ffffff; margin-top: 10px;")
+        layout.addWidget(advanced_filters_label)
+
+        # --- Volume Filter ---
+        self.volume_filter_check = QCheckBox("Volume Filter")
+        self.volume_filter_widget = QWidget()
+        volume_layout = QHBoxLayout(self.volume_filter_widget)
+        self.min_volume_spin = QSpinBox()
+        self.min_volume_spin.setRange(100, 100000)
+        self.min_volume_spin.setValue(1000)
+        self.volume_ratio_spin = QDoubleSpinBox()
+        self.volume_ratio_spin.setRange(1.0, 5.0)
+        self.volume_ratio_spin.setValue(1.5)
+        volume_layout.addWidget(QLabel("Min Volume:"))
+        volume_layout.addWidget(self.min_volume_spin)
+        volume_layout.addWidget(QLabel("Volume Ratio:"))
+        volume_layout.addWidget(self.volume_ratio_spin)
+        volume_layout.setContentsMargins(10, 0, 0, 0)
+        self.volume_filter_widget.setVisible(False)
+        self.volume_filter_check.toggled.connect(self.volume_filter_widget.setVisible)
+        layout.addWidget(self.volume_filter_check)
+        layout.addWidget(self.volume_filter_widget)
+
+        # --- Time Filter ---
+        self.time_filter_check = QCheckBox("Time Filter")
+        self.time_filter_widget = QWidget()
+        time_layout = QHBoxLayout(self.time_filter_widget)
+        self.start_time_edit = QTimeEdit()
+        self.start_time_edit.setTime(QTime(9, 30))
+        self.end_time_edit = QTimeEdit()
+        self.end_time_edit.setTime(QTime(16, 0))
+        time_layout.addWidget(QLabel("Start Time:"))
+        time_layout.addWidget(self.start_time_edit)
+        time_layout.addWidget(QLabel("End Time:"))
+        time_layout.addWidget(self.end_time_edit)
+        time_layout.setContentsMargins(10, 0, 0, 0)
+        self.time_filter_widget.setVisible(False)
+        self.time_filter_check.toggled.connect(self.time_filter_widget.setVisible)
+        layout.addWidget(self.time_filter_check)
+        layout.addWidget(self.time_filter_widget)
+
+        # --- Volatility Filter ---
+        self.volatility_filter_check = QCheckBox("Volatility Filter")
+        self.volatility_filter_widget = QWidget()
+        volatility_layout = QHBoxLayout(self.volatility_filter_widget)
+        self.min_atr_ratio_spin = QDoubleSpinBox()
+        self.min_atr_ratio_spin.setRange(0.001, 0.1)
+        self.min_atr_ratio_spin.setValue(0.01)
+        self.max_atr_ratio_spin = QDoubleSpinBox()
+        self.max_atr_ratio_spin.setRange(0.01, 0.2)
+        self.max_atr_ratio_spin.setValue(0.05)
+        volatility_layout.addWidget(QLabel("Min ATR Ratio:"))
+        volatility_layout.addWidget(self.min_atr_ratio_spin)
+        volatility_layout.addWidget(QLabel("Max ATR Ratio:"))
+        volatility_layout.addWidget(self.max_atr_ratio_spin)
+        volatility_layout.setContentsMargins(10, 0, 0, 0)
+        self.volatility_filter_widget.setVisible(False)
+        self.volatility_filter_check.toggled.connect(self.volatility_filter_widget.setVisible)
+        layout.addWidget(self.volatility_filter_check)
+        layout.addWidget(self.volatility_filter_widget)
+
+        # --- Momentum Filter ---
+        self.momentum_filter_check = QCheckBox("Momentum Filter")
+        self.momentum_filter_widget = QWidget()
+        momentum_layout = QHBoxLayout(self.momentum_filter_widget)
+        self.momentum_threshold_spin = QDoubleSpinBox()
+        self.momentum_threshold_spin.setRange(0.001, 0.1)
+        self.momentum_threshold_spin.setValue(0.02)
+        self.rsi_min_spin = QSpinBox()
+        self.rsi_min_spin.setRange(0, 100)
+        self.rsi_min_spin.setValue(30)
+        self.rsi_max_spin = QSpinBox()
+        self.rsi_max_spin.setRange(0, 100)
+        self.rsi_max_spin.setValue(70)
+        momentum_layout.addWidget(QLabel("Momentum Threshold:"))
+        momentum_layout.addWidget(self.momentum_threshold_spin)
+        momentum_layout.addWidget(QLabel("RSI Range:"))
+        momentum_layout.addWidget(self.rsi_min_spin)
+        momentum_layout.addWidget(QLabel("-"))
+        momentum_layout.addWidget(self.rsi_max_spin)
+        momentum_layout.setContentsMargins(10, 0, 0, 0)
+        self.momentum_filter_widget.setVisible(False)
+        self.momentum_filter_check.toggled.connect(self.momentum_filter_widget.setVisible)
+        layout.addWidget(self.momentum_filter_check)
+        layout.addWidget(self.momentum_filter_widget)
+
+        # --- Price Filter ---
+        self.price_filter_check = QCheckBox("Price Filter")
+        self.price_filter_widget = QWidget()
+        price_layout = QHBoxLayout(self.price_filter_widget)
+        self.min_price_spin = QDoubleSpinBox()
+        self.min_price_spin.setRange(0.01, 1000.0)
+        self.min_price_spin.setValue(1.0)
+        self.max_price_spin = QDoubleSpinBox()
+        self.max_price_spin.setRange(1.0, 10000.0)
+        self.max_price_spin.setValue(1000.0)
+        price_layout.addWidget(QLabel("Min Price:"))
+        price_layout.addWidget(self.min_price_spin)
+        price_layout.addWidget(QLabel("Max Price:"))
+        price_layout.addWidget(self.max_price_spin)
+        price_layout.setContentsMargins(10, 0, 0, 0)
+        self.price_filter_widget.setVisible(False)
+        self.price_filter_check.toggled.connect(self.price_filter_widget.setVisible)
+        layout.addWidget(self.price_filter_check)
+        layout.addWidget(self.price_filter_widget)
+
+        group.setLayout(layout)
+        return group
+
+    def _create_location_params_group(self) -> QGroupBox:
+        """Create location parameters group with zone-specific parameters"""
+        group = QGroupBox("Zone Parameters")
+        layout = QVBoxLayout()
+        
+        # Create tabs for different parameter categories
+        tabs = QTabWidget()
+        
+        # FVG parameters tab
+        fvg_tab = QWidget()
+        fvg_layout = QFormLayout()
+        
+        # FVG detection parameters
+        fvg_layout.addRow(QLabel("Detection Parameters:"))
+        fvg_layout.addRow(QLabel(""))  # Spacer
+        
+        self.fvg_epsilon_spin = QDoubleSpinBox()
+        self.fvg_epsilon_spin.setRange(1, 5)
+        self.fvg_epsilon_spin.setValue(2)
+        self.fvg_epsilon_spin.setSingleStep(0.5)
+        self.fvg_epsilon_spin.setToolTip("Zone buffer points [1, 5]")
+        fvg_layout.addRow("ε (Buffer Points):", self.fvg_epsilon_spin)
+        
+        self.fvg_N_spin = QSpinBox()
+        self.fvg_N_spin.setRange(1, 10)
+        self.fvg_N_spin.setValue(3)
+        self.fvg_N_spin.setToolTip("Number of Gaussian peaks [1, 10]")
+        fvg_layout.addRow("N (Peak Count):", self.fvg_N_spin)
+        
+        self.fvg_sigma_spin = QDoubleSpinBox()
+        self.fvg_sigma_spin.setRange(0.01, 0.5)
+        self.fvg_sigma_spin.setValue(0.1)
+        self.fvg_sigma_spin.setSingleStep(0.01)
+        self.fvg_sigma_spin.setToolTip("Std-dev of Gaussian peaks [0.01, 0.5]")
+        fvg_layout.addRow("σ (Peak Width):", self.fvg_sigma_spin)
+        
+        self.fvg_beta1_spin = QDoubleSpinBox()
+        self.fvg_beta1_spin.setRange(0.6, 0.8)
+        self.fvg_beta1_spin.setValue(0.7)
+        self.fvg_beta1_spin.setSingleStep(0.05)
+        self.fvg_beta1_spin.setToolTip("Flat base weight [0.6, 0.8]")
+        fvg_layout.addRow("β₁ (Base Weight):", self.fvg_beta1_spin)
+        
+        self.fvg_beta2_spin = QDoubleSpinBox()
+        self.fvg_beta2_spin.setRange(0.2, 0.4)
+        self.fvg_beta2_spin.setValue(0.3)
+        self.fvg_beta2_spin.setSingleStep(0.05)
+        self.fvg_beta2_spin.setToolTip("Micro-comb weight [0.2, 0.4]")
+        fvg_layout.addRow("β₂ (Comb Weight):", self.fvg_beta2_spin)
+        
+        self.fvg_phi_spin = QDoubleSpinBox()
+        self.fvg_phi_spin.setRange(0.0, 0.5)
+        self.fvg_phi_spin.setValue(0.2)
+        self.fvg_phi_spin.setSingleStep(0.05)
+        self.fvg_phi_spin.setToolTip("Momentum warp factor [0, 0.5]")
+        fvg_layout.addRow("φ (Momentum Warp):", self.fvg_phi_spin)
+        
+        self.fvg_lambda_spin = QDoubleSpinBox()
+        self.fvg_lambda_spin.setRange(-2.0, 2.0)
+        self.fvg_lambda_spin.setValue(0.0)
+        self.fvg_lambda_spin.setSingleStep(0.1)
+        self.fvg_lambda_spin.setToolTip("Directional skew slope [-2, 2]")
+        fvg_layout.addRow("λ (Directional Skew):", self.fvg_lambda_spin)
+        
+        # FVG decay parameters
+        fvg_layout.addRow(QLabel(""))  # Spacer
+        fvg_layout.addRow(QLabel("Decay Parameters:"))
+        fvg_layout.addRow(QLabel(""))  # Spacer
+        
+        self.fvg_gamma_spin = QDoubleSpinBox()
+        self.fvg_gamma_spin.setRange(0.8, 0.99)
+        self.fvg_gamma_spin.setValue(0.95)
+        self.fvg_gamma_spin.setSingleStep(0.01)
+        self.fvg_gamma_spin.setToolTip("Exponential decay per bar [0.8, 0.99]")
+        fvg_layout.addRow("γ (Decay per Bar):", self.fvg_gamma_spin)
+        
+        self.fvg_tau_spin = QSpinBox()
+        self.fvg_tau_spin.setRange(5, 200)
+        self.fvg_tau_spin.setValue(50)
+        self.fvg_tau_spin.setToolTip("Hard purge after τ bars [5, 200]")
+        fvg_layout.addRow("τ (Hard Purge Bars):", self.fvg_tau_spin)
+        
+        self.fvg_drop_threshold_spin = QDoubleSpinBox()
+        self.fvg_drop_threshold_spin.setRange(0.001, 0.1)
+        self.fvg_drop_threshold_spin.setValue(0.01)
+        self.fvg_drop_threshold_spin.setSingleStep(0.001)
+        self.fvg_drop_threshold_spin.setToolTip("Minimum strength before early purge [0.001, 0.1]")
+        fvg_layout.addRow("Drop Threshold:", self.fvg_drop_threshold_spin)
+        
+        fvg_tab.setLayout(fvg_layout)
+        tabs.addTab(fvg_tab, "FVG")
+        
+        # VWAP parameters tab
+        vwap_tab = QWidget()
+        vwap_layout = QFormLayout()
+        
+        # VWAP detection parameters
+        vwap_layout.addRow(QLabel("Detection Parameters:"))
+        vwap_layout.addRow(QLabel(""))  # Spacer
+        
+        self.vwap_k_spin = QDoubleSpinBox()
+        self.vwap_k_spin.setRange(0.5, 2.0)
+        self.vwap_k_spin.setValue(1.0)
+        self.vwap_k_spin.setSingleStep(0.1)
+        self.vwap_k_spin.setToolTip("Multiplier for VWAP stdev band [0.5, 2.0]")
+        vwap_layout.addRow("k (Stdev Multiplier):", self.vwap_k_spin)
+        
+        self.vwap_lookback_spin = QSpinBox()
+        self.vwap_lookback_spin.setRange(10, 50)
+        self.vwap_lookback_spin.setValue(20)
+        self.vwap_lookback_spin.setToolTip("VWAP calculation lookback [10, 50]")
+        vwap_layout.addRow("VWAP Lookback:", self.vwap_lookback_spin)
+        
+        # VWAP decay parameters
+        vwap_layout.addRow(QLabel(""))  # Spacer
+        vwap_layout.addRow(QLabel("Decay Parameters:"))
+        vwap_layout.addRow(QLabel(""))  # Spacer
+        
+        self.vwap_gamma_spin = QDoubleSpinBox()
+        self.vwap_gamma_spin.setRange(0.8, 0.99)
+        self.vwap_gamma_spin.setValue(0.95)
+        self.vwap_gamma_spin.setSingleStep(0.01)
+        self.vwap_gamma_spin.setToolTip("Exponential decay per bar [0.8, 0.99]")
+        vwap_layout.addRow("γ (Decay per Bar):", self.vwap_gamma_spin)
+        
+        self.vwap_tau_spin = QSpinBox()
+        self.vwap_tau_spin.setRange(5, 200)
+        self.vwap_tau_spin.setValue(15)  # VWAP zones are shorter-lived
+        self.vwap_tau_spin.setToolTip("Hard purge after τ bars [5, 200]")
+        vwap_layout.addRow("τ (Hard Purge Bars):", self.vwap_tau_spin)
+        
+        self.vwap_drop_threshold_spin = QDoubleSpinBox()
+        self.vwap_drop_threshold_spin.setRange(0.001, 0.1)
+        self.vwap_drop_threshold_spin.setValue(0.01)
+        self.vwap_drop_threshold_spin.setSingleStep(0.001)
+        self.vwap_drop_threshold_spin.setToolTip("Minimum strength before early purge [0.001, 0.1]")
+        vwap_layout.addRow("Drop Threshold:", self.vwap_drop_threshold_spin)
+        
+        vwap_tab.setLayout(vwap_layout)
+        tabs.addTab(vwap_tab, "VWAP")
+        
+        # Support/Resistance parameters tab
+        sr_tab = QWidget()
+        sr_layout = QFormLayout()
+        
+        # Support/Resistance detection parameters
+        sr_layout.addRow(QLabel("Detection Parameters:"))
+        sr_layout.addRow(QLabel(""))  # Spacer
+        
+        self.sr_window_spin = QSpinBox()
+        self.sr_window_spin.setRange(10, 100)
+        self.sr_window_spin.setValue(20)
+        self.sr_window_spin.setSingleStep(5)
+        self.sr_window_spin.setToolTip("Window size for support/resistance detection [10, 100]")
+        sr_layout.addRow("Window Size:", self.sr_window_spin)
+        
+        self.sr_buffer_pts_spin = QDoubleSpinBox()
+        self.sr_buffer_pts_spin.setRange(0.5, 10.0)
+        self.sr_buffer_pts_spin.setValue(2.0)
+        self.sr_buffer_pts_spin.setSingleStep(0.5)
+        self.sr_buffer_pts_spin.setToolTip("Buffer points for zone edges [0.5, 10.0]")
+        sr_layout.addRow("Buffer Points:", self.sr_buffer_pts_spin)
+        
+        self.sr_sigma_r_spin = QDoubleSpinBox()
+        self.sr_sigma_r_spin.setRange(1.0, 20.0)
+        self.sr_sigma_r_spin.setValue(5.0)
+        self.sr_sigma_r_spin.setSingleStep(0.5)
+        self.sr_sigma_r_spin.setToolTip("Spatial standard deviation [1.0, 20.0]")
+        sr_layout.addRow("σ_r (Spatial):", self.sr_sigma_r_spin)
+        
+        self.sr_sigma_t_spin = QDoubleSpinBox()
+        self.sr_sigma_t_spin.setRange(1.0, 10.0)
+        self.sr_sigma_t_spin.setValue(3.0)
+        self.sr_sigma_t_spin.setSingleStep(0.5)
+        self.sr_sigma_t_spin.setToolTip("Temporal standard deviation [1.0, 10.0]")
+        sr_layout.addRow("σ_t (Temporal):", self.sr_sigma_t_spin)
+        
+        # Support/Resistance decay parameters
+        sr_layout.addRow(QLabel(""))  # Spacer
+        sr_layout.addRow(QLabel("Decay Parameters:"))
+        sr_layout.addRow(QLabel(""))  # Spacer
+        
+        self.sr_gamma_spin = QDoubleSpinBox()
+        self.sr_gamma_spin.setRange(0.8, 0.99)
+        self.sr_gamma_spin.setValue(0.95)
+        self.sr_gamma_spin.setSingleStep(0.01)
+        self.sr_gamma_spin.setToolTip("Exponential decay per bar [0.8, 0.99]")
+        sr_layout.addRow("γ (Decay per Bar):", self.sr_gamma_spin)
+        
+        self.sr_tau_spin = QSpinBox()
+        self.sr_tau_spin.setRange(5, 200)
+        self.sr_tau_spin.setValue(60)  # Support/Resistance zones are medium-lived
+        self.sr_tau_spin.setToolTip("Hard purge after τ bars [5, 200]")
+        sr_layout.addRow("τ (Hard Purge Bars):", self.sr_tau_spin)
+        
+        self.sr_drop_threshold_spin = QDoubleSpinBox()
+        self.sr_drop_threshold_spin.setRange(0.001, 0.1)
+        self.sr_drop_threshold_spin.setValue(0.01)
+        self.sr_drop_threshold_spin.setSingleStep(0.001)
+        self.sr_drop_threshold_spin.setToolTip("Minimum strength before early purge [0.001, 0.1]")
+        sr_layout.addRow("Drop Threshold:", self.sr_drop_threshold_spin)
+        
+        sr_tab.setLayout(sr_layout)
+        tabs.addTab(sr_tab, "Support/Resistance")
+        
+        # Imbalance parameters tab
+        imbalance_tab = QWidget()
+        imbalance_layout = QFormLayout()
+        
+        # Imbalance detection parameters
+        imbalance_layout.addRow(QLabel("Detection Parameters:"))
+        imbalance_layout.addRow(QLabel(""))  # Spacer
+        
+        self.imbalance_threshold_spin = QDoubleSpinBox()
+        self.imbalance_threshold_spin.setRange(10, 500)
+        self.imbalance_threshold_spin.setValue(100)
+        self.imbalance_threshold_spin.setSingleStep(10)
+        self.imbalance_threshold_spin.setToolTip("Threshold points to register imbalance [10, 500]")
+        imbalance_layout.addRow("τ_imbalance (Threshold):", self.imbalance_threshold_spin)
+        
+        self.imbalance_gamma_mem_spin = QDoubleSpinBox()
+        self.imbalance_gamma_mem_spin.setRange(0.001, 0.1)
+        self.imbalance_gamma_mem_spin.setValue(0.01)
+        self.imbalance_gamma_mem_spin.setSingleStep(0.001)
+        self.imbalance_gamma_mem_spin.setToolTip("Decay factor for imbalance memory [0.001, 0.1]")
+        imbalance_layout.addRow("γ_mem (Memory Decay):", self.imbalance_gamma_mem_spin)
+        
+        self.imbalance_sigma_rev_spin = QDoubleSpinBox()
+        self.imbalance_sigma_rev_spin.setRange(5, 50)
+        self.imbalance_sigma_rev_spin.setValue(20)
+        self.imbalance_sigma_rev_spin.setSingleStep(1)
+        self.imbalance_sigma_rev_spin.setToolTip("Width of Gaussian influence for revisit [5, 50 pts]")
+        imbalance_layout.addRow("σ_rev (Revisit Width):", self.imbalance_sigma_rev_spin)
+        
+        # Imbalance decay parameters
+        imbalance_layout.addRow(QLabel(""))  # Spacer
+        imbalance_layout.addRow(QLabel("Decay Parameters:"))
+        imbalance_layout.addRow(QLabel(""))  # Spacer
+        
+        self.imbalance_gamma_spin = QDoubleSpinBox()
+        self.imbalance_gamma_spin.setRange(0.8, 0.99)
+        self.imbalance_gamma_spin.setValue(0.95)
+        self.imbalance_gamma_spin.setSingleStep(0.01)
+        self.imbalance_gamma_spin.setToolTip("Exponential decay per bar [0.8, 0.99]")
+        imbalance_layout.addRow("γ (Decay per Bar):", self.imbalance_gamma_spin)
+        
+        self.imbalance_tau_spin = QSpinBox()
+        self.imbalance_tau_spin.setRange(5, 200)
+        self.imbalance_tau_spin.setValue(100)  # Imbalance zones can last longer
+        self.imbalance_tau_spin.setToolTip("Hard purge after τ bars [5, 200]")
+        imbalance_layout.addRow("τ (Hard Purge Bars):", self.imbalance_tau_spin)
+        
+        self.imbalance_drop_threshold_spin = QDoubleSpinBox()
+        self.imbalance_drop_threshold_spin.setRange(0.001, 0.1)
+        self.imbalance_drop_threshold_spin.setValue(0.01)
+        self.imbalance_drop_threshold_spin.setSingleStep(0.001)
+        self.imbalance_drop_threshold_spin.setToolTip("Minimum strength before early purge [0.001, 0.1]")
+        imbalance_layout.addRow("Drop Threshold:", self.imbalance_drop_threshold_spin)
+        
+        imbalance_tab.setLayout(imbalance_layout)
+        tabs.addTab(imbalance_tab, "Imbalance")
+        
+        # Order Block tab
+        ob_tab = QWidget()
+        ob_layout = QFormLayout()
+        ob_layout.addRow(QLabel("Detection Parameters:"))
+        ob_layout.addRow(QLabel(""))  # Spacer
+        self.ob_impulse_threshold_spin = QDoubleSpinBox()
+        self.ob_impulse_threshold_spin.setRange(0.01, 0.1)
+        self.ob_impulse_threshold_spin.setValue(0.02)
+        self.ob_impulse_threshold_spin.setSingleStep(0.005)
+        self.ob_impulse_threshold_spin.setToolTip("Minimum impulse move [0.01, 0.1]")
+        ob_layout.addRow("Impulse Threshold:", self.ob_impulse_threshold_spin)
+        self.ob_lookback_spin = QSpinBox()
+        self.ob_lookback_spin.setRange(5, 50)
+        self.ob_lookback_spin.setValue(10)
+        self.ob_lookback_spin.setToolTip("Lookback for impulse detection [5, 50]")
+        ob_layout.addRow("Lookback Period:", self.ob_lookback_spin)
+        ob_layout.addRow(QLabel(""))  # Spacer
+        ob_layout.addRow(QLabel("Decay Parameters:"))
+        ob_layout.addRow(QLabel(""))  # Spacer
+        self.ob_gamma_spin = QDoubleSpinBox()
+        self.ob_gamma_spin.setRange(0.8, 0.99)
+        self.ob_gamma_spin.setValue(0.95)
+        self.ob_gamma_spin.setSingleStep(0.01)
+        self.ob_gamma_spin.setToolTip("Exponential decay per bar [0.8, 0.99]")
+        ob_layout.addRow("γ (Decay per Bar):", self.ob_gamma_spin)
+        self.ob_tau_spin = QSpinBox()
+        self.ob_tau_spin.setRange(5, 200)
+        self.ob_tau_spin.setValue(50)
+        self.ob_tau_spin.setToolTip("Hard purge after τ bars [5, 200]")
+        ob_layout.addRow("τ (Hard Purge Bars):", self.ob_tau_spin)
+        self.ob_buffer_spin = QDoubleSpinBox()
+        self.ob_buffer_spin.setRange(0.01, 1.0)
+        self.ob_buffer_spin.setSingleStep(0.01)
+        self.ob_buffer_spin.setValue(0.1)
+        ob_layout.addRow("Buffer (pts)", self.ob_buffer_spin)
+        ob_tab.setLayout(ob_layout)
+        tabs.addTab(ob_tab, "Order Block")
+        
+        # Global settings tab
+        global_tab = QWidget()
+        global_layout = QFormLayout()
+        
+        global_layout.addRow(QLabel("Global Settings:"))
+        global_layout.addRow(QLabel(""))  # Spacer
+        
+        self.bar_interval_minutes_spin = QSpinBox()
+        self.bar_interval_minutes_spin.setRange(1, 1440)
+        self.bar_interval_minutes_spin.setValue(1)
+        self.bar_interval_minutes_spin.setToolTip("Minutes per bar for calendar conversion")
+        global_layout.addRow("Bar Interval (min):", self.bar_interval_minutes_spin)
+        
+        global_tab.setLayout(global_layout)
+        tabs.addTab(global_tab, "Global")
+        
+        layout.addWidget(tabs)
+        
+        # Reset button
+        reset_btn = QPushButton("Reset to Defaults")
+        reset_btn.clicked.connect(self._reset_location_params)
+        layout.addWidget(reset_btn)
+
+        group.setLayout(layout)
+        return group
+
+    def _reset_location_params(self):
+        """Reset all parameters to spec-compliant defaults"""
+        self.fvg_epsilon_spin.setValue(2)
+        self.fvg_N_spin.setValue(3)
+        self.fvg_sigma_spin.setValue(0.1)
+        self.fvg_beta1_spin.setValue(0.7)
+        self.fvg_beta2_spin.setValue(0.3)
+        self.fvg_phi_spin.setValue(0.2)
+        self.fvg_lambda_spin.setValue(0.0)
+        self.fvg_gamma_spin.setValue(0.95)
+        self.fvg_tau_spin.setValue(50)
+        self.fvg_drop_threshold_spin.setValue(0.01)
+        self.vwap_k_spin.setValue(1.0)
+        self.vwap_lookback_spin.setValue(20)
+        self.vwap_gamma_spin.setValue(0.95)
+        self.vwap_tau_spin.setValue(15)
+        self.vwap_drop_threshold_spin.setValue(0.01)
+        self.sr_window_spin.setValue(20)
+        self.sr_buffer_pts_spin.setValue(2.0)
+        self.sr_sigma_r_spin.setValue(5.0)
+        self.sr_sigma_t_spin.setValue(3.0)
+        self.sr_gamma_spin.setValue(0.95)
+        self.sr_tau_spin.setValue(60)
+        self.sr_drop_threshold_spin.setValue(0.01)
+        self.imbalance_threshold_spin.setValue(100)
+        self.imbalance_gamma_mem_spin.setValue(0.01)
+        self.imbalance_sigma_rev_spin.setValue(20)
+        self.imbalance_gamma_spin.setValue(0.95)
+        self.imbalance_tau_spin.setValue(100)
+        self.imbalance_drop_threshold_spin.setValue(0.01)
+        self.ob_impulse_threshold_spin.setValue(0.02)
+        self.ob_lookback_spin.setValue(10)
+        self.ob_gamma_spin.setValue(0.95)
+        self.ob_tau_spin.setValue(50)
+        self.ob_buffer_spin.setValue(2.0)
+        self.bar_interval_minutes_spin.setValue(1)
+
+    def _create_strategy_panel(self) -> QWidget:
+        """Create the strategy management panel"""
+        strategy_group = QGroupBox("Strategy Configuration")
+        layout = QVBoxLayout()
+        
+        form_layout = QFormLayout()
+        
+        self.strategy_name_edit = QLineEdit()
+        self.strategy_name_edit.setPlaceholderText("e.g., 'My Hammer Strategy'")
+        form_layout.addRow("Strategy Name:", self.strategy_name_edit)
+        
+        self.combination_logic_combo = QComboBox()
+        self.combination_logic_combo.addItems(['AND', 'OR'])
+        form_layout.addRow("Combination Logic:", self.combination_logic_combo)
+        
+        layout.addLayout(form_layout)
+
+        # --- Execution Gates ---
+        self.gates_toggle_button = QToolButton()
+        self.gates_toggle_button.setText("Execution Gates ▼")
+        self.gates_toggle_button.setCheckable(True)
+        self.gates_toggle_button.setChecked(False)
+        self.gates_toggle_button.setStyleSheet("QToolButton { border: none; }")
+        
+        self.gates_group = self._create_gates_group()
+        self.gates_group.setVisible(False)
+        self.gates_toggle_button.toggled.connect(self.gates_group.setVisible)
+
+        layout.addWidget(self.gates_toggle_button)
+        layout.addWidget(self.gates_group)
+        
+        self.create_strategy_button = QPushButton("Create Strategy")
+        self.create_strategy_button.clicked.connect(self._create_strategy)
+        self.duplicate_strategy_button = QPushButton("Duplicate Strategy")
+        self.duplicate_strategy_button.clicked.connect(self._duplicate_strategy)
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.create_strategy_button)
+        button_layout.addWidget(self.duplicate_strategy_button)
+        layout.addLayout(button_layout)
+        
+        strategy_group.setLayout(layout)
+        return strategy_group
+
+    def _create_gates_group(self) -> QGroupBox:
+        """Creates the group box for execution gate toggles."""
+        group = QGroupBox("Gates")
+        layout = QVBoxLayout()
+        
+        # Basic gates
+        basic_gates_label = QLabel("Basic Gates:")
+        basic_gates_label.setStyleSheet("font-weight: bold; color: #ffffff;")
+        layout.addWidget(basic_gates_label)
+        
+        self.volatility_gate_check = QCheckBox("Volatility Gate")
+        self.regime_gate_check = QCheckBox("Regime Gate")
         self.bayesian_gate_check = QCheckBox("Bayesian State Gate")
-        self.bayesian_gate_check.setToolTip("Bayesian state tracking and filter")
-        gates_layout.addRow(self.bayesian_gate_check)
+        
+        layout.addWidget(self.volatility_gate_check)
+        layout.addWidget(self.regime_gate_check)
+        layout.addWidget(self.bayesian_gate_check)
+        
+        # Microstructure gates
+        microstructure_gates_label = QLabel("Microstructure Gates:")
+        microstructure_gates_label.setStyleSheet("font-weight: bold; color: #ffffff; margin-top: 10px;")
+        layout.addWidget(microstructure_gates_label)
+        
+        self.market_environment_gate_check = QCheckBox("Market Environment Gate")
+        self.news_time_gate_check = QCheckBox("News Time Gate")
+        self.tick_validation_gate_check = QCheckBox("Tick Validation Gate")
+        
+        layout.addWidget(self.market_environment_gate_check)
+        layout.addWidget(self.news_time_gate_check)
+        layout.addWidget(self.tick_validation_gate_check)
+        
+        # Advanced gates
+        advanced_gates_label = QLabel("Advanced Gates:")
+        advanced_gates_label.setStyleSheet("font-weight: bold; color: #ffffff; margin-top: 10px;")
+        layout.addWidget(advanced_gates_label)
+        
+        self.fvg_gate_check = QCheckBox("FVG Gate")
+        self.momentum_gate_check = QCheckBox("Momentum Gate")
+        self.volume_gate_check = QCheckBox("Volume Gate")
+        self.time_gate_check = QCheckBox("Time Gate")
+        self.correlation_gate_check = QCheckBox("Correlation Gate")
+        self.order_block_gate_check = QCheckBox("Order Block Gate")
+        
+        layout.addWidget(self.fvg_gate_check)
+        layout.addWidget(self.momentum_gate_check)
+        layout.addWidget(self.volume_gate_check)
+        layout.addWidget(self.time_gate_check)
+        layout.addWidget(self.correlation_gate_check)
+        layout.addWidget(self.order_block_gate_check)
 
-        # Execution gates
-        self.exec_gates_check = QCheckBox("Execution Gates (All Gates Must Pass)")
-        self.exec_gates_check.setToolTip("Require all gates to pass for execution")
-        gates_layout.addRow(self.exec_gates_check)
-
-        # Alignment
-        self.alignment_check = QCheckBox("Alignment (C_align)")
-        self.alignment_check.setToolTip("Alignment score for multi-TF or multi-feature agreement")
-        gates_layout.addRow(self.alignment_check)
-
-        # Master equation
-        self.master_eq_check = QCheckBox("Master Equation (Final Score)")
-        self.master_eq_check.setToolTip("Use master equation for final scoring and execution")
-        gates_layout.addRow(self.master_eq_check)
-
-        # Position sizing
-        self.kelly_check = QCheckBox("Kelly Sizing (f*)")
-        self.kelly_check.setToolTip("Kelly criterion for position sizing")
-        gates_layout.addRow(self.kelly_check)
-
-        # Stop loss
-        self.stop_check = QCheckBox("Stop Loss (ATR-based)")
-        self.stop_check.setToolTip("ATR-based or custom stop loss")
-        self.k_stop_spin = QDoubleSpinBox(); self.k_stop_spin.setRange(0.1, 10.0); self.k_stop_spin.setValue(2.0)
-        gates_layout.addRow(self.stop_check, self.k_stop_spin)
-
-        # Tail risk
-        self.tail_risk_check = QCheckBox("Tail Risk (Fat-tail/GPD)")
-        self.tail_risk_check.setToolTip("Fat-tail risk adjustment using GPD/ES")
-        gates_layout.addRow(self.tail_risk_check)
-
-        gates_group.setLayout(gates_layout)
-        layout.addWidget(gates_group)
-        # --- End Gates/Filters & Execution Logic Section ---
-
-        # --- Advanced Features Section ---
-        advanced_group = QGroupBox("Advanced Features (Mathematical Components)")
-        advanced_layout = QFormLayout()
-
-        # Rolling support/resistance
-        self.rolling_sr_check = QCheckBox("Rolling Support/Resistance (R_t^sup, R_t^inf)")
-        self.rolling_sr_check.setToolTip("Rolling support/resistance: R_t^sup = max_{i=t-W}^t H_i, R_t^inf = min_{i=t-W}^t L_i")
-        self.sr_window_spin = QSpinBox(); self.sr_window_spin.setRange(5, 100); self.sr_window_spin.setValue(20)
-        advanced_layout.addRow(self.rolling_sr_check, self.sr_window_spin)
-
-        # Market maker reversion score
-        self.mmrs_check = QCheckBox("Market Maker Reversion Score (MMRS)")
-        self.mmrs_check.setToolTip("Market-maker reversion score: M_t = exp[-(L_t - R_t^inf)^2/(2σ_r^2)] exp[-ε^2/(2σ_t^2)]")
-        self.sigma_r_spin = QDoubleSpinBox(); self.sigma_r_spin.setRange(0.001, 0.1); self.sigma_r_spin.setValue(0.02)
-        self.sigma_t_spin = QDoubleSpinBox(); self.sigma_t_spin.setRange(0.001, 0.1); self.sigma_t_spin.setValue(0.01)
-        self.epsilon_spin = QDoubleSpinBox(); self.epsilon_spin.setRange(0.0001, 0.01); self.epsilon_spin.setValue(0.001)
-        mmrs_params = QWidget(); mmrs_params_layout = QHBoxLayout(mmrs_params)
-        mmrs_params_layout.addWidget(QLabel("σ_r:")); mmrs_params_layout.addWidget(self.sigma_r_spin)
-        mmrs_params_layout.addWidget(QLabel("σ_t:")); mmrs_params_layout.addWidget(self.sigma_t_spin)
-        mmrs_params_layout.addWidget(QLabel("ε:")); mmrs_params_layout.addWidget(self.epsilon_spin)
-        advanced_layout.addRow(self.mmrs_check, mmrs_params)
-
-        # MMRS threshold
-        self.mmrs_threshold_spin = QDoubleSpinBox(); self.mmrs_threshold_spin.setRange(0.1, 1.0); self.mmrs_threshold_spin.setValue(0.5)
-        advanced_layout.addRow("MMRS Threshold (τ):", self.mmrs_threshold_spin)
-
-        # Pattern confidence
-        self.pattern_conf_check = QCheckBox("Pattern Confidence (q_T)")
-        self.pattern_conf_check.setToolTip("Pattern confidence: q_T = σ[κ(Corr_T - τ)]")
-        self.kappa_conf_spin = QDoubleSpinBox(); self.kappa_conf_spin.setRange(0.1, 10.0); self.kappa_conf_spin.setValue(2.0)
-        self.tau_conf_spin = QDoubleSpinBox(); self.tau_conf_spin.setRange(0.1, 1.0); self.tau_conf_spin.setValue(0.7)
-        conf_params = QWidget(); conf_params_layout = QHBoxLayout(conf_params)
-        conf_params_layout.addWidget(QLabel("κ:")); conf_params_layout.addWidget(self.kappa_conf_spin)
-        conf_params_layout.addWidget(QLabel("τ:")); conf_params_layout.addWidget(self.tau_conf_spin)
-        advanced_layout.addRow(self.pattern_conf_check, conf_params)
-
-        # Imbalance memory
-        self.imbalance_memory_check = QCheckBox("Imbalance Memory System")
-        self.imbalance_memory_check.setToolTip("Imbalance memory for reversion expectation")
-        self.gamma_mem_spin = QDoubleSpinBox(); self.gamma_mem_spin.setRange(0.01, 1.0); self.gamma_mem_spin.setValue(0.1)
-        self.sigma_rev_spin = QDoubleSpinBox(); self.sigma_rev_spin.setRange(0.001, 0.1); self.sigma_rev_spin.setValue(0.02)
-        imb_params = QWidget(); imb_params_layout = QHBoxLayout(imb_params)
-        imb_params_layout.addWidget(QLabel("γ_mem:")); imb_params_layout.addWidget(self.gamma_mem_spin)
-        imb_params_layout.addWidget(QLabel("σ_rev:")); imb_params_layout.addWidget(self.sigma_rev_spin)
-        advanced_layout.addRow(self.imbalance_memory_check, imb_params)
-
-        # Bayesian state tracking
-        self.bayesian_tracking_check = QCheckBox("Bayesian State Tracking")
-        self.bayesian_tracking_check.setToolTip("Bayesian state tracking for regime detection")
-        self.min_state_prob_spin = QDoubleSpinBox(); self.min_state_prob_spin.setRange(0.1, 1.0); self.min_state_prob_spin.setValue(0.3)
-        advanced_layout.addRow(self.bayesian_tracking_check, self.min_state_prob_spin)
-
-        # Execution threshold
-        self.exec_threshold_spin = QDoubleSpinBox(); self.exec_threshold_spin.setRange(0.1, 1.0); self.exec_threshold_spin.setValue(0.5)
-        advanced_layout.addRow("Execution Threshold:", self.exec_threshold_spin)
-
-        advanced_group.setLayout(advanced_layout)
-        layout.addWidget(advanced_group)
-        # --- End Advanced Features Section ---
-
-        panel.setLayout(layout)
-        return panel
+        group.setLayout(layout)
+        return group
 
     def _create_testing_panel(self) -> QWidget:
-        """Create testing and validation panel"""
-        panel = QGroupBox("Testing & Validation")
+        """Create the strategy testing panel"""
+        testing_group = QGroupBox("Strategy Testing")
         layout = QVBoxLayout()
 
         # Dataset selection
         dataset_layout = QHBoxLayout()
-        dataset_layout.addWidget(QLabel("Test Dataset:"))
-
+        dataset_layout.addWidget(QLabel("Dataset:"))
         self.dataset_combo = QComboBox()
-        self.dataset_combo.addItem("-- Select Dataset --")
-        for dataset_name in self.available_datasets.keys():
-            self.dataset_combo.addItem(dataset_name)
+        if self.available_datasets:
+            self.dataset_combo.addItems(self.available_datasets.keys())
         dataset_layout.addWidget(self.dataset_combo)
 
-        self.load_dataset_btn = QPushButton("Load External")
-        self.load_dataset_btn.clicked.connect(self._load_external_dataset)
-        dataset_layout.addWidget(self.load_dataset_btn)
-
+        self.load_dataset_button = QPushButton("Load External")
+        self.load_dataset_button.clicked.connect(self._load_external_dataset)
+        dataset_layout.addWidget(self.load_dataset_button)
         layout.addLayout(dataset_layout)
 
-        # Test controls
-        test_controls = QHBoxLayout()
-
-        self.test_strategy_btn = QPushButton("Test Strategy")
-        self.test_strategy_btn.clicked.connect(self._test_strategy)
-        test_controls.addWidget(self.test_strategy_btn)
-
-        self.stop_test_btn = QPushButton("Stop Test")
-        self.stop_test_btn.setEnabled(False)
-        test_controls.addWidget(self.stop_test_btn)
-
-        layout.addLayout(test_controls)
-
-        # Results display
+        # Buttons
+        button_layout = QHBoxLayout()
+        self.test_strategy_button = QPushButton("Test")
+        self.test_strategy_button.setEnabled(False)
+        self.test_strategy_button.clicked.connect(self._test_strategy)
+        
+        self.accept_strategy_button = QPushButton("Accept and Close")
+        self.accept_strategy_button.setEnabled(False)
+        self.accept_strategy_button.clicked.connect(self._accept_strategy)
+        
+        self.reject_strategy_button = QPushButton("Reject and Close")
+        self.reject_strategy_button.clicked.connect(self._reject_strategy)
+        
+        button_layout.addWidget(self.test_strategy_button)
+        button_layout.addWidget(self.accept_strategy_button)
+        button_layout.addWidget(self.reject_strategy_button)
+        layout.addLayout(button_layout)
+        
+        # Results
         self.results_text = QTextEdit()
         self.results_text.setReadOnly(True)
-        self.results_text.setMaximumHeight(150)
         layout.addWidget(self.results_text)
 
-        # Acceptance controls
-        acceptance_layout = QHBoxLayout()
-
-        self.probability_spin = QDoubleSpinBox()
-        self.probability_spin.setRange(0, 1)
-        self.probability_spin.setValue(0.6)
-        self.probability_spin.setSingleStep(0.01)
-        acceptance_layout.addWidget(QLabel("Probability:"))
-        acceptance_layout.addWidget(self.probability_spin)
-
-        self.accept_btn = QPushButton("Accept & Save Dataset")
-        self.accept_btn.clicked.connect(self._accept_strategy)
-        acceptance_layout.addWidget(self.accept_btn)
-
-        self.reject_btn = QPushButton("Reject")
-        self.reject_btn.clicked.connect(self._reject_strategy)
-        acceptance_layout.addWidget(self.reject_btn)
-
-        layout.addLayout(acceptance_layout)
-
-        panel.setLayout(layout)
-        return panel
+        testing_group.setLayout(layout)
+        return testing_group
 
     def _add_action(self):
-        """Add action to strategy"""
-        pattern_name = self.pattern_combo.currentText()
-        if pattern_name == "-- Select Pattern --":
-            QMessageBox.warning(self, "Warning", "Please select a pattern")
+        """Add a new action to the strategy"""
+        action_name = self.action_name_edit.text()
+        if not action_name:
+            QMessageBox.warning(self, "Warning", "Please enter an action name.")
             return
 
-        # Get pattern from the main hub's dictionary first, then try the registry
-        pattern = self.available_patterns.get(pattern_name)
-        if not pattern:
-            # If not found, it might be a default pattern from the registry
-            pattern_instance = registry.get_pattern(pattern_name)
-            if pattern_instance:
-                # This assumes default patterns might need instantiation
-                # This part of the logic may need to be adjusted based on registry's behavior
-                pattern = pattern_instance
-            else:
-                 QMessageBox.critical(self, "Error", f"Could not find or create pattern: {pattern_name}")
-                 print(f"ERROR: Failed to retrieve pattern '{pattern_name}' from available_patterns and registry.")
-                 return
+        pattern_name = self.pattern_combo.currentText()
+        if pattern_name == "Location Only":
+            pattern = None
+        elif pattern_name == "FVG (Fair Value Gap)":
+            # PATCH: Always use the FVG pattern object from available_patterns
+            pattern = self.available_patterns.get("FVG (Fair Value Gap)")
+            if pattern is None:
+                QMessageBox.warning(self, "Warning", "FVG pattern object not found in available_patterns.")
+                return
+        else:
+            pattern = self.available_patterns.get(pattern_name)
+        
+        if not pattern and pattern_name != "Location Only":
+            QMessageBox.warning(self, "Warning", f"Pattern '{pattern_name}' not found.")
+            return
 
-        # Create action
-        from core.data_structures import TimeRange
-
-        time_range = TimeRange(
-            value=self.time_value.value(),
-            unit=self.time_unit.currentText()
-        )
-
-        # Build filters
+        time_range = {
+            'value': self.time_range_value.value(),
+            'unit': self.time_range_unit.currentText()
+        }
+        
+        # Zone strategy
+        location_strategy = self.location_gate_combo.currentText()
+        if location_strategy == "None":
+            location_strategy = None
+            
+        # Indicator Filters
         filters = []
+        if self.ma_filter_check.isChecked():
+            filters.append({
+                'type': 'ma',
+                'period': self.ma_period_spin.value(),
+                'condition': self.ma_condition_combo.currentText()
+            })
+        if self.vwap_filter_check.isChecked():
+            filters.append({
+                'type': 'vwap',
+                'condition': self.vwap_condition_combo.currentText()
+            })
+        if self.bb_filter_check.isChecked():
+            filters.append({
+                'type': 'bollinger_bands',
+                'period': self.bb_period_spin.value(),
+                'std_dev': self.bb_std_spin.value(),
+                'condition': self.bb_condition_combo.currentText()
+            })
+        
+        # Microstructure Filters
+        if self.tick_frequency_filter_check.isChecked():
+            filters.append({
+                'type': 'tick_frequency',
+                'max_ticks_per_second': self.max_ticks_per_second_spin.value(),
+                'min_book_depth': self.min_book_depth_spin.value()
+            })
+        if self.spread_filter_check.isChecked():
+            filters.append({
+                'type': 'spread',
+                'max_spread_ticks': self.max_spread_ticks_spin.value(),
+                'normal_spread_multiple': self.normal_spread_multiple_spin.value()
+            })
+        if self.order_flow_filter_check.isChecked():
+            filters.append({
+                'type': 'order_flow',
+                'min_cvd_threshold': self.min_cvd_threshold_spin.value(),
+                'large_trade_ratio': self.large_trade_ratio_spin.value()
+            })
+        
+        # Advanced Filters
         if self.volume_filter_check.isChecked():
             filters.append({
                 'type': 'volume',
-                'min_volume': self.min_volume.value()
+                'min_volume': self.min_volume_spin.value(),
+                'volume_ratio': self.volume_ratio_spin.value()
             })
-
+        if self.time_filter_check.isChecked():
+            filters.append({
+                'type': 'time',
+                'start_time': self.start_time_edit.time().toString('HH:mm'),
+                'end_time': self.end_time_edit.time().toString('HH:mm')
+            })
         if self.volatility_filter_check.isChecked():
             filters.append({
                 'type': 'volatility',
-                'range': [self.vol_min.value(), self.vol_max.value()]
+                'min_atr_ratio': self.min_atr_ratio_spin.value(),
+                'max_atr_ratio': self.max_atr_ratio_spin.value()
+            })
+        if self.momentum_filter_check.isChecked():
+            filters.append({
+                'type': 'momentum',
+                'momentum_threshold': self.momentum_threshold_spin.value(),
+                'rsi_range': [self.rsi_min_spin.value(), self.rsi_max_spin.value()]
+            })
+        if self.price_filter_check.isChecked():
+            filters.append({
+                'type': 'price',
+                'min_price': self.min_price_spin.value(),
+                'max_price': self.max_price_spin.value()
             })
 
-        # Create action
         action = Action(
-            name=f"{pattern_name}_{time_range}",
+            name=action_name,
             pattern=pattern,
             time_range=time_range,
-            location_strategy=self.location_combo.currentText() if self.location_combo.currentIndex() > 0 else None,
+            location_strategy=location_strategy,
             filters=filters
         )
 
         self.actions.append(action)
-
-        # Update list
-        list_text = f"{pattern_name} @ {time_range}"
-        if action.location_strategy:
-            list_text += f" near {action.location_strategy}"
-        self.actions_list.addItem(list_text)
-
-        # Reset form
+        self._update_actions_list()
+        self.action_name_edit.clear()
         self.pattern_combo.setCurrentIndex(0)
+        self.location_gate_combo.setCurrentIndex(0)
+        self.ma_filter_check.setChecked(False)
+        self.vwap_filter_check.setChecked(False)
+        self.bb_filter_check.setChecked(False)
+
+    def _update_actions_list(self):
+        """Update the list of actions in the UI"""
+        self.actions_list.clear()
+        for action in self.actions:
+            pattern_str = action.pattern.name if action.pattern else "Location Only"
+            self.actions_list.addItem(f"{action.name} (Pattern: {pattern_str})")
 
     def _remove_action(self):
-        """Remove selected action"""
+        """Remove the selected action"""
         current_row = self.actions_list.currentRow()
         if current_row >= 0:
-            self.actions_list.takeItem(current_row)
-            del self.actions[current_row]
+            self.actions.pop(current_row)
+            self._update_actions_list()
 
     def _clear_actions(self):
         """Clear all actions"""
-        self.actions_list.clear()
-        self.actions.clear()
+        self.actions = []
+        self._update_actions_list()
 
     def _create_strategy(self):
-        """Create strategy from actions"""
-        if not self.actions:
-            QMessageBox.warning(self, "Warning", "Please add at least one action")
-            return
-
-        name = self.strategy_name.text()
+        """Create and save the current strategy"""
+        # Always get the latest name from the QLineEdit
+        name = self.strategy_name_edit.text()
         if not name:
-            QMessageBox.warning(self, "Warning", "Please enter a strategy name")
+            QMessageBox.warning(self, "Warning", "Please enter a strategy name.")
             return
 
-        # Gather gates/filters & execution logic selections
-        gates_and_logic = {
-            'location_gate': self.location_gate_check.isChecked(),
-            'volatility_gate': self.volatility_gate_check.isChecked(),
-            'regime_gate': self.regime_gate_check.isChecked(),
-            'bayesian_gate': self.bayesian_gate_check.isChecked(),
-            'exec_gates': self.exec_gates_check.isChecked(),
-            'alignment': self.alignment_check.isChecked(),
-            'master_equation': self.master_eq_check.isChecked(),
-            'kelly_sizing': self.kelly_check.isChecked(),
-            'stop_loss': self.stop_check.isChecked(),
-            'k_stop': self.k_stop_spin.value(),
-            'tail_risk': self.tail_risk_check.isChecked(),
+        if not self.actions:
+            QMessageBox.warning(self, "Warning", "A strategy must have at least one action.")
+            return
+
+        # Collect location parameters
+        location_params = {
+            # Global settings
+            'bar_interval_minutes': self.bar_interval_minutes_spin.value(),
             
-            # Advanced features
-            'rolling_support_resistance': self.rolling_sr_check.isChecked(),
+            # FVG parameters
+            'fvg_epsilon': self.fvg_epsilon_spin.value(),
+            'fvg_N': self.fvg_N_spin.value(),
+            'fvg_sigma': self.fvg_sigma_spin.value(),
+            'fvg_beta1': self.fvg_beta1_spin.value(),
+            'fvg_beta2': self.fvg_beta2_spin.value(),
+            'fvg_phi': self.fvg_phi_spin.value(),
+            'fvg_lambda': self.fvg_lambda_spin.value(),
+            'fvg_gamma': self.fvg_gamma_spin.value(),
+            'fvg_tau_bars': self.fvg_tau_spin.value(),
+            'fvg_drop_threshold': self.fvg_drop_threshold_spin.value(),
+            
+            # VWAP parameters
+            'vwap_k': self.vwap_k_spin.value(),
+            'vwap_lookback': self.vwap_lookback_spin.value(),
+            'vwap_gamma': self.vwap_gamma_spin.value(),
+            'vwap_tau_bars': self.vwap_tau_spin.value(),
+            'vwap_drop_threshold': self.vwap_drop_threshold_spin.value(),
+            
+            # Support/Resistance parameters
             'sr_window': self.sr_window_spin.value(),
-            'market_maker_reversion': self.mmrs_check.isChecked(),
-            'sigma_r': self.sigma_r_spin.value(),
-            'sigma_t': self.sigma_t_spin.value(),
-            'epsilon': self.epsilon_spin.value(),
-            'mmrs_threshold': self.mmrs_threshold_spin.value(),
-            'pattern_confidence': self.pattern_conf_check.isChecked(),
-            'kappa_conf': self.kappa_conf_spin.value(),
-            'tau_conf': self.tau_conf_spin.value(),
-            'imbalance_memory': self.imbalance_memory_check.isChecked(),
-            'gamma_mem': self.gamma_mem_spin.value(),
-            'sigma_rev': self.sigma_rev_spin.value(),
-            'bayesian_tracking': self.bayesian_tracking_check.isChecked(),
-            'min_state_probability': self.min_state_prob_spin.value(),
-            'exec_threshold': self.exec_threshold_spin.value(),
+            'sr_buffer_pts': self.sr_buffer_pts_spin.value(),
+            'sr_sigma_r': self.sr_sigma_r_spin.value(),
+            'sr_sigma_t': self.sr_sigma_t_spin.value(),
+            'sr_gamma': self.sr_gamma_spin.value(),
+            'sr_tau_bars': self.sr_tau_spin.value(),
+            'sr_drop_threshold': self.sr_drop_threshold_spin.value(),
+            
+            # Imbalance parameters
+            'imbalance_threshold': self.imbalance_threshold_spin.value(),
+            'imbalance_gamma_mem': self.imbalance_gamma_mem_spin.value(),
+            'imbalance_sigma_rev': self.imbalance_sigma_rev_spin.value(),
+            'imbalance_gamma': self.imbalance_gamma_spin.value(),
+            'imbalance_tau_bars': self.imbalance_tau_spin.value(),
+            'imbalance_drop_threshold': self.imbalance_drop_threshold_spin.value(),
+            
+            # Order Block parameters
+            'ob_impulse_threshold': self.ob_impulse_threshold_spin.value(),
+            'ob_lookback': self.ob_lookback_spin.value(),
+            'ob_gamma': self.ob_gamma_spin.value(),
+            'ob_tau_bars': self.ob_tau_spin.value(),
+            'ob_buffer_points': self.ob_buffer_spin.value(),
+            
+            # Legacy parameters for compatibility
+            'sr_threshold': 0.015,
+            'gamma_z': 1.0,
+            'delta_y': 0.0,
+            'omega_mem': 1.0,
+            'kernel_xi': 0.5,
+            'kernel_alpha': 2.0,
         }
+        
+        # The main 'location_gate' is active if any action uses a zone type
+        zone_in_use = any(action.location_strategy and action.location_strategy != "None" for action in self.actions)
+        
+        # Map UI zone names to internal zone types
+        zone_type_mapping = {
+            "FVG (Fair Value Gap)": "FVG",
+            "VWAP Mean-Reversion Band": "VWAP",
+            # Support/Resistance Band removed
+            "Imbalance Memory Zone": "Imbalance",
+            "Order Block": "Order Block"
+        }
+        
+        # Update actions with mapped zone types
+        for action in self.actions:
+            if action.location_strategy and action.location_strategy in zone_type_mapping:
+                action.location_strategy = zone_type_mapping[action.location_strategy]
 
-        # Create pattern strategy
+        # Always use the latest name from the QLineEdit
         self.current_strategy = PatternStrategy(
+            id=f"strat_{datetime.now().strftime('%Y%m%d%H%M%S')}",
             name=name,
-            actions=self.actions.copy(),
-            min_actions_required=self.min_actions_spin.value(),
-            gates_and_logic=gates_and_logic
+            actions=self.actions,
+            combination_logic=self.combination_logic_combo.currentText(),
+            gates_and_logic={
+                'location_gate': zone_in_use,
+                'volatility_gate': self.volatility_gate_check.isChecked(),
+                'regime_gate': self.regime_gate_check.isChecked(),
+                'bayesian_gate': self.bayesian_gate_check.isChecked(),
+                # Microstructure gates
+                'market_environment_gate': self.market_environment_gate_check.isChecked(),
+                'news_time_gate': self.news_time_gate_check.isChecked(),
+                'tick_validation_gate': self.tick_validation_gate_check.isChecked(),
+                # Advanced gates
+                'fvg_gate': self.fvg_gate_check.isChecked(),
+                'momentum_gate': self.momentum_gate_check.isChecked(),
+                'volume_gate': self.volume_gate_check.isChecked(),
+                'time_gate': self.time_gate_check.isChecked(),
+                'correlation_gate': self.correlation_gate_check.isChecked(),
+                'order_block_gate': self.order_block_gate_check.isChecked()
+            },
+            location_gate_params=location_params
         )
-
-        self.results_text.append(f"Strategy '{name}' created with {len(self.actions)} actions")
+        
+        self.test_strategy_button.setEnabled(True)
+        self.accept_strategy_button.setEnabled(True)
+        
+        self.results_text.setText(f"Strategy '{self.current_strategy.name}' has been created/updated.\n"
+                                  "It is now ready for testing.")
+        
+        QMessageBox.information(self, "Strategy Created", 
+                                f"Strategy '{self.current_strategy.name}' has been created and is ready for testing.")
 
     def _test_strategy(self):
-        """Test strategy on selected dataset"""
+        """Run a test of the current strategy"""
         if not self.current_strategy:
-            QMessageBox.warning(self, "Warning", "Please create a strategy first")
+            QMessageBox.warning(self, "Warning", "Please create a strategy first.")
             return
 
         dataset_name = self.dataset_combo.currentText()
-        if dataset_name == "-- Select Dataset --":
-            QMessageBox.warning(self, "Warning", "Please select a dataset")
+        if not dataset_name or not self.available_datasets:
+            QMessageBox.warning(self, "Warning", "Please select or load a dataset.")
             return
 
-        # Get dataset
-        dataset_info = self.available_datasets.get(dataset_name)
-        if not dataset_info:
-            return
-
-        # Run real backtest with timeout
-        self.results_text.clear()
-        self.results_text.append(f"Testing strategy on dataset: {dataset_name}")
-        self.results_text.append(
-            f"Dataset rows: {dataset_info['data'].shape[0] if 'data' in dataset_info else 'Unknown'}")
-        self.results_text.append("\nRunning backtest...")
+        dataset = self.available_datasets[dataset_name]['data']
         
-        # Show progress dialog
-        progress = QProgressDialog("Running backtest...", "Cancel", 0, 100, self)
-        progress.setWindowModality(Qt.WindowModality.WindowModal)
-        progress.show()
+        # Instantiate backtest engine
+        engine = BacktestEngine()
         
         try:
-            # Run backtest with timeout
-            from strategies.strategy_builders import BacktestEngine
-            engine = BacktestEngine()
+            results = engine.run_backtest(self.current_strategy, dataset)
             
-            # Limit dataset size for performance
-            data = dataset_info['data']
-            if len(data) > 5000:
-                data = data.tail(5000)
-                self.results_text.append(f"Limited to last 5000 bars for performance")
-            
-            progress.setValue(25)
-            
-            results = engine.run_backtest(
-                self.current_strategy, 
-                data,
-                initial_capital=100000,
-                risk_per_trade=0.02
+            # Format results for display
+            results_str = (
+                f"Backtest Results for '{self.current_strategy.name}':\n"
+                f"--------------------------------------------------\n"
+                f"Total Trades: {results.get('total_trades', 0)}\n"
+                f"Win Rate: {results.get('win_rate', 0):.2%}\n"
+                f"Profit Factor: {results.get('profit_factor', 0):.2f}\n"
+                f"Total Return: {results.get('total_return', 0):.2%}\n"
+                f"Max Drawdown: {results.get('max_drawdown', 0):.2%}\n"
+                f"Sharpe Ratio: {results.get('sharpe_ratio', 0):.2f}\n"
+                f"Final Capital: ${results.get('final_capital', 0):,.2f}\n"
             )
             
-            progress.setValue(100)
-            
-            # Display results
-            self.results_text.append("\nBacktest Results:")
-            self.results_text.append(f"Total Trades: {results['total_trades']}")
-            self.results_text.append(f"Total Return: {results['total_return']:.2%}")
-            self.results_text.append(f"Sharpe Ratio: {results['sharpe_ratio']:.2f}")
-            self.results_text.append(f"Max Drawdown: {results['max_drawdown']:.2%}")
-            self.results_text.append(f"Win Rate: {results['win_rate']:.2%}")
-            self.results_text.append(f"Profit Factor: {results.get('profit_factor', 0):.2f}")
-            
-            # Update probability based on win rate
-            self.probability_spin.setValue(results['win_rate'])
+            self.results_text.setText(results_str)
             
         except Exception as e:
-            progress.setValue(100)
-            self.results_text.append(f"\nBacktest failed: {str(e)}")
-            # Fallback to mock results for display
-            self.results_text.append("\nMock Results (backtest failed):")
-            self.results_text.append("Signals generated: 47")
-            self.results_text.append("Success rate: 63.8%")
-            self.results_text.append("Average gain: 0.45%")
-            self.results_text.append("Sharpe ratio: 1.82")
-            self.probability_spin.setValue(0.638)
+            self.results_text.setText(f"An error occurred during backtesting: {e}")
+            import traceback
+            traceback.print_exc()
 
     def _accept_strategy(self):
-        """Accept strategy and save"""
-        if not self.current_strategy:
-            QMessageBox.warning(self, "Warning", "No strategy to accept")
-            return
-
-        # Ensure the strategy has the correct name from the input field
-        strategy_name = self.strategy_name.text()
-        if not strategy_name:
-            QMessageBox.warning(self, "Warning", "Please enter a strategy name before accepting.")
-            return
-        self.current_strategy.name = strategy_name
-
-        # Create probability metrics
-        metrics = ProbabilityMetrics()
-        metrics.probability = self.probability_spin.value()
-        metrics.confidence_interval = (
-            max(0, metrics.probability - 0.05),
-            min(1, metrics.probability + 0.05)
-        )
-        metrics.sample_size_adequate = True
-
-        self.current_strategy.update_probability(metrics)
-
-        # Emit the fully-named and configured strategy
-        self.strategy_created.emit(self.current_strategy)
-
-        # Automatically run backtest if dataset is available
-        dataset_name = self.dataset_combo.currentText()
-        if dataset_name != "-- Select Dataset --":
-            dataset_info = self.available_datasets.get(dataset_name)
-            if dataset_info and 'data' in dataset_info:
-                self.results_text.append("\nRunning automatic backtest...")
-                
-                try:
-                    # Run backtest
-                    engine = BacktestEngine()
-                    backtest_results = engine.run_backtest(
-                        self.current_strategy, 
-                        dataset_info['data'],
-                        initial_capital=100000,
-                        risk_per_trade=0.02
-                    )
-                    
-                    # Add strategy name to results
-                    backtest_results['strategy_name'] = self.current_strategy.name
-                    
-                    # Save results to parent window
-                    if self.parent_window:
-                        self.parent_window.on_backtest_complete(backtest_results)
-                    
-                    self.results_text.append(f"Backtest completed: {backtest_results['total_trades']} trades, "
-                                           f"{backtest_results['total_return']:.2%} return")
-                    
-                except Exception as e:
-                    self.results_text.append(f"Backtest failed: {str(e)}")
-                    # Continue with strategy creation even if backtest fails
-
-        QMessageBox.information(self, "Success",
-                                f"Strategy '{self.current_strategy.name}' accepted and passed to main hub.")
-
-        # Clear for next strategy
-        self._clear_actions()
-        self.strategy_name.clear()
-        self.results_text.clear()
+        """Emit signal and close"""
+        if self.current_strategy:
+            self.strategy_created.emit(self.current_strategy)
+            if self.parent_window:
+                self.parent_window.save_strategy(self.current_strategy)
+                self.parent_window.update_strategy_list()
+                self.parent_window.show_status_message(f"Strategy '{self.current_strategy.name}' saved.")
+            self.close()
+        else:
+            QMessageBox.warning(self, "Warning", "No strategy to accept.")
 
     def _reject_strategy(self):
-        """Reject strategy"""
-        reason, ok = QInputDialog.getText(self, "Reject Strategy",
-                                          "Reason for rejection:")
-        if ok and reason:
-            self.results_text.append(f"\nStrategy rejected: {reason}")
+        """Close without saving"""
+        self.close()
 
     def _load_external_dataset(self):
-        """Load external dataset for testing"""
-        filepath, _ = QFileDialog.getOpenFileName(
-            self, "Select Dataset", "", "CSV Files (*.csv)"
-        )
-
-        if filepath:
-            # Would load the dataset here
-            QMessageBox.information(self, "Info",
-                                    "External dataset loading not implemented yet")
+        """Load a dataset from a file"""
+        file_path, _ = QFileDialog.getOpenFileName(self, "Load Dataset", "", "CSV Files (*.csv)")
+        if file_path:
+            try:
+                df = pd.read_csv(file_path, index_col=0, parse_dates=True)
+                dataset_name = file_path.split('/')[-1]
+                self.available_datasets[dataset_name] = {'data': df, 'metadata': {}}
+                self.dataset_combo.addItem(dataset_name)
+                self.dataset_combo.setCurrentText(dataset_name)
+                self.results_text.setText(f"Loaded external dataset: {dataset_name}")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to load dataset: {e}")
 
     def load_strategy_for_editing(self, strategy: PatternStrategy):
-        """Loads an existing strategy into the builder UI for editing."""
-        self.current_strategy = strategy
-        
-        # Load name
-        self.strategy_name.setText(strategy.name)
-        
-        # Load actions
-        self.actions = strategy.actions
-        self.actions_list.clear()
-        for action in self.actions:
-            self.actions_list.addItem(f"{action.name} (Pattern: {action.pattern.name})")
+        """Load a strategy into the builder for editing"""
+        if self.parent_window:
+            self.parent_window.show_status_message(f"Loading strategy '{strategy.name}' for editing...")
 
-        # Load parameters
-        self.min_actions_spin.setValue(strategy.min_actions_required)
+        self.strategy_name_edit.setText(strategy.name)
+        self.combination_logic_combo.setCurrentText(strategy.combination_logic)
         
-        # Load gates and logic
-        if hasattr(strategy, 'gates_and_logic'):
-            for key, value in strategy.gates_and_logic.items():
-                widget = self.findChild(QWidget, key) # This relies on object names being set
-                if isinstance(widget, QCheckBox):
-                    widget.setChecked(value)
-                elif isinstance(widget, QSpinBox) or isinstance(widget, QDoubleSpinBox):
-                    widget.setValue(value)
+        # Clear existing UI state and load actions
+        self._clear_actions()
+        self.actions = list(strategy.actions) # Use a copy
+        self._update_actions_list()
+
+        # Load gates
+        gates = strategy.gates_and_logic or {}
+        self.volatility_gate_check.setChecked(gates.get('volatility_gate', False))
+        self.regime_gate_check.setChecked(gates.get('regime_gate', False))
+        self.bayesian_gate_check.setChecked(gates.get('bayesian_gate', False))
+        
+        # The location gate dropdowns are handled by selecting an action
+        # For now, just ensure the params button is in the correct state
+        self._toggle_location_params_button(self.location_gate_combo.currentText())
+
+        # Load location parameters for the Definitive Zone
+        if strategy.location_gate_params:
+            for name, widget in self.location_param_widgets.items():
+                if name in strategy.location_gate_params:
+                    widget.setValue(strategy.location_gate_params[name])
+                else:
+                    widget.setValue(DEFAULT_LOCATION_PARAMS[name])
+        else:
+            self._reset_location_params()
+
+        # Load filter settings
+        for f in strategy.filters:
+            if f.get('type') == 'ma':
+                self.ma_filter_check.setChecked(True)
+                self.ma_period_spin.setValue(f.get('period', 20))
+                self.ma_condition_combo.setCurrentText(f.get('condition', 'above'))
+            elif f.get('type') == 'vwap':
+                self.vwap_filter_check.setChecked(True)
+                self.vwap_condition_combo.setCurrentText(f.get('condition', 'above'))
+            elif f.get('type') == 'bollinger_bands':
+                self.bb_filter_check.setChecked(True)
+                self.bb_period_spin.setValue(f.get('period', 20))
+                self.bb_std_spin.setValue(f.get('std_dev', 2.0))
+                self.bb_condition_combo.setCurrentText(f.get('condition', 'inside'))
+
+        self.current_strategy = strategy
+        self.test_strategy_button.setEnabled(True)
+        self.accept_strategy_button.setEnabled(True)
         
         self.results_text.setText(f"Loaded strategy '{strategy.name}' for editing.")
+        self.tabs.setCurrentIndex(0) # Switch to builder tab
+        self.show()
+        self.raise_()
+        self.activateWindow()
+
+    def _display_action_details(self, current, previous):
+        """When an action is selected in the list, display its details in the UI."""
+        if current is None:
+            return
+            
+        row = self.actions_list.row(current)
+        if row < 0 or row >= len(self.actions):
+            return
+
+        action = self.actions[row]
+        
+        # --- Reset all filter checks before loading action details ---
+        self.ma_filter_check.setChecked(False)
+        self.vwap_filter_check.setChecked(False)
+        self.bb_filter_check.setChecked(False)
+
+        self.action_name_edit.setText(action.name)
+        
+        if action.pattern:
+            self.pattern_combo.setCurrentText(action.pattern.name)
+        else:
+            self.pattern_combo.setCurrentText("Location Only")
+            
+        if action.location_strategy:
+            self.location_gate_combo.setCurrentText(action.location_strategy)
+        else:
+            self.location_gate_combo.setCurrentText("None")
+
+        if action.time_range:
+            self.time_range_value.setValue(action.time_range.get('value', 1))
+            self.time_range_unit.setCurrentText(action.time_range.get('unit', 'minutes'))
+            
+        # Load filter settings
+        for f in action.filters:
+            if f.get('type') == 'ma':
+                self.ma_filter_check.setChecked(True)
+                self.ma_period_spin.setValue(f.get('period', 20))
+                self.ma_condition_combo.setCurrentText(f.get('condition', 'above'))
+            elif f.get('type') == 'vwap':
+                self.vwap_filter_check.setChecked(True)
+                self.vwap_condition_combo.setCurrentText(f.get('condition', 'above'))
+            elif f.get('type') == 'bollinger_bands':
+                self.bb_filter_check.setChecked(True)
+                self.bb_period_spin.setValue(f.get('period', 20))
+                self.bb_std_spin.setValue(f.get('std_dev', 2.0))
+                self.bb_condition_combo.setCurrentText(f.get('condition', 'inside'))
+
+    def _duplicate_strategy(self):
+        """Duplicate the current strategy, including all actions, gates, and parameters."""
+        if not self.current_strategy:
+            QMessageBox.warning(self, "Warning", "No strategy to duplicate.")
+            return
+        # Deep copy the strategy and actions
+        new_strategy = deepcopy(self.current_strategy)
+        new_strategy.name = f"{self.current_strategy.name}_copy"
+        self.load_strategy_for_editing(new_strategy)
+        QMessageBox.information(self, "Strategy Duplicated", f"Strategy '{self.current_strategy.name}' duplicated. You can now add or remove actions.")

@@ -10,11 +10,43 @@ from typing import Dict, List, Any, Optional, Tuple
 import pandas as pd
 import numpy as np
 from core.data_structures import OHLCRatio, TimeRange, BaseStrategy
+# Import get_candle_metrics locally to avoid circular import
 from core.feature_quantification import (
     body_size, upper_wick, lower_wick, wick_ratios, doji_ness,
     two_bar_strength, dual_layer_location, momentum_boost,
     realized_vol, atr, bayesian_update
 )
+
+
+def get_candle_metrics(data: pd.DataFrame) -> Dict[str, pd.Series]:
+    """Calculate candle metrics for pattern detection"""
+    # Calculate basic metrics
+    body_size = (data['close'] - data['open']).abs()
+    total_range = (data['high'] - data['low']).replace(0, np.nan)
+    body_ratio = body_size / total_range
+    
+    # Calculate wicks
+    upper_wick = data['high'] - data[['open', 'close']].max(axis=1)
+    lower_wick = data[['open', 'close']].min(axis=1) - data['low']
+    upper_wick_ratio = upper_wick / total_range
+    lower_wick_ratio = lower_wick / total_range
+    
+    # Calculate direction
+    direction = pd.Series('neutral', index=data.index)
+    direction.loc[data['close'] > data['open']] = 'bullish'
+    direction.loc[data['close'] < data['open']] = 'bearish'
+    direction.loc[body_size < total_range * 0.05] = 'neutral'  # Very small body
+    
+    return {
+        'body_size': body_size,
+        'body_ratio': body_ratio,
+        'upper_wick': upper_wick,
+        'lower_wick': lower_wick,
+        'upper_wick_ratio': upper_wick_ratio,
+        'lower_wick_ratio': lower_wick_ratio,
+        'total_range': total_range,
+        'direction': direction
+    }
 
 
 class CandlestickPattern(ABC):
@@ -73,12 +105,10 @@ class IIBarsPattern(CandlestickPattern):
                     (data['low'] >= data['low'].shift(1))
         
         # An II-Bars pattern is a series of consecutive inside bars.
-        # We use a rolling window to check if all bars in the window are inside bars.
-        # The `all()` method on the rolling object returns True if every value in the window is True.
-        signals = is_inside.rolling(window=self.min_bars).all()
+        # Use rolling apply(all) for pandas compatibility
+        signals = is_inside.rolling(window=self.min_bars).apply(all).fillna(False)
         
-        # Rolling operations produce NaNs for the initial periods; fill them with False.
-        return signals.fillna(False)
+        return signals.astype(bool)
     
     def get_strength(self, data: pd.DataFrame) -> pd.Series:
         """Calculate II pattern strength based on volatility compression."""
@@ -186,11 +216,19 @@ class EngulfingPattern(CandlestickPattern):
         # Define engulfing conditions
         body_engulfs_prev_body = body > prev_body
         
-        # Bullish Engulfing: previous is bearish, current is bullish, and current body engulfs previous body
-        is_bullish_engulfing = (is_prev_bearish & is_current_bullish & body_engulfs_prev_body)
+        # Check if current bar's range engulfs previous bar's range
+        current_high = data['high']
+        current_low = data['low']
+        prev_high = data['high'].shift(1)
+        prev_low = data['low'].shift(1)
         
-        # Bearish Engulfing: previous is bullish, current is bearish, and current body engulfs previous body
-        is_bearish_engulfing = (is_prev_bullish & is_current_bearish & body_engulfs_prev_body)
+        range_engulfs_prev = (current_high > prev_high) & (current_low < prev_low)
+        
+        # Bullish Engulfing: previous is bearish, current is bullish, and current bar engulfs previous bar
+        is_bullish_engulfing = (is_prev_bearish & is_current_bullish & range_engulfs_prev)
+        
+        # Bearish Engulfing: previous is bullish, current is bearish, and current bar engulfs previous bar
+        is_bearish_engulfing = (is_prev_bullish & is_current_bearish & range_engulfs_prev)
 
         # Return signals based on the selected pattern type
         if self.pattern_type == 'bullish':
@@ -298,24 +336,58 @@ class CustomPattern(CandlestickPattern):
         return strength
 
     def _check_ratio_vectorized(self, data: pd.DataFrame, ratio: OHLCRatio) -> pd.Series:
-        """Perform a single ratio check in a vectorized manner."""
+        """Perform a single ratio check in a vectorized manner with operator support."""
         results = pd.Series(False, index=data.index)
+        total_range = (data['high'] - data['low']).replace(0, np.nan)
+        
         if ratio.body_ratio is not None:
-            val = (data['close'] - data['open']).abs() / (data['high'] - data['low']).replace(0, np.nan)
-            results = val > ratio.body_ratio
+            body = (data['close'] - data['open']).abs()
+            body_ratio = body / total_range
+            op = getattr(ratio, 'body_ratio_op', '>')
+            if op == '>':
+                results = body_ratio > ratio.body_ratio
+            elif op == '<':
+                results = body_ratio < ratio.body_ratio
+            elif op == '>=':
+                results = body_ratio >= ratio.body_ratio
+            elif op == '<=':
+                results = body_ratio <= ratio.body_ratio
+            elif op == '==':
+                results = body_ratio == ratio.body_ratio
         elif ratio.upper_wick_ratio is not None:
-            val = (data['high'] - data[['open', 'close']].max(axis=1)) / (data['high'] - data['low']).replace(0, np.nan)
-            results = val > ratio.upper_wick_ratio
+            upper_wick = data['high'] - data[['open', 'close']].max(axis=1)
+            upper_wick_ratio = upper_wick / total_range
+            op = getattr(ratio, 'upper_wick_ratio_op', '>')
+            if op == '>':
+                results = upper_wick_ratio > ratio.upper_wick_ratio
+            elif op == '<':
+                results = upper_wick_ratio < ratio.upper_wick_ratio
+            elif op == '>=':
+                results = upper_wick_ratio >= ratio.upper_wick_ratio
+            elif op == '<=':
+                results = upper_wick_ratio <= ratio.upper_wick_ratio
+            elif op == '==':
+                results = upper_wick_ratio == ratio.upper_wick_ratio
         elif ratio.lower_wick_ratio is not None:
-            val = (data[['open', 'close']].min(axis=1) - data['low']) / (data['high'] - data['low']).replace(0, np.nan)
-            results = val > ratio.lower_wick_ratio
+            lower_wick = data[['open', 'close']].min(axis=1) - data['low']
+            lower_wick_ratio = lower_wick / total_range
+            op = getattr(ratio, 'lower_wick_ratio_op', '>')
+            if op == '>':
+                results = lower_wick_ratio > ratio.lower_wick_ratio
+            elif op == '<':
+                results = lower_wick_ratio < ratio.lower_wick_ratio
+            elif op == '>=':
+                results = lower_wick_ratio >= ratio.lower_wick_ratio
+            elif op == '<=':
+                results = lower_wick_ratio <= ratio.lower_wick_ratio
+            elif op == '==':
+                results = lower_wick_ratio == ratio.lower_wick_ratio
         elif ratio.custom_formula is not None:
-            # Evaluate custom formula if provided
             try:
                 results = data.eval(ratio.custom_formula)
             except Exception:
                 results = pd.Series(False, index=data.index)
-        return results
+        return results.fillna(False)
 
     def _apply_advanced_features(self, data: pd.DataFrame, index: int, bars: pd.DataFrame) -> bool:
         """
@@ -476,6 +548,108 @@ class HammerPattern(CandlestickPattern):
         # Strength: ratio of lower wick to body, normalized
         with np.errstate(divide='ignore', invalid='ignore'):
             strength = (lower / (body + 1e-6)).clip(0, 5) / 5
+        return strength.where(signals, 0.0).fillna(0.0)
+
+
+class SpinningTopPattern(CandlestickPattern):
+    """Spinning Top pattern"""
+    def __init__(self, timeframes: List[TimeRange], **kwargs):
+        super().__init__("SpinningTop", timeframes)
+        # Use parameters from enhanced patterns
+        from patterns.enhanced_candlestick_patterns import PredefinedPatterns
+        self.parameters = PredefinedPatterns.spinning_top()
+
+    def get_required_bars(self) -> int:
+        return 1
+
+    def detect(self, data: pd.DataFrame) -> pd.Series:
+        if not self.validate_data(data):
+            return pd.Series(False, index=data.index)
+        
+        # Get candle metrics
+        metrics = get_candle_metrics(data)
+        
+        # Use the parametric pattern detection
+        return self.parameters.get_match_signals(metrics)
+
+    def get_strength(self, data: pd.DataFrame) -> pd.Series:
+        signals = self.detect(data)
+        # Strength based on how well the pattern matches criteria
+        metrics = get_candle_metrics(data)
+        
+        # Calculate strength based on body ratio and wick symmetry
+        body_ratio = metrics['body_ratio']
+        wick_symmetry = 1 - abs(metrics['upper_wick_ratio'] - metrics['lower_wick_ratio'])
+        
+        strength = (body_ratio * 0.5 + wick_symmetry * 0.5).clip(0, 1)
+        return strength.where(signals, 0.0).fillna(0.0)
+
+
+class DojiPattern(CandlestickPattern):
+    """Doji pattern"""
+    def __init__(self, timeframes: List[TimeRange], **kwargs):
+        super().__init__("Doji", timeframes)
+        # Use parameters from enhanced patterns
+        from patterns.enhanced_candlestick_patterns import PredefinedPatterns
+        self.parameters = PredefinedPatterns.doji()
+
+    def get_required_bars(self) -> int:
+        return 1
+
+    def detect(self, data: pd.DataFrame) -> pd.Series:
+        if not self.validate_data(data):
+            return pd.Series(False, index=data.index)
+        
+        # Get candle metrics
+        metrics = get_candle_metrics(data)
+        
+        # Use the parametric pattern detection
+        return self.parameters.get_match_signals(metrics)
+
+    def get_strength(self, data: pd.DataFrame) -> pd.Series:
+        signals = self.detect(data)
+        # Strength based on how well the pattern matches criteria
+        metrics = get_candle_metrics(data)
+        
+        # Calculate strength based on body ratio and wick symmetry
+        body_ratio = metrics['body_ratio']
+        wick_symmetry = 1 - abs(metrics['upper_wick_ratio'] - metrics['lower_wick_ratio'])
+        
+        strength = (body_ratio * 0.3 + wick_symmetry * 0.7).clip(0, 1)
+        return strength.where(signals, 0.0).fillna(0.0)
+
+
+class MarubozuPattern(CandlestickPattern):
+    """Marubozu pattern (no wick)"""
+    def __init__(self, timeframes: List[TimeRange], **kwargs):
+        super().__init__("Marubozu", timeframes)
+        # Use parameters from enhanced patterns
+        from patterns.enhanced_candlestick_patterns import PredefinedPatterns
+        self.parameters = PredefinedPatterns.marubozu()
+
+    def get_required_bars(self) -> int:
+        return 1
+
+    def detect(self, data: pd.DataFrame) -> pd.Series:
+        if not self.validate_data(data):
+            return pd.Series(False, index=data.index)
+        
+        # Get candle metrics
+        metrics = get_candle_metrics(data)
+        
+        # Use the parametric pattern detection
+        return self.parameters.get_match_signals(metrics)
+
+    def get_strength(self, data: pd.DataFrame) -> pd.Series:
+        signals = self.detect(data)
+        # Strength based on how well the pattern matches criteria
+        metrics = get_candle_metrics(data)
+        
+        # Calculate strength based on body ratio and lack of wicks
+        body_ratio = metrics['body_ratio']
+        wick_absence = 1 - (metrics['upper_wick_ratio'] + metrics['lower_wick_ratio'])
+        
+        strength = (body_ratio * 0.7 + wick_absence * 0.3).clip(0, 1)
         return strength.where(signals, 0.0).fillna(0.0)
 
 

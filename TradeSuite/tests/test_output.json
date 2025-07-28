@@ -1,0 +1,19 @@
+{
+  "strategy_name": "Test_Fvg",
+  "data_length": 11,
+  "signals": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+  ],
+  "trades": [],
+  "zones": []
+}

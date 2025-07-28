@@ -504,6 +504,12 @@ class StatisticsWindow(QMainWindow):
         if self.parent_window and hasattr(self.parent_window, 'datasets'):
             for dataset_name in self.parent_window.datasets.keys():
                 self.dataset_combo.addItem(dataset_name)
+        # Auto-select last loaded dataset if available
+        if self.parent_window and hasattr(self.parent_window, 'last_loaded_dataset'):
+            last = self.parent_window.last_loaded_dataset
+            idx = self.dataset_combo.findText(last)
+            if idx > 0:
+                self.dataset_combo.setCurrentIndex(idx)
                 
     def refresh_data(self):
         """Refresh strategy and dataset lists"""

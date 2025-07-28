@@ -1,0 +1,31 @@
+{
+  "name": "NQ_Complete_Test",
+  "timeframes": [
+    "1m",
+    "5m",
+    "original",
+    "15m"
+  ],
+  "original_timeframes": [
+    "1m",
+    "5m"
+  ],
+  "created_at": "2025-06-29T19:18:53.291754",
+  "original_rows": 3286734,
+  "timeframe_rows": {
+    "1m": 312582,
+    "5m": 62526,
+    "15m": 20842
+  },
+  "source": "NQ_5s.csv",
+  "description": "Complete workflow test with real data",
+  "saved_at": "2025-06-29T19:19:14.845158",
+  "rows": 20842,
+  "columns": [
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume"
+  ]
+}

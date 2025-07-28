@@ -1,0 +1,56 @@
+{
+  "strategy_name": "Test_OrderBlock",
+  "data_length": 8,
+  "signals": [
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false
+  ],
+  "trades": [],
+  "zones": [
+    {
+      "type": "OrderBlock",
+      "direction": "bullish",
+      "zone_min": 102.0,
+      "zone_max": 105.0,
+      "midpoint": 103.5,
+      "creation_index": 3,
+      "timestamp": "3",
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "zone_type": "OrderBlock",
+      "zone_direction": "bullish"
+    },
+    {
+      "type": "OrderBlock",
+      "direction": "bullish",
+      "zone_min": 102.0,
+      "zone_max": 105.0,
+      "midpoint": 103.5,
+      "creation_index": 3,
+      "timestamp": "3",
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "zone_type": "OrderBlock",
+      "zone_direction": "bullish"
+    },
+    {
+      "type": "OrderBlock",
+      "direction": "bullish",
+      "zone_min": 102.0,
+      "zone_max": 105.0,
+      "midpoint": 103.5,
+      "creation_index": 3,
+      "timestamp": "3",
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "zone_type": "OrderBlock",
+      "zone_direction": "bullish"
+    }
+  ]
+}

@@ -12,7 +12,12 @@ import numpy as np
 from enum import Enum
 
 from core.data_structures import TimeRange
+from patterns.candlestick_patterns import CandlestickPattern
 
+# Add at the top of the file (after imports)
+body_size = lambda open_, close_: np.abs(close_ - open_)
+upper_wick = lambda open_, close_, high: high - np.maximum(open_, close_)
+lower_wick = lambda open_, close_, low: np.minimum(open_, close_) - low
 
 class PatternDirection(Enum):
     """Pattern direction"""
@@ -29,9 +34,12 @@ def get_candle_metrics(data: pd.DataFrame) -> Dict[str, pd.Series]:
     total_range = (data['high'] - data['low']).replace(0, np.nan)
     body_size_s = body_size(data['open'], data['close'])
     
-    direction = pd.Series(PatternDirection.NEUTRAL, index=data.index)
-    direction = direction.where(data['close'] <= data['open'], PatternDirection.BULLISH)
-    direction = direction.where(data['close'] >= data['open'], PatternDirection.BEARISH)
+    # Fix direction classification to match single-candle version
+    # Use numpy.where for more explicit control
+    direction_values = np.where(data['close'] > data['open'], PatternDirection.BULLISH, PatternDirection.BEARISH)
+    # Override with NEUTRAL when body is very small (less than 5% of total range)
+    direction_values = np.where(body_size_s < total_range * 0.05, PatternDirection.NEUTRAL, direction_values)
+    direction = pd.Series(direction_values, index=data.index)
 
     return {
         'body_size': body_size_s,
@@ -164,8 +172,11 @@ class CustomParametricPattern:
         
     def detect(self, data: pd.DataFrame) -> pd.Series:
         """Detect pattern in data using vectorized operations."""
+        # Always use RangeIndex for all index math
+        df = data.reset_index(drop=True)
+        
         # 1. Calculate all candle metrics at once
-        metrics = get_candle_metrics(data)
+        metrics = get_candle_metrics(df)
         
         # 2. Get initial matches based on single-candle parameters
         signals = self.parameters.get_match_signals(metrics)
@@ -175,7 +186,7 @@ class CustomParametricPattern:
             signals = signals.rolling(window=self.parameters.consecutive_bars).all()
 
         if self.parameters.trend_requirement:
-            trend_signals = self._check_trend_vectorized(data)
+            trend_signals = self._check_trend_vectorized(df)
             signals &= trend_signals
             
         final_signals = signals.fillna(False)
@@ -184,15 +195,13 @@ class CustomParametricPattern:
         self.pattern_occurrences = final_signals[final_signals].index.tolist()
         
         if self.parameters.measure_bars > 0 and final_signals.any():
-            entry_prices = data['close'][final_signals]
+            entry_prices = df['close'][final_signals]
             future_indices = entry_prices.index.to_series() + self.parameters.measure_bars
-            
-            # Ensure future indices are within bounds
-            valid_future_indices = future_indices[future_indices < len(data)]
+            valid_future_indices = future_indices[future_indices < len(df)]
             if not valid_future_indices.empty:
-                future_prices = data['close'].iloc[valid_future_indices]
-                # Align indices for calculation
-                entry_prices_aligned = entry_prices.loc[valid_future_indices.index - self.parameters.measure_bars]
+                future_prices = df['close'].iloc[valid_future_indices.values]
+                # Align indices for calculation using iloc
+                entry_prices_aligned = entry_prices.iloc[valid_future_indices.index - self.parameters.measure_bars]
                 
                 price_changes_s = (future_prices.values - entry_prices_aligned.values) / entry_prices_aligned.values
                 self.price_changes = price_changes_s.tolist()
@@ -330,33 +339,48 @@ class FVGIndicator:
             candle1 = data.iloc[i-2]
             candle2 = data.iloc[i-1]
             candle3 = data.iloc[i]
+            gap_size = (candle3['low'] - candle1['high']) / candle1['high']
+            print(f"[FVG GAP CHECK] Bar {i}: candle1_high={candle1['high']}, candle3_low={candle3['low']}, gap_size={gap_size:.6f}")
+            # DEBUG: Print candle info for synthetic test data
+            if len(data) <= 20:  # Only for small test datasets
+                print(f"[FVG DEBUG] Bar {i}: Candle1 (i-2): H={candle1['high']:.2f}, L={candle1['low']:.2f}")
+                print(f"[FVG DEBUG] Bar {i}: Candle2 (i-1): H={candle2['high']:.2f}, L={candle2['low']:.2f}")
+                print(f"[FVG DEBUG] Bar {i}: Candle3 (i): H={candle3['high']:.2f}, L={candle3['low']:.2f}")
             
             # Check for bullish FVG (gap up)
             if candle1['high'] < candle3['low']:
                 gap_size = (candle3['low'] - candle1['high']) / candle1['high']
                 if gap_size >= self.min_gap_size:
+                    print(f"[FVG DETECTED] Bullish FVG at bar {i}: gap_size={gap_size:.4f}, high[i-2]={candle1['high']}, low[i]={candle3['low']}")
                     fvg = FVGLevel(
-                        timestamp=data.index[i-1],
+                        timestamp=i,  # PATCH: use integer index for timestamp
                         high=candle3['low'],
                         low=candle1['high'],
                         midpoint=(candle3['low'] + candle1['high']) / 2,
                         direction=PatternDirection.BULLISH
                     )
                     self.active_fvgs.append(fvg)
-                    
+                    print(f"[FVG DETECTED] Appended: {fvg}")
+            
             # Check for bearish FVG (gap down)
             elif candle1['low'] > candle3['high']:
                 gap_size = (candle1['low'] - candle3['high']) / candle3['high']
                 if gap_size >= self.min_gap_size:
+                    if len(data) <= 20:  # Only for small test datasets
+                        print(f"[FVG DEBUG] Bearish FVG detected at bar {i}: gap_size={gap_size:.4f}")
                     fvg = FVGLevel(
-                        timestamp=data.index[i-1],
+                        timestamp=i,  # PATCH: use integer index for timestamp
                         high=candle1['low'],
                         low=candle3['high'],
                         midpoint=(candle1['low'] + candle3['high']) / 2,
                         direction=PatternDirection.BEARISH
                     )
                     self.active_fvgs.append(fvg)
-                    
+                    if len(data) <= 20:  # Only for small test datasets
+                        print(f"[FVG DEBUG] Added bearish FVG: {fvg}")
+            elif len(data) <= 20:  # Only for small test datasets
+                print(f"[FVG DEBUG] No FVG at bar {i}: candle1_high={candle1['high']:.2f}, candle3_low={candle3['low']:.2f}, candle1_low={candle1['low']:.2f}, candle3_high={candle3['high']:.2f}")
+            
         # Process FVGs with price action
         self._process_fvg_touches(data)
         
@@ -594,3 +618,60 @@ class BreakerIndicator:
         else:
             # Bearish breaker broken if close above it
             return bar['close'] > breaker.high * 1.001  # Small buffer
+
+
+class FVGPattern(CandlestickPattern):
+    """Fair Value Gap pattern for use in GUI and backtest engine"""
+    def __init__(self, timeframes=None, min_gap_size=0.001, max_touches=3):
+        if timeframes is None:
+            timeframes = [TimeRange(1, 'm')]
+        super().__init__("FVG", timeframes)
+        self.indicator = FVGIndicator(min_gap_size=min_gap_size, max_touches=max_touches)
+        self.name = "FVG"
+
+    def get_required_bars(self):
+        return 3
+
+    def detect(self, data: pd.DataFrame) -> pd.Series:
+        # Always use RangeIndex for all index math
+        df = data.reset_index(drop=True)
+        # Mark True at the timestamp of each detected FVG
+        fvg_dict = self.indicator.calculate(df)
+        active = fvg_dict.get('active', [])
+        signals = pd.Series(False, index=df.index)
+        for fvg in active:
+            if fvg.timestamp in signals.index:
+                signals.loc[fvg.timestamp] = True
+        return signals
+
+    def detect_zones(self, data: pd.DataFrame) -> list:
+        # Always use RangeIndex for all index math
+        df = data.reset_index(drop=True)
+        # Use the full DataFrame to detect all FVGs
+        fvg_dict = self.indicator.calculate(df)
+        active = fvg_dict.get('active', [])
+        detected_zones = []
+        for fvg in active:
+            if hasattr(fvg, 'timestamp'):
+                i = fvg.timestamp if isinstance(fvg.timestamp, int) else df.index.get_loc(fvg.timestamp)
+                zone = {
+                    'timestamp': fvg.timestamp,
+                    'bar_index': i,
+                    'zone_min': min(fvg.low, fvg.high),
+                    'zone_max': max(fvg.low, fvg.high),
+                    'zone_type': 'FVG',
+                    'zone_direction': getattr(fvg, 'direction', None).value if hasattr(fvg, 'direction') else None
+                }
+                detected_zones.append(zone)
+        return detected_zones
+
+    def get_strength(self, data: pd.DataFrame) -> pd.Series:
+        # Return the strength for each detected FVG
+        df = data.reset_index(drop=True)
+        fvg_dict = self.indicator.calculate(df)
+        active = fvg_dict.get('active', [])
+        strength = pd.Series(0.0, index=df.index)
+        for fvg in active:
+            if fvg.timestamp in strength.index:
+                strength.loc[fvg.timestamp] = fvg.strength
+        return strength

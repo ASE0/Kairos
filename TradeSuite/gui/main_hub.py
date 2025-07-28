@@ -21,6 +21,7 @@ from core.dataset_manager import DatasetInfo
 from core.workspace_manager import WorkspaceManager
 from core.strategy_manager import StrategyManager
 from patterns.candlestick_patterns import *
+from patterns.enhanced_candlestick_patterns import FVGPattern
 from processors.data_processor import *
 from strategies.strategy_builders import *
 from statistics1.probability_calculator import *
@@ -37,8 +38,8 @@ logger = logging.getLogger(__name__)
 class TradingStrategyHub(QMainWindow):
     """Main hub application for trading strategy building"""
     
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.setWindowTitle("Trading Strategy Hub - Professional Edition")
         self.setGeometry(100, 100, 1200, 800)
         
@@ -72,6 +73,10 @@ class TradingStrategyHub(QMainWindow):
         # Load workspace and strategies
         self._load_workspace()
         self._load_strategies_and_results()
+        
+        self.last_session_file = 'last_session.json'
+        self.last_loaded_dataset = None
+        self._load_last_session()
         
     def _setup_ui(self):
         """Setup main UI layout"""
@@ -683,7 +688,9 @@ class TradingStrategyHub(QMainWindow):
                     'kappa_m': 0.3,
                     'body_size': True
                 }
-            )
+            ),
+            # Add FVGPattern for GUI use
+            'FVG (Fair Value Gap)': FVGPattern(timeframes=[TimeRange(1, 'm')], min_gap_size=0.001)
         }
         
         for name, pattern in default_patterns.items():
@@ -981,7 +988,7 @@ class TradingStrategyHub(QMainWindow):
         """)
         
     def _load_workspace(self):
-        """Load existing workspace data"""
+        """Load existing workspace data and restore last dataset if available."""
         try:
             # Load saved patterns
             saved_patterns = self.workspace_manager.list_patterns()
@@ -989,23 +996,25 @@ class TradingStrategyHub(QMainWindow):
                 pattern = self.workspace_manager.load_pattern(pattern_name)
                 if pattern:
                     self.patterns[pattern_name] = pattern
-            
             # Load saved strategies
             saved_strategies = self.workspace_manager.list_strategies()
             for strategy_name in saved_strategies:
                 strategy = self.workspace_manager.load_strategy(strategy_name)
                 if strategy:
                     self.strategies['pattern'][strategy_name] = strategy
-            
             # Load saved datasets
             saved_datasets = self.workspace_manager.list_datasets()
             for dataset_name in saved_datasets:
                 dataset_info = self.workspace_manager.load_dataset(dataset_name)
                 if dataset_info:
                     self.datasets[dataset_name] = dataset_info
-            
             self._log(f"Loaded workspace: {len(saved_patterns)} patterns, {len(saved_strategies)} strategies, {len(saved_datasets)} datasets")
-            
+            # Restore last loaded dataset if available
+            self._load_last_session()
+            if self.last_loaded_dataset and self.last_loaded_dataset in self.datasets:
+                # Optionally, set as active in UI (if such a method exists)
+                self._log(f"Restored last loaded dataset: {self.last_loaded_dataset}")
+                # You may want to call a method to update the UI selection here
         except Exception as e:
             self._log(f"Error loading workspace: {e}")
     
@@ -1104,6 +1113,30 @@ class TradingStrategyHub(QMainWindow):
         self._refresh_statistics_windows()
         
         self._update_dashboard()
+    
+    def save_strategy(self, strategy: BaseStrategy):
+        """Save a strategy to disk"""
+        try:
+            self.strategy_manager.save_strategy(strategy)
+            self._log(f"Strategy '{strategy.name}' saved successfully")
+        except Exception as e:
+            self._log(f"Error saving strategy: {e}")
+            raise
+    
+    def update_strategy_list(self):
+        """Update the strategy list in any open windows"""
+        # Refresh any open windows that display strategies
+        for window in self.open_windows:
+            if hasattr(window, 'refresh_datasets'):
+                try:
+                    window.refresh_datasets()
+                except Exception as e:
+                    self._log(f"Error refreshing window: {e}")
+    
+    def show_status_message(self, message: str):
+        """Show a status message in the status bar"""
+        self.status_bar.showMessage(message)
+        self._log(message)
     
     def _refresh_statistics_windows(self):
         """Refresh any open statistics windows"""
@@ -1213,6 +1246,7 @@ class TradingStrategyHub(QMainWindow):
         
     def open_strategy_pattern_manager(self):
         """Open the strategy/pattern manager window."""
+        from gui.strategy_pattern_manager_window import StrategyPatternManagerWindow
         window = StrategyPatternManagerWindow(self)
         window.show()
         self.open_windows.append(window)
@@ -1224,12 +1258,15 @@ class TradingStrategyHub(QMainWindow):
             'data': data,
             'metadata': metadata
         }
+        self.last_loaded_dataset = dataset_name
         self._log(f"Dataset '{dataset_name}' processed: {len(data)} rows")
         self._update_dashboard()
         
     def on_risk_strategy_created(self, strategy: RiskStrategy):
         """Handle created risk strategy"""
+        print(f"[DEBUG] Received risk strategy with name: '{strategy.name}', ID: '{strategy.id}'")
         self.strategies['risk'][strategy.id] = strategy
+        print(f"[DEBUG] Stored strategy in self.strategies['risk'] with key: '{strategy.id}'")
         self._log(f"Risk strategy '{strategy.name}' created")
         self._update_dashboard()
         
@@ -1237,6 +1274,7 @@ class TradingStrategyHub(QMainWindow):
         """Handle dataset selection from explorer"""
         self._log(f"Dataset '{info.name}' loaded from explorer")
         self.datasets[info.name] = {'data': data, 'metadata': info}
+        self.last_loaded_dataset = info.name
         self._update_dashboard()
         self._refresh_statistics_windows()
         
@@ -1368,10 +1406,26 @@ class TradingStrategyHub(QMainWindow):
         self.status_labels['actions'].setText(str(len(self.actions)))
         self.status_labels['patterns'].setText(str(len(self.patterns)))
         
-        total_strategies = sum(len(s) for s in self.strategies.values())
+        # Fix the strategies count calculation to handle non-dictionary values
+        total_strategies = 0
+        for strategy_type, strategies in self.strategies.items():
+            if isinstance(strategies, dict):
+                total_strategies += len(strategies)
+            else:
+                # If it's not a dict, it's likely a strategy object that was incorrectly added
+                # Remove it and log the issue
+                if hasattr(strategies, 'id') and hasattr(strategies, 'type'):
+                    # Move it to the correct location
+                    correct_type = strategies.type
+                    if correct_type not in self.strategies:
+                        self.strategies[correct_type] = {}
+                    self.strategies[correct_type][strategies.id] = strategies
+                # Remove the incorrect entry
+                del self.strategies[strategy_type]
+        
         self.status_labels['strategies'].setText(str(total_strategies))
         
-        self.status_labels['combined'].setText(str(len(self.strategies['combined'])))
+        self.status_labels['combined'].setText(str(len(self.strategies.get('combined', {}))))
         self.status_labels['backtests'].setText(str(len(self.results)))
         
         # Calculate average success rate
@@ -1392,6 +1446,7 @@ class TradingStrategyHub(QMainWindow):
         for window in self.open_windows:
             window.close()
             
+        self._save_last_session()
         event.accept()
 
     def _load_strategies_and_results(self):
@@ -1399,8 +1454,22 @@ class TradingStrategyHub(QMainWindow):
         # Load strategies
         loaded_strategies = self.strategy_manager.load_strategies()
         for sid, strategy in loaded_strategies.items():
+            # Determine strategy type
+            strategy_type = 'pattern'  # Default type
             if hasattr(strategy, 'type'):
-                self.strategies[strategy.type][sid] = strategy
+                strategy_type = strategy.type
+            elif hasattr(strategy, '__class__'):
+                class_name = strategy.__class__.__name__.lower()
+                if 'risk' in class_name:
+                    strategy_type = 'risk'
+                elif 'combined' in class_name:
+                    strategy_type = 'combined'
+                else:
+                    strategy_type = 'pattern'
+            # Only set fallback name if missing or blank, never overwrite a valid name
+            if not hasattr(strategy, 'name') or not strategy.name or not strategy.name.strip():
+                strategy.name = f"Strategy_{sid}"
+            self.strategies[strategy_type][sid] = strategy
         
         # Load patterns
         self.patterns.update(self.strategy_manager.load_patterns())
@@ -1414,18 +1483,22 @@ class TradingStrategyHub(QMainWindow):
         self._log(f"Loaded {count_s} strategies, {count_p} patterns, and {count_r} result sets from workspace.")
         self._update_dashboard()
 
+    def _load_last_session(self):
+        """Load last session info (e.g., last loaded dataset) from file."""
+        try:
+            with open(self.last_session_file, 'r') as f:
+                session = json.load(f)
+                last_dataset = session.get('last_dataset')
+                if last_dataset and last_dataset in self.datasets:
+                    self.last_loaded_dataset = last_dataset
+        except Exception:
+            pass
 
-def main():
-    """Main application entry point"""
-    app = QApplication(sys.argv)
-    app.setStyle('Fusion')
-    
-    # Create and show main window
-    hub = TradingStrategyHub()
-    hub.show()
-    
-    sys.exit(app.exec())
-
-
-if __name__ == "__main__":
-    main()
+    def _save_last_session(self):
+        """Save last session info (e.g., last loaded dataset) to file."""
+        try:
+            session = {'last_dataset': self.last_loaded_dataset}
+            with open(self.last_session_file, 'w') as f:
+                json.dump(session, f)
+        except Exception:
+            pass

@@ -9,6 +9,16 @@ from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime
 import json
 import uuid
+import numpy as np
+
+
+@dataclass
+class Bar:
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: float
 
 
 @dataclass
@@ -33,8 +43,11 @@ class TimeRange:
 class OHLCRatio:
     """Defines ratios between OHLC values"""
     body_ratio: Optional[float] = None  # (close-open)/(high-low)
+    body_ratio_op: str = '>'
     upper_wick_ratio: Optional[float] = None  # (high-max(open,close))/(high-low)
+    upper_wick_ratio_op: str = '>'
     lower_wick_ratio: Optional[float] = None  # (min(open,close)-low)/(high-low)
+    lower_wick_ratio_op: str = '>'
     custom_formula: Optional[str] = None  # Custom formula string
     
     def to_dict(self):
@@ -176,3 +189,67 @@ class BaseStrategy:
         """Update probability metrics"""
         self.probability_metrics = metrics
         self.modified_at = datetime.now()
+
+
+class ZSpaceMatrix:
+    """Z-space matrix for advanced pattern analysis"""
+    
+    def __init__(self, dimensions: int = 3):
+        self.dimensions = dimensions
+        self.matrix = np.zeros((dimensions, dimensions))
+        self.weights = np.ones(dimensions)
+        
+    def update(self, pattern_strength: float, momentum: float, volatility: float):
+        """Update matrix with new values"""
+        values = [pattern_strength, momentum, volatility]
+        for i in range(min(self.dimensions, len(values))):
+            self.matrix[i, i] = values[i]
+    
+    def get_aggregate_score(self) -> float:
+        """Get aggregate score from matrix"""
+        return np.trace(self.matrix) / self.dimensions
+
+
+class BayesianStateTracker:
+    """Bayesian state tracker for market regime detection"""
+    
+    def __init__(self, states: List[str] = None):
+        self.states = states or ['trending', 'ranging', 'volatile']
+        self.state_probabilities = {state: 1.0/len(self.states) for state in self.states}
+        self.transition_matrix = np.eye(len(self.states)) * 0.8 + np.ones((len(self.states), len(self.states))) * 0.1
+        self.observation_history = []
+        
+    def update(self, observation: Dict[str, float]):
+        """Update state probabilities based on observation"""
+        self.observation_history.append(observation)
+        
+        # Simple Bayesian update
+        for state in self.states:
+            likelihood = self._calculate_likelihood(observation, state)
+            prior = self.state_probabilities[state]
+            self.state_probabilities[state] = likelihood * prior
+        
+        # Normalize
+        total = sum(self.state_probabilities.values())
+        if total > 0:
+            for state in self.states:
+                self.state_probabilities[state] /= total
+    
+    def _calculate_likelihood(self, observation: Dict[str, float], state: str) -> float:
+        """Calculate likelihood of observation given state"""
+        # Simplified likelihood calculation
+        if state == 'trending':
+            return 0.7 if observation.get('momentum', 0) > 0.01 else 0.3
+        elif state == 'ranging':
+            return 0.7 if observation.get('volatility', 0) < 0.02 else 0.3
+        elif state == 'volatile':
+            return 0.7 if observation.get('volatility', 0) > 0.05 else 0.3
+        return 0.5
+    
+    def get_dominant_state(self) -> Tuple[str, float]:
+        """Get the most likely state and its probability"""
+        if not self.state_probabilities:
+            return self.states[0], 1.0/len(self.states)
+        
+        max_state = max(self.state_probabilities, key=self.state_probabilities.get)
+        return max_state, self.state_probabilities[max_state]

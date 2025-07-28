@@ -1,0 +1,97 @@
+{
+  "strategy_name": "Test_OrderBlock",
+  "data_length": 12,
+  "signals": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    false,
+    false
+  ],
+  "trades": [],
+  "zones": [
+    {
+      "type": "OrderBlock",
+      "direction": "bearish",
+      "zone_min": 18251.2,
+      "zone_max": 18251.5,
+      "comb_centers": [
+        18251.35
+      ],
+      "strength": 0.02027175104098181,
+      "creation_index": 8,
+      "timestamp": 8,
+      "mu_block": 18251.35,
+      "impulse_threshold": 0.02,
+      "lookback": 10,
+      "gamma": 0.95,
+      "tau_bars": 80,
+      "drop_threshold": 0.01,
+      "zone_type": "OrderBlock"
+    },
+    {
+      "type": "OrderBlock",
+      "direction": "bullish",
+      "zone_min": 18252.0,
+      "zone_max": 18252.1,
+      "comb_centers": [
+        18252.05
+      ],
+      "strength": 0.02060731461805167,
+      "creation_index": 9,
+      "timestamp": 9,
+      "mu_block": 18252.05,
+      "impulse_threshold": 0.02,
+      "lookback": 10,
+      "gamma": 0.95,
+      "tau_bars": 80,
+      "drop_threshold": 0.01,
+      "zone_type": "OrderBlock"
+    },
+    {
+      "type": "OrderBlock",
+      "direction": "bearish",
+      "zone_min": 18251.2,
+      "zone_max": 18251.5,
+      "comb_centers": [
+        18251.35
+      ],
+      "strength": 0.02027175104098181,
+      "creation_index": 8,
+      "timestamp": 8,
+      "mu_block": 18251.35,
+      "impulse_threshold": 0.02,
+      "lookback": 10,
+      "gamma": 0.95,
+      "tau_bars": 80,
+      "drop_threshold": 0.01,
+      "zone_type": "OrderBlock"
+    },
+    {
+      "type": "OrderBlock",
+      "direction": "bullish",
+      "zone_min": 18252.0,
+      "zone_max": 18252.1,
+      "comb_centers": [
+        18252.05
+      ],
+      "strength": 0.02060731461805167,
+      "creation_index": 9,
+      "timestamp": 9,
+      "mu_block": 18252.05,
+      "impulse_threshold": 0.02,
+      "lookback": 10,
+      "gamma": 0.95,
+      "tau_bars": 80,
+      "drop_threshold": 0.01,
+      "zone_type": "OrderBlock"
+    }
+  ]
+}

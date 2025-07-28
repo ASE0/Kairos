@@ -1,0 +1,29 @@
+{
+    "initial_capital": 100000,
+    "final_capital": 100000,
+    "cumulative_pnl": 0,
+    "total_return": 0.0,
+    "sharpe_ratio": 0,
+    "max_drawdown": 0,
+    "win_rate": 0,
+    "profit_factor": 0,
+    "total_trades": 0,
+    "equity_curve": [
+        100000
+    ],
+    "trades": [],
+    "zones": [],
+    "data": "               open      high      low     close  volume\nDate                                                    \n2025-03-07  20141.0  20286.25  19765.5  20207.25  712493",
+    "multi_tf_data": {
+        "5min": "               open      high      low     close  volume\nDate                                                    \n2025-03-07  20141.0  20286.25  19765.5  20207.25  712493",
+        "execution": "               open      high      low     close  volume\nDate                                                    \n2025-03-07  20141.0  20286.25  19765.5  20207.25  712493"
+    },
+    "action_details": {
+        "h": "Date\n2025-03-07    False\nFreq: 5min, dtype: bool",
+        "z": "Date\n2025-03-07    True\nFreq: 5min, dtype: bool"
+    },
+    "strategy_name": "hammer+zone",
+    "timeframe": "-- Use Dataset Timeframe --",
+    "interval": "-- Use Dataset Timeframe --",
+    "result_display_name": "hammer+zone_-- Use Dataset Timeframe --_20250624_181235"
+}

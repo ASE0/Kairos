@@ -1,0 +1,36 @@
+{
+  "name": "NQ_Multi_Timeframe",
+  "timeframes": [
+    "1m",
+    "5m",
+    "15m",
+    "original",
+    "10m",
+    "30m"
+  ],
+  "original_timeframes": [
+    "1m",
+    "5m",
+    "15m"
+  ],
+  "created_at": "2025-06-29T19:17:10.860140",
+  "original_rows": 3286734,
+  "timeframe_rows": {
+    "1m": 312582,
+    "5m": 62526,
+    "15m": 20842,
+    "10m": 31265,
+    "30m": 10423
+  },
+  "source": "NQ_5s.csv",
+  "description": "Real NQ dataset with multiple timeframes",
+  "saved_at": "2025-06-29T19:17:39.810341",
+  "rows": 10423,
+  "columns": [
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume"
+  ]
+}

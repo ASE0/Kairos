@@ -42,13 +42,15 @@ class StrategyManager:
         strategies = {}
         if not os.path.exists(self.strategies_path):
             return strategies
-            
         for filename in os.listdir(self.strategies_path):
             if filename.endswith('.dill'):
                 filepath = os.path.join(self.strategies_path, filename)
                 try:
                     with open(filepath, 'rb') as f:
                         strategy = dill.load(f)
+                    # Only set fallback name if missing or blank, never overwrite a valid name
+                    if not hasattr(strategy, 'name') or not strategy.name or not strategy.name.strip():
+                        strategy.name = filename.replace('.dill', '').replace('_', ' ')
                     if hasattr(strategy, 'id'):
                         strategies[strategy.id] = strategy
                     else:
@@ -134,19 +136,35 @@ class StrategyManager:
     def save_backtest_results(self, results: Dict[str, Any]):
         """Save backtest results, linked to a strategy."""
         strategy_name = results.get('strategy_name')
+        timeframe = results.get('timeframe', 'UnknownTF')
         if not strategy_name:
             print("Cannot save results without a strategy name.")
             return
-
-        strategy_folder_name = strategy_name.replace(' ', '_')
+        # Sanitize for filesystem
+        safe_strategy = str(strategy_name).replace(' ', '_').replace('/', '_')
+        safe_timeframe = str(timeframe).replace(' ', '_').replace('/', '_')
+        strategy_folder_name = safe_strategy
         results_dir = os.path.join(self.results_path, strategy_folder_name)
         os.makedirs(results_dir, exist_ok=True)
-        
         result_id = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filepath = os.path.join(results_dir, f"result_{result_id}.json")
+        filename = f"result_{safe_strategy}_{safe_timeframe}_{result_id}.json"
+        filepath = os.path.join(results_dir, filename)
         
         # Handle non-serializable objects like pandas DataFrames
         serializable_results = results.copy()
+        
+        # Convert DataFrames to JSON format for proper serialization
+        if 'data' in serializable_results and isinstance(serializable_results['data'], pd.DataFrame):
+            serializable_results['data'] = serializable_results['data'].to_json(orient='split')
+        if 'dataset_data' in serializable_results and isinstance(serializable_results['dataset_data'], pd.DataFrame):
+            serializable_results['dataset_data'] = serializable_results['dataset_data'].to_json(orient='split')
+        if 'multi_tf_data' in serializable_results and isinstance(serializable_results['multi_tf_data'], dict):
+            # Handle multi-timeframe data dictionary
+            mtf_data = serializable_results['multi_tf_data']
+            for tf_key, tf_data in mtf_data.items():
+                if isinstance(tf_data, pd.DataFrame):
+                    mtf_data[tf_key] = tf_data.to_json(orient='split')
+            serializable_results['multi_tf_data'] = mtf_data
         if 'equity_curve' in serializable_results and isinstance(serializable_results['equity_curve'], pd.Series):
             serializable_results['equity_curve'] = serializable_results['equity_curve'].to_json()
         if 'trades' in serializable_results and isinstance(serializable_results['trades'], pd.DataFrame):
@@ -154,7 +172,7 @@ class StrategyManager:
 
         try:
             with open(filepath, 'w') as f:
-                json.dump(serializable_results, f, indent=4, default=str)
+                json.dump(serializable_results, f, indent=4)
             print(f"Results for '{strategy_name}' saved to {filepath}")
         except Exception as e:
             print(f"Error saving results for {strategy_name}: {e}")
@@ -177,6 +195,17 @@ class StrategyManager:
                             result_id = f"{strategy_folder}_{filename.replace('.json', '')}"
                             
                             # Deserialize pandas objects
+                            if 'data' in result and isinstance(result['data'], str):
+                                result['data'] = pd.read_json(result['data'], orient='split')
+                            if 'dataset_data' in result and isinstance(result['dataset_data'], str):
+                                result['dataset_data'] = pd.read_json(result['dataset_data'], orient='split')
+                            if 'multi_tf_data' in result and isinstance(result['multi_tf_data'], dict):
+                                # Handle multi-timeframe data dictionary
+                                mtf_data = result['multi_tf_data']
+                                for tf_key, tf_data in mtf_data.items():
+                                    if isinstance(tf_data, str):
+                                        mtf_data[tf_key] = pd.read_json(tf_data, orient='split')
+                                result['multi_tf_data'] = mtf_data
                             if 'equity_curve' in result and isinstance(result['equity_curve'], str):
                                 result['equity_curve'] = pd.read_json(result['equity_curve'], typ='series')
                             if 'trades' in result and isinstance(result['trades'], str):

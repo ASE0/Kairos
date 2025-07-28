@@ -1,0 +1,139 @@
+{
+  "timestamp": "2025-06-25T01:21:14.121185",
+  "summary": {
+    "total_issues": 9,
+    "total_fixes": 9,
+    "categories_passed": 6,
+    "categories_failed": 3,
+    "encoding_issues_fixed": 0
+  },
+  "audit_results": {
+    "data_validation": {
+      "issues": [],
+      "fixes": [],
+      "status": "pass"
+    },
+    "index_management": {
+      "issues": [
+        "Non-unique index detected"
+      ],
+      "fixes": [
+        "Add index deduplication logic"
+      ],
+      "status": "fail"
+    },
+    "date_filtering": {
+      "issues": [],
+      "fixes": [],
+      "status": "pass"
+    },
+    "zone_overlays": {
+      "issues": [],
+      "fixes": [],
+      "status": "pass"
+    },
+    "chart_rendering": {
+      "issues": [],
+      "fixes": [],
+      "status": "pass"
+    },
+    "error_handling": {
+      "issues": [
+        "Missing error handling in gui/backtest_window.py",
+        "Missing error handling in gui/main_hub.py",
+        "Missing error handling in gui/results_viewer_window.py"
+      ],
+      "fixes": [
+        "Add try-catch blocks to gui/backtest_window.py",
+        "Add try-catch blocks to gui/main_hub.py",
+        "Add try-catch blocks to gui/results_viewer_window.py"
+      ],
+      "status": "fail"
+    },
+    "performance": {
+      "issues": [],
+      "fixes": [],
+      "status": "pass"
+    },
+    "code_quality": {
+      "issues": [
+        "Print statements found in gui\\data_explorer_window.py",
+        "TODO/FIXME found in gui\\main_hub.py",
+        "Print statements found in gui\\risk_manager_window.py",
+        "Print statements found in gui\\strategy_combiner_window.py",
+        "Print statements found in gui\\strategy_optimizer_window.py"
+      ],
+      "fixes": [
+        "Replace print statements with logging in gui\\data_explorer_window.py",
+        "Address TODO/FIXME in gui\\main_hub.py",
+        "Replace print statements with logging in gui\\risk_manager_window.py",
+        "Replace print statements with logging in gui\\strategy_combiner_window.py",
+        "Replace print statements with logging in gui\\strategy_optimizer_window.py"
+      ],
+      "status": "fail"
+    },
+    "gui_functionality": {
+      "issues": [],
+      "fixes": [],
+      "status": "pass"
+    }
+  },
+  "fixes_applied": [
+    {
+      "description": "Add index deduplication logic",
+      "category": "index_management",
+      "timestamp": "2025-06-25T01:21:04.681122"
+    },
+    {
+      "description": "Add try-catch blocks to gui/backtest_window.py",
+      "category": "error_handling",
+      "timestamp": "2025-06-25T01:21:04.683598"
+    },
+    {
+      "description": "Add try-catch blocks to gui/main_hub.py",
+      "category": "error_handling",
+      "timestamp": "2025-06-25T01:21:04.684059"
+    },
+    {
+      "description": "Add try-catch blocks to gui/results_viewer_window.py",
+      "category": "error_handling",
+      "timestamp": "2025-06-25T01:21:04.684734"
+    },
+    {
+      "description": "Replace print statements with logging in gui\\data_explorer_window.py",
+      "category": "code_quality",
+      "timestamp": "2025-06-25T01:21:04.685699"
+    },
+    {
+      "description": "Address TODO/FIXME in gui\\main_hub.py",
+      "category": "code_quality",
+      "timestamp": "2025-06-25T01:21:04.701693"
+    },
+    {
+      "description": "Replace print statements with logging in gui\\risk_manager_window.py",
+      "category": "code_quality",
+      "timestamp": "2025-06-25T01:21:04.702274"
+    },
+    {
+      "description": "Replace print statements with logging in gui\\strategy_combiner_window.py",
+      "category": "code_quality",
+      "timestamp": "2025-06-25T01:21:04.729497"
+    },
+    {
+      "description": "Replace print statements with logging in gui\\strategy_optimizer_window.py",
+      "category": "code_quality",
+      "timestamp": "2025-06-25T01:21:04.734902"
+    }
+  ],
+  "encoding_issues": [],
+  "recommendations": [
+    "Add more comprehensive error handling throughout the application",
+    "Implement code quality checks in CI/CD pipeline",
+    "Implement robust index management with automatic deduplication",
+    "Consider adding unit tests for all GUI components",
+    "Implement automated GUI testing with PyQt6.QTest",
+    "Add performance monitoring and profiling",
+    "Implement continuous integration for automated testing",
+    "Add comprehensive documentation for all GUI components"
+  ]
+}

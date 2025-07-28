@@ -4,6 +4,8 @@ gui/strategy_combiner_window.py
 Window for combining pattern and risk strategies
 """
 
+import logging
+logger = logging.getLogger(__name__)
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
@@ -378,7 +380,10 @@ class StrategyCombinerWindow(QMainWindow):
         self.risk_combo = QComboBox()
         self.risk_combo.addItem("-- Select Risk Strategy --")
         for strategy_id, strategy in self.available_strategies.get('risk', {}).items():
-            self.risk_combo.addItem(strategy.name, strategy_id)
+            logger.info(f"[DEBUG] Risk strategy ID: {strategy_id}, Name: '{strategy.name}', Type: {type(strategy.name)}")
+            display_name = strategy.name or f"Risk {strategy_id}"
+            logger.info(f"[DEBUG] Display name: '{display_name}'")
+            self.risk_combo.addItem(display_name, strategy_id)
         risk_layout.addWidget(self.risk_combo)
 
         self.risk_details = QTextEdit()
@@ -572,15 +577,16 @@ class StrategyCombinerWindow(QMainWindow):
         pattern_strategy = self.available_strategies['pattern'].get(self.pattern_combo.currentData())
         risk_strategy = self.available_strategies['risk'].get(self.risk_combo.currentData())
 
-        # Create combined strategy
+        # Create combined strategy (do not pass entry_logic, exit_logic, sizing_logic to constructor)
         self.current_combination = CombinedStrategy(
             name=name,
             pattern_strategy=pattern_strategy,
-            risk_strategy=risk_strategy,
-            entry_logic=self.entry_logic.currentText(),
-            exit_logic=self.exit_logic.currentText(),
-            sizing_logic=self.sizing_logic.currentText()
+            risk_strategy=risk_strategy
         )
+        # Store combination logic as attributes for later use
+        self.current_combination.entry_logic = self.entry_logic.currentText()
+        self.current_combination.exit_logic = self.exit_logic.currentText()
+        self.current_combination.sizing_logic = self.sizing_logic.currentText()
 
         self.analysis_results.append(f"\nCombination '{name}' created successfully")
         self.save_btn.setEnabled(True)

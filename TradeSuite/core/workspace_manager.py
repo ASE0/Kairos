@@ -15,6 +15,7 @@ from pathlib import Path
 from patterns.candlestick_patterns import CandlestickPattern, CustomPattern, PatternFactory
 from strategies.strategy_builders import PatternStrategy, RiskStrategy, CombinedStrategy, Action
 from core.data_structures import TimeRange, OHLCRatio
+from processors.data_processor import MultiTimeframeProcessor
 
 
 class WorkspaceManager:
@@ -33,6 +34,9 @@ class WorkspaceManager:
         # Create subdirectories
         for dir_path in [self.patterns_dir, self.strategies_dir, self.datasets_dir, self.configs_dir]:
             dir_path.mkdir(exist_ok=True)
+        
+        # Multi-timeframe processor for automatic timeframe creation
+        self.mtf_processor = MultiTimeframeProcessor()
     
     def save_pattern(self, pattern: CandlestickPattern, name: str) -> bool:
         """Save a pattern to workspace"""
@@ -363,4 +367,179 @@ class WorkspaceManager:
             
             strategy.add_action(action)
         
-        return strategy 
+        return strategy
+    
+    def save_multi_timeframe_dataset(self, 
+                                   name: str, 
+                                   original_data: pd.DataFrame,
+                                   timeframes: List[TimeRange],
+                                   metadata: Dict[str, Any] = None) -> bool:
+        """Save a multi-timeframe dataset with automatic timeframe creation"""
+        try:
+            # Create multi-timeframe datasets
+            mtf_datasets = self.mtf_processor.create_timeframe_datasets(original_data, timeframes)
+            
+            # Save each timeframe dataset
+            saved_timeframes = []
+            for tf_str, tf_df in mtf_datasets.items():
+                tf_name = f"{name}_{tf_str}"
+                if self.save_dataset(tf_df, tf_name, metadata):
+                    saved_timeframes.append(tf_str)
+            
+            # Save original data
+            original_name = f"{name}_original"
+            if self.save_dataset(original_data, original_name, metadata):
+                saved_timeframes.append("original")
+            
+            # Save multi-timeframe metadata
+            mtf_metadata = {
+                'name': name,
+                'timeframes': saved_timeframes,
+                'original_timeframes': [f"{tf.value}{tf.unit}" for tf in timeframes],
+                'created_at': datetime.now().isoformat(),
+                'original_rows': len(original_data),
+                'timeframe_rows': {tf_str: len(tf_df) for tf_str, tf_df in mtf_datasets.items()}
+            }
+            
+            if metadata:
+                mtf_metadata.update(metadata)
+            
+            mtf_config_path = self.configs_dir / f"{name}_mtf_config.json"
+            with open(mtf_config_path, 'w') as f:
+                json.dump(mtf_metadata, f, indent=2, default=str)
+            
+            print(f"Saved multi-timeframe dataset '{name}' with timeframes: {saved_timeframes}")
+            return True
+            
+        except Exception as e:
+            print(f"Error saving multi-timeframe dataset: {e}")
+            return False
+    
+    def load_multi_timeframe_dataset(self, name: str) -> Optional[Dict[str, Any]]:
+        """Load a multi-timeframe dataset with all available timeframes"""
+        try:
+            # Load multi-timeframe configuration
+            mtf_config_path = self.configs_dir / f"{name}_mtf_config.json"
+            if not mtf_config_path.exists():
+                return None
+            
+            with open(mtf_config_path, 'r') as f:
+                mtf_config = json.load(f)
+            
+            # Load all timeframe datasets
+            datasets = {}
+            for tf_str in mtf_config.get('timeframes', []):
+                if tf_str == 'original':
+                    dataset_name = f"{name}_original"
+                else:
+                    dataset_name = f"{name}_{tf_str}"
+                
+                dataset_info = self.load_dataset(dataset_name)
+                if dataset_info:
+                    datasets[tf_str] = dataset_info
+            
+            return {
+                'config': mtf_config,
+                'datasets': datasets
+            }
+            
+        except Exception as e:
+            print(f"Error loading multi-timeframe dataset: {e}")
+            return None
+    
+    def ensure_timeframes_available(self, 
+                                  dataset_name: str, 
+                                  required_timeframes: List[str]) -> Dict[str, pd.DataFrame]:
+        """Ensure all required timeframes are available for a dataset, creating missing ones"""
+        try:
+            # Load the multi-timeframe dataset
+            mtf_info = self.load_multi_timeframe_dataset(dataset_name)
+            if not mtf_info:
+                print(f"Multi-timeframe dataset '{dataset_name}' not found")
+                return {}
+            
+            available_timeframes = list(mtf_info['datasets'].keys())
+            missing_timeframes = []
+            
+            for tf_str in required_timeframes:
+                if tf_str not in available_timeframes:
+                    missing_timeframes.append(tf_str)
+            
+            if missing_timeframes:
+                print(f"Creating missing timeframes for '{dataset_name}': {missing_timeframes}")
+                
+                # Get original data
+                original_data = mtf_info['datasets'].get('original', {}).get('data')
+                if original_data is None:
+                    print("Original data not found, cannot create missing timeframes")
+                    return {}
+                
+                # Create missing timeframes
+                additional_timeframes = []
+                for tf_str in missing_timeframes:
+                    import re
+                    match = re.match(r'(\d+)([smhd])', tf_str)
+                    if match:
+                        value = int(match.group(1))
+                        unit = match.group(2)
+                        additional_timeframes.append(TimeRange(value, unit))
+                
+                # Create additional datasets
+                additional_datasets = self.mtf_processor.create_timeframe_datasets(
+                    original_data, 
+                    additional_timeframes
+                )
+                
+                # Save additional datasets
+                for tf_str, tf_df in additional_datasets.items():
+                    tf_name = f"{dataset_name}_{tf_str}"
+                    self.save_dataset(tf_df, tf_name, mtf_info['config'])
+                    mtf_info['datasets'][tf_str] = {'data': tf_df, 'metadata': mtf_info['config']}
+                
+                # Update configuration
+                mtf_info['config']['timeframes'].extend(missing_timeframes)
+                mtf_info['config']['timeframe_rows'].update(
+                    {tf_str: len(tf_df) for tf_str, tf_df in additional_datasets.items()}
+                )
+                
+                # Save updated configuration
+                mtf_config_path = self.configs_dir / f"{dataset_name}_mtf_config.json"
+                with open(mtf_config_path, 'w') as f:
+                    json.dump(mtf_info['config'], f, indent=2, default=str)
+                
+                print(f"Created and saved {len(missing_timeframes)} missing timeframes")
+            
+            # Return all available datasets
+            return {
+                tf_str: dataset_info['data'] 
+                for tf_str, dataset_info in mtf_info['datasets'].items()
+                if tf_str in required_timeframes
+            }
+            
+        except Exception as e:
+            print(f"Error ensuring timeframes available: {e}")
+            return {}
+    
+    def get_strategy_timeframes(self, strategy: PatternStrategy) -> List[str]:
+        """Extract required timeframes from a strategy"""
+        timeframes = set()
+        unit_map = {'minute': 'm', 'minutes': 'm', 'hour': 'h', 'hours': 'h', 'day': 'd', 'days': 'd', 'second': 's', 'seconds': 's'}
+        
+        if hasattr(strategy, 'actions'):
+            for action in strategy.actions:
+                if action.time_range:
+                    # Handle both TimeRange objects and dictionaries
+                    if hasattr(action.time_range, 'value') and hasattr(action.time_range, 'unit'):
+                        value = action.time_range.value
+                        unit = action.time_range.unit
+                    elif isinstance(action.time_range, dict):
+                        value = action.time_range.get('value')
+                        unit = action.time_range.get('unit')
+                    else:
+                        value = None
+                        unit = None
+                    if value is not None and unit is not None:
+                        abbr_unit = unit_map.get(str(unit).lower(), str(unit)[0])
+                        timeframes.add(f"{value}{abbr_unit}")
+        
+        return list(timeframes) 

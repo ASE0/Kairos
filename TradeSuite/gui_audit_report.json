@@ -1,0 +1,115 @@
+{
+  "timestamp": "2025-06-25T01:17:31.954916",
+  "summary": {
+    "total_issues": 13,
+    "total_fixes": 6,
+    "categories_passed": 5,
+    "categories_failed": 3
+  },
+  "audit_results": {
+    "data_validation": {
+      "issues": [],
+      "fixes": [],
+      "status": "pass"
+    },
+    "index_management": {
+      "issues": [
+        "Non-unique index detected"
+      ],
+      "fixes": [
+        "Add index deduplication logic"
+      ],
+      "status": "fail"
+    },
+    "date_filtering": {
+      "issues": [],
+      "fixes": [],
+      "status": "pass"
+    },
+    "zone_overlays": {
+      "issues": [],
+      "fixes": [],
+      "status": "pass"
+    },
+    "chart_rendering": {
+      "issues": [],
+      "fixes": [],
+      "status": "pass"
+    },
+    "error_handling": {
+      "issues": [
+        "Cannot read gui/backtest_window.py: 'charmap' codec can't decode byte 0x8f in position 40658: character maps to <undefined>",
+        "Cannot read gui/main_hub.py: 'charmap' codec can't decode byte 0x8d in position 5534: character maps to <undefined>",
+        "Cannot read gui/results_viewer_window.py: 'charmap' codec can't decode byte 0x8f in position 41042: character maps to <undefined>"
+      ],
+      "fixes": [
+        "Fix file access for gui/backtest_window.py",
+        "Fix file access for gui/main_hub.py",
+        "Fix file access for gui/results_viewer_window.py"
+      ],
+      "status": "fail"
+    },
+    "performance": {
+      "issues": [],
+      "fixes": [],
+      "status": "pass"
+    },
+    "code_quality": {
+      "issues": [
+        "Cannot analyze gui\\backtest_window.py: 'charmap' codec can't decode byte 0x8f in position 40658: character maps to <undefined>",
+        "Cannot analyze gui\\data_explorer_window.py: 'charmap' codec can't decode byte 0x8f in position 12606: character maps to <undefined>",
+        "Cannot analyze gui\\main_hub.py: 'charmap' codec can't decode byte 0x8d in position 5534: character maps to <undefined>",
+        "Cannot analyze gui\\pattern_builder_window.py: 'charmap' codec can't decode byte 0x81 in position 17510: character maps to <undefined>",
+        "Cannot analyze gui\\results_viewer_window.py: 'charmap' codec can't decode byte 0x8f in position 41042: character maps to <undefined>",
+        "Print statements found in gui\\risk_manager_window.py",
+        "Cannot analyze gui\\strategy_builder_window.py: 'charmap' codec can't decode byte 0x81 in position 20389: character maps to <undefined>",
+        "Print statements found in gui\\strategy_combiner_window.py",
+        "Cannot analyze gui\\strategy_optimizer_window.py: 'charmap' codec can't decode byte 0x8d in position 40356: character maps to <undefined>"
+      ],
+      "fixes": [
+        "Replace print statements with logging in gui\\risk_manager_window.py",
+        "Replace print statements with logging in gui\\strategy_combiner_window.py"
+      ],
+      "status": "fail"
+    }
+  },
+  "fixes_applied": [
+    {
+      "description": "Add index deduplication logic",
+      "category": "index_management",
+      "timestamp": "2025-06-25T01:17:22.241699"
+    },
+    {
+      "description": "Fix file access for gui/backtest_window.py",
+      "category": "error_handling",
+      "timestamp": "2025-06-25T01:17:22.242447"
+    },
+    {
+      "description": "Fix file access for gui/main_hub.py",
+      "category": "error_handling",
+      "timestamp": "2025-06-25T01:17:22.242704"
+    },
+    {
+      "description": "Fix file access for gui/results_viewer_window.py",
+      "category": "error_handling",
+      "timestamp": "2025-06-25T01:17:22.242956"
+    },
+    {
+      "description": "Replace print statements with logging in gui\\risk_manager_window.py",
+      "category": "code_quality",
+      "timestamp": "2025-06-25T01:17:22.243461"
+    },
+    {
+      "description": "Replace print statements with logging in gui\\strategy_combiner_window.py",
+      "category": "code_quality",
+      "timestamp": "2025-06-25T01:17:22.244301"
+    }
+  ],
+  "recommendations": [
+    "Add more comprehensive error handling throughout the application",
+    "Implement code quality checks in CI/CD pipeline",
+    "Consider adding unit tests for all GUI components",
+    "Implement automated GUI testing with PyQt6.QTest",
+    "Add performance monitoring and profiling"
+  ]
+}

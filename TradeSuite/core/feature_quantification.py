@@ -4,6 +4,10 @@ core/feature_quantification.py
 Reusable quantification and scoring features for patterns and strategies
 """
 import numpy as np
+try:
+    from scipy.signal import argrelextrema
+except ImportError:
+    argrelextrema = None
 
 # SECTION 2: Core Candlestick Quantification
 
@@ -11,13 +15,13 @@ def body_size(open_, close_):
     """Bt = |C-O|"""
     return abs(close_ - open_)
 
-def upper_wick(high, open_, close_):
-    """Wu = H - max(O,C)"""
-    return high - max(open_, close_)
+def upper_wick(open_, close_, high):
+    """Vectorized upper wick calculation"""
+    return high - np.maximum(open_, close_)
 
-def lower_wick(low, open_, close_):
-    """Wl = min(O,C) - L"""
-    return min(open_, close_) - low
+def lower_wick(open_, close_, low):
+    """Vectorized lower wick calculation"""
+    return np.minimum(open_, close_) - low
 
 def wick_ratios(high, low, open_, close_):
     """Ŵu = Wu/(H-L), Ŵl = Wl/(H-L)"""
@@ -26,12 +30,36 @@ def wick_ratios(high, low, open_, close_):
     wl = lower_wick(low, open_, close_)
     return wu / rng if rng else 0, wl / rng if rng else 0
 
-def doji_ness(Bt, rng, wu_ratio, wl_ratio, sigma_b=0.1, sigma_w=0.1):
-    """Dt = exp[-(Bt/Range)^2/(2σ_b^2)] · exp[-(Ŵu-Ŵl)^2/(2σ_w^2)]"""
+def doji_ness(Bt, rng, wu_ratio, wl_ratio, sigma_b=0.05, sigma_w=0.10):
+    """
+    Doji-ness score per spec: Dₜ = exp[−(Bₜ/(Hₜ−Lₜ))²/(2σ_b²)] × exp[−(Ẇᵘₜ−Ẇˡₜ)²/(2σ_w²)]
+    
+    Args:
+        Bt: Real body size |Cₜ - Oₜ|
+        rng: Total range Hₜ - Lₜ
+        wu_ratio: Normalized upper wick Ẇᵘₜ = Wᵘₜ/(Hₜ-Lₜ)
+        wl_ratio: Normalized lower wick Ẇˡₜ = Wˡₜ/(Hₜ-Lₜ)
+        sigma_b: Body size sensitivity [0.01, 0.1], default 0.05
+        sigma_w: Wick symmetry requirement [0.05, 0.2], default 0.10
+    
+    Returns:
+        Doji-ness score ∈ [0, 1]
+    """
     if rng == 0:
-        return 0
-    term1 = np.exp(-((Bt / rng) ** 2) / (2 * sigma_b ** 2))
-    term2 = np.exp(-((wu_ratio - wl_ratio) ** 2) / (2 * sigma_w ** 2))
+        return 0.0
+    
+    # Clamp parameters to spec ranges
+    sigma_b = max(0.01, min(0.1, sigma_b))
+    sigma_w = max(0.05, min(0.2, sigma_w))
+    
+    # Body size term: exp[−(Bₜ/(Hₜ−Lₜ))²/(2σ_b²)]
+    body_ratio = Bt / rng
+    term1 = np.exp(-(body_ratio ** 2) / (2 * sigma_b ** 2))
+    
+    # Wick symmetry term: exp[−(Ẇᵘₜ−Ẇˡₜ)²/(2σ_w²)]
+    wick_diff = wu_ratio - wl_ratio
+    term2 = np.exp(-(wick_diff ** 2) / (2 * sigma_w ** 2))
+    
     return term1 * term2
 
 def two_bar_strength(body2, body1, beta_pat=1.0):
@@ -326,38 +354,7 @@ FVG_DEFAULT_PARAMS = {
     'kappa_m': 0.5    # Momentum boost
 }
 
-def detect_support_resistance(highs, lows, window=20, threshold=0.02):
-    """
-    Detect support and resistance levels using local peaks and troughs
-    Returns: Lists of support and resistance levels
-    """
-    supports = []
-    resistances = []
-    
-    for i in range(window, len(highs) - window):
-        # Check for resistance (local high)
-        if highs[i] == max(highs[i-window:i+window+1]):
-            # Check if it's significant enough
-            avg_high = np.mean(highs[i-window:i+window+1])
-            if highs[i] > avg_high * (1 + threshold):
-                resistances.append({
-                    'price': highs[i],
-                    'index': i,
-                    'strength': (highs[i] - avg_high) / avg_high
-                })
-        
-        # Check for support (local low)
-        if lows[i] == min(lows[i-window:i+window+1]):
-            # Check if it's significant enough
-            avg_low = np.mean(lows[i-window:i+window+1])
-            if lows[i] < avg_low * (1 - threshold):
-                supports.append({
-                    'price': lows[i],
-                    'index': i,
-                    'strength': (avg_low - lows[i]) / avg_low
-                })
-    
-    return supports, resistances
+# REMOVE: detect_support_resistance and rolling_support_resistance and all S/R logic
 
 def location_context_score(current_price, supports, resistances, tolerance=0.01):
     """
@@ -370,21 +367,19 @@ def location_context_score(current_price, supports, resistances, tolerance=0.01)
     
     # Check proximity to supports
     for support in supports:
-        distance = abs(current_price - support['price']) / support['price']
+        distance = abs(current_price - support) / support
         if distance <= tolerance:
             # Closer to support = higher score for bullish setups
             proximity_score = 1 - (distance / tolerance)
-            strength_score = min(1, support['strength'] * 10)
-            scores.append(proximity_score * strength_score)
+            scores.append(proximity_score)
     
     # Check proximity to resistances
     for resistance in resistances:
-        distance = abs(current_price - resistance['price']) / resistance['price']
+        distance = abs(current_price - resistance) / resistance
         if distance <= tolerance:
             # Closer to resistance = higher score for bearish setups
             proximity_score = 1 - (distance / tolerance)
-            strength_score = min(1, resistance['strength'] * 10)
-            scores.append(proximity_score * strength_score)
+            scores.append(proximity_score)
     
     return np.mean(scores) if scores else 0.5
 
@@ -770,24 +765,6 @@ def detect_series_pattern(data, min_bars=3, similarity_threshold=0.8):
 
 # SECTION 9: Market-Maker Reversion Models
 
-def rolling_support_resistance(highs, lows, window=20):
-    """
-    Rolling support/resistance: R_t^sup = max_{i=t-W}^t H_i, R_t^inf = min_{i=t-W}^t L_i
-    """
-    supports = []
-    resistances = []
-    
-    for i in range(window, len(highs)):
-        # Rolling resistance (high)
-        resistance = max(highs[i-window:i+1])
-        resistances.append(resistance)
-        
-        # Rolling support (low)
-        support = min(lows[i-window:i+1])
-        supports.append(support)
-    
-    return supports, resistances
-
 def market_maker_reversion_score(low, resistance_inf, sigma_r=0.02, sigma_t=0.01, epsilon=0.001):
     """
     Market-maker reversion score: M_t = exp[-(L_t - R_t^inf)^2/(2σ_r^2)] exp[-ε^2/(2σ_t^2)]
@@ -1002,23 +979,139 @@ def impulse_weighted_depth(open_, close_, high, low, zone_high, zone_low,
     return basic_depth * range_boost * wick_boost
 
 def two_bar_reversal_patterns(bar1, bar2, pattern_type='bullish_engulfing'):
-    """
-    Two-bar reversal patterns with specific formulas
-    """
-    B1 = abs(bar1['close'] - bar1['open'])
-    B2 = abs(bar2['close'] - bar2['open'])
+    """Detect two-bar reversal patterns"""
+    # Implementation for two-bar patterns
+    return True  # Placeholder
+
+
+# Additional functions needed by strategy_builders.py
+
+def compute_penetration_depth(open_, close_, high, low, zone_high, zone_low):
+    """Compute penetration depth into a zone"""
+    if zone_high <= zone_low:
+        return 0.0
     
-    if pattern_type == 'bullish_engulfing':
-        beta_eng = 1.0
-        return beta_eng * (B2 / B1) if B1 > 0 else 0.0
+    # Calculate how much the candle penetrates the zone
+    candle_low = min(open_, close_)
+    candle_high = max(open_, close_)
     
-    elif pattern_type == 'piercing_line':
-        beta_pierce = 1.0
-        return beta_pierce * (bar2['close'] - bar1['low']) / B1 if B1 > 0 else 0.0
+    # Check if candle overlaps with zone
+    if candle_high < zone_low or candle_low > zone_high:
+        return 0.0
     
-    elif pattern_type == 'dark_cloud_cover':
-        beta_dcc = 1.0
-        return beta_dcc * (bar1['high'] - bar2['close']) / B1 if B1 > 0 else 0.0
+    # Calculate penetration
+    penetration_low = max(candle_low, zone_low)
+    penetration_high = min(candle_high, zone_high)
+    penetration = penetration_high - penetration_low
     
-    else:
-        return 0.0 
+    # Normalize by zone size
+    zone_size = zone_high - zone_low
+    return penetration / zone_size if zone_size > 0 else 0.0
+
+
+def compute_impulse_penetration(open_, close_, high, low, zone_high, zone_low, 
+                               avg_range, gamma=1.0, delta=0.5, epsilon=0.001):
+    """Compute impulse-weighted penetration depth"""
+    base_penetration = compute_penetration_depth(open_, close_, high, low, zone_high, zone_low)
+    
+    if base_penetration == 0:
+        return 0.0
+    
+    # Calculate impulse factor
+    body_size = abs(close_ - open_)
+    total_range = high - low
+    
+    if total_range == 0:
+        return base_penetration
+    
+    # Impulse ratio: body size relative to total range
+    impulse_ratio = body_size / total_range
+    
+    # Apply impulse weighting
+    impulse_factor = (impulse_ratio ** gamma) * (1 + delta * impulse_ratio)
+    
+    return base_penetration * impulse_factor
+
+
+def per_zone_strength(A_pattern, d_imp, kernel_params, C_i, kappa_m, M_t_y):
+    """Calculate per-zone strength score"""
+    xi, omega, alpha = kernel_params
+    
+    # Kernel function
+    kernel = skew_normal_kernel(d_imp, xi, omega, alpha)
+    
+    # Momentum adjustment
+    momentum_factor = 1 + kappa_m * M_t_y
+    
+    # Final strength
+    S_ti = A_pattern * kernel * C_i * momentum_factor
+    
+    return max(0.0, min(1.0, S_ti))  # Clamp to [0, 1]
+
+
+def flat_fvg_base(current_price, x0, x1):
+    """Flat FVG base distribution"""
+    return fvg_base_distribution(current_price, x0, x1)
+
+
+def micro_comb_peaks(current_price, x0, x1, N, sigma):
+    """Micro combination peaks"""
+    return fvg_micro_comb(current_price, x0, x1, N, sigma)
+
+
+def combined_location_strength(current_price, x0, x1, beta1, beta2, N, sigma):
+    """Combined location strength"""
+    L_base = flat_fvg_base(current_price, x0, x1)
+    C_peaks = micro_comb_peaks(current_price, x0, x1, N, sigma)
+    return beta1 * L_base + beta2 * C_peaks
+
+
+def directional_skew(current_price, x0, L_base, lambda_skew):
+    """Directional skew adjustment"""
+    return L_base * (1 + lambda_skew * (current_price - x0))
+
+
+def z_space_aggregate(S_ti_list, w_list, beta_v, V_xy):
+    """Z-space aggregation of zone strengths"""
+    if not S_ti_list or not w_list:
+        return 0.0
+    
+    # Weighted sum
+    weighted_sum = sum(S_ti * w for S_ti, w in zip(S_ti_list, w_list))
+    total_weight = sum(w_list)
+    
+    if total_weight == 0:
+        return 0.0
+    
+    # Volatility adjustment
+    S_net = weighted_sum / total_weight
+    S_adj = S_net / (1 + beta_v * V_xy)
+    
+    return max(0.0, min(1.0, S_adj))
+
+
+def momentum_weighted_location(L_total, kappa_m, M_t_y):
+    """Momentum-weighted location score"""
+    momentum_factor = 1 + kappa_m * M_t_y
+    return L_total * momentum_factor
+
+
+def market_maker_reversion_enhanced(low, resistance_inf, imbalance_expectation, 
+                                  sigma_r=0.02, sigma_t=0.01, epsilon=0.001):
+    """Enhanced market maker reversion score"""
+    # Base MMRS
+    base_mmrs = market_maker_reversion_score(low, resistance_inf, sigma_r, sigma_t, epsilon)
+    
+    # Add imbalance expectation
+    enhanced_mmrs = base_mmrs + imbalance_expectation
+    
+    return max(0.0, min(1.0, enhanced_mmrs))
+
+
+def enhanced_execution_score(S_adj, C_align, MMRS_enhanced, tau=0.5):
+    """Enhanced execution score"""
+    # Combine all components
+    execution_score = S_adj * C_align * MMRS_enhanced
+    
+    # Apply threshold
+    return execution_score > tau 

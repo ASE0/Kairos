@@ -1,0 +1,460 @@
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.1, 'max_impulse_bars': 3, 'min_impulse_score': 1.0, 'min_impulse_body_mult': 1.5, 'max_block_lookback': 3, 'min_block_body_frac': 0.25, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.95, 'tau_bars': 50}
+[FORCE-OB] Added 18 OB zones to results['zones'] (forced run)
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-03-07 16:15:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2024-03-07 16:16:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2024-03-07 16:17:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2024-03-07 16:18:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2024-03-07 16:19:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.1, 'max_impulse_bars': 3, 'min_impulse_score': 1.0, 'min_impulse_body_mult': 1.5, 'max_block_lookback': 3, 'min_block_body_frac': 0.25, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.95, 'tau_bars': 50}
+[FORCE-OB] Added 18 OB zones to results['zones'] (forced run)
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-03-07 16:15:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2024-03-07 16:16:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2024-03-07 16:17:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2024-03-07 16:18:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2024-03-07 16:19:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.1, 'max_impulse_bars': 3, 'min_impulse_score': 1.0, 'min_impulse_body_mult': 1.5, 'max_block_lookback': 3, 'min_block_body_frac': 0.25, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.95, 'tau_bars': 50}
+[FORCE-OB] Added 18 OB zones to results['zones'] (forced run)
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-03-07 16:15:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2024-03-07 16:16:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2024-03-07 16:17:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2024-03-07 16:18:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2024-03-07 16:19:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.1, 'max_impulse_bars': 3, 'min_impulse_score': 1.0, 'min_impulse_body_mult': 1.5, 'max_block_lookback': 3, 'min_block_body_frac': 0.25, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.95, 'tau_bars': 50}
+[FORCE-OB] Added 18 OB zones to results['zones'] (forced run)
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.1, 'max_impulse_bars': 3, 'min_impulse_score': 1.0, 'min_impulse_body_mult': 1.5, 'max_block_lookback': 3, 'min_block_body_frac': 0.25, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.95, 'tau_bars': 50}
+[FORCE-OB] Added 18 OB zones to results['zones'] (forced run)
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-03-07 16:15:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2024-03-07 16:16:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2024-03-07 16:17:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2024-03-07 16:18:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2024-03-07 16:19:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.1, 'max_impulse_bars': 3, 'min_impulse_score': 1.0, 'min_impulse_body_mult': 1.5, 'max_block_lookback': 3, 'min_block_body_frac': 0.25, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.95, 'tau_bars': 50}
+[FORCE-OB] Added 18 OB zones to results['zones'] (forced run)
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.1, 'max_impulse_bars': 3, 'min_impulse_score': 1.0, 'min_impulse_body_mult': 1.5, 'max_block_lookback': 3, 'min_block_body_frac': 0.25, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.95, 'tau_bars': 50}
+[FORCE-OB] Added 18 OB zones to results['zones'] (forced run)
+[FORCE-OB] Entered forced OB detection block in run_backtest\n[FORCE-OB] Error: 'OBZone' object has no attribute 'get'\nTraceback (most recent call last):
+  File "C:\Users\Arnav\Downloads\TradeSuite\TradeSuite\strategies\strategy_builders.py", line 2573, in run_backtest
+    zone.get('created_idx'),
+    ^^^^^^^^
+AttributeError: 'OBZone' object has no attribute 'get'
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB] Error in forced OB detection: 'OBZone' object has no attribute 'get'
+Traceback (most recent call last):
+  File "C:\Users\Arnav\Downloads\TradeSuite\TradeSuite\strategies\strategy_builders.py", line 2566, in run_backtest
+    zone.get('creation_index'),
+    ^^^^^^^^
+AttributeError: 'OBZone' object has no attribute 'get'
+
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB] Added 7 unique OB zones to results['zones']
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB] Added 7 unique OB zones to results['zones']
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB] Added 7 unique OB zones to results['zones']
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-03-07 16:15:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2024-03-07 16:16:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2024-03-07 16:17:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2024-03-07 16:18:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2024-03-07 16:19:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.1, 'max_impulse_bars': 3, 'min_impulse_score': 1.0, 'min_impulse_body_mult': 1.5, 'max_block_lookback': 3, 'min_block_body_frac': 0.25, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.95, 'tau_bars': 50}
+[FORCE-OB] Added 18 OB zones to results['zones'] (forced run)
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.1, 'max_impulse_bars': 3, 'min_impulse_score': 1.0, 'min_impulse_body_mult': 1.5, 'max_block_lookback': 3, 'min_block_body_frac': 0.25, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.95, 'tau_bars': 50}
+[FORCE-OB] Added 18 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 18 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.1, 'max_impulse_bars': 3, 'min_impulse_score': 1.0, 'min_impulse_body_mult': 1.5, 'max_block_lookback': 3, 'min_block_body_frac': 0.25, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.95, 'tau_bars': 50}
+[FORCE-OB] Added 18 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 18 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.1, 'max_impulse_bars': 3, 'min_impulse_score': 1.0, 'min_impulse_body_mult': 1.5, 'max_block_lookback': 3, 'min_block_body_frac': 0.25, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.95, 'tau_bars': 50}
+[FORCE-OB] Added 18 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 18 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.1, 'max_impulse_bars': 3, 'min_impulse_score': 1.0, 'min_impulse_body_mult': 1.5, 'max_block_lookback': 3, 'min_block_body_frac': 0.25, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.95, 'tau_bars': 50}
+[FORCE-OB] Added 7 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 7 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-03-07 16:15:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2024-03-07 16:16:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2024-03-07 16:17:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2024-03-07 16:18:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2024-03-07 16:19:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.1, 'max_impulse_bars': 3, 'min_impulse_score': 1.0, 'min_impulse_body_mult': 1.5, 'max_block_lookback': 3, 'min_block_body_frac': 0.25, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.95, 'tau_bars': 50}
+[FORCE-OB] Added 7 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 7 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.1, 'max_impulse_bars': 3, 'min_impulse_score': 1.0, 'min_impulse_body_mult': 1.5, 'max_block_lookback': 3, 'min_block_body_frac': 0.25, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.95, 'tau_bars': 50}
+[FORCE-OB] Added 7 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 7 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-03-07 16:15:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2024-03-07 16:16:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2024-03-07 16:17:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2024-03-07 16:18:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2024-03-07 16:19:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.1, 'max_impulse_bars': 3, 'min_impulse_score': 1.0, 'min_impulse_body_mult': 1.5, 'max_block_lookback': 3, 'min_block_body_frac': 0.25, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.95, 'tau_bars': 50}
+[FORCE-OB] Added 7 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 7 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-03-07 16:15:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2024-03-07 16:16:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2024-03-07 16:17:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2024-03-07 16:18:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2024-03-07 16:19:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.1, 'max_impulse_bars': 3, 'min_impulse_score': 1.0, 'min_impulse_body_mult': 1.5, 'max_block_lookback': 3, 'min_block_body_frac': 0.25, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.95, 'tau_bars': 50}
+[FORCE-OB] Added 7 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 7 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 2.0, 'max_impulse_bars': 5, 'min_impulse_score': 0.5, 'min_impulse_body_mult': 1.2, 'max_block_lookback': 5, 'min_block_body_frac': 0.15, 'gamma_imp': 1.5, 'delta_imp': 1.0, 'gamma_decay': 0.98, 'tau_bars': 100}
+[FORCE-OB] Added 0 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 0 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 5, 'min_impulse_score': 0.5, 'min_impulse_body_mult': 1.2, 'max_block_lookback': 5, 'min_block_body_frac': 0.15, 'gamma_imp': 1.5, 'delta_imp': 1.0, 'gamma_decay': 0.98, 'tau_bars': 100}
+[FORCE-OB] Added 4 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 4 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-03-07 16:15:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2024-03-07 16:16:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2024-03-07 16:17:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2024-03-07 16:18:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2024-03-07 16:19:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 5, 'min_impulse_score': 0.5, 'min_impulse_body_mult': 1.2, 'max_block_lookback': 5, 'min_block_body_frac': 0.15, 'gamma_imp': 1.5, 'delta_imp': 1.0, 'gamma_decay': 0.98, 'tau_bars': 100}
+[FORCE-OB] Added 4 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 4 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 1.0, 'max_impulse_bars': 10, 'min_impulse_score': 0.3, 'min_impulse_body_mult': 1.0, 'max_block_lookback': 10, 'min_block_body_frac': 0.1, 'gamma_imp': 1.0, 'delta_imp': 0.8, 'gamma_decay': 0.99, 'tau_bars': 200}
+[FORCE-OB] Added 6 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 6 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.1, 'max_impulse_bars': 20, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.5, 'max_block_lookback': 20, 'min_block_body_frac': 0.05, 'gamma_imp': 0.5, 'delta_imp': 0.5, 'gamma_decay': 0.99, 'tau_bars': 200}
+[FORCE-OB] Added 26 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 26 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 1.0, 'max_impulse_bars': 10, 'min_impulse_score': 0.3, 'min_impulse_body_mult': 1.0, 'max_block_lookback': 10, 'min_block_body_frac': 0.1, 'gamma_imp': 1.0, 'delta_imp': 0.8, 'gamma_decay': 0.99, 'tau_bars': 200}
+[FORCE-OB] Added 6 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 6 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.1, 'max_impulse_bars': 20, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.5, 'max_block_lookback': 20, 'min_block_body_frac': 0.05, 'gamma_imp': 0.5, 'delta_imp': 0.5, 'gamma_decay': 0.99, 'tau_bars': 200}
+[FORCE-OB] Added 26 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 26 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.01, 'max_impulse_bars': 30, 'min_impulse_score': 0.01, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.01, 'gamma_imp': 0.1, 'delta_imp': 0.1, 'gamma_decay': 0.999, 'tau_bars': 500}
+[FORCE-OB] Added 26 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 26 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-03-07 16:15:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2024-03-07 16:16:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2024-03-07 16:17:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2024-03-07 16:18:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2024-03-07 16:19:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.01, 'max_impulse_bars': 30, 'min_impulse_score': 0.01, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.01, 'gamma_imp': 0.1, 'delta_imp': 0.1, 'gamma_decay': 0.999, 'tau_bars': 500}
+[FORCE-OB] Added 26 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 26 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 5.0, 'min_impulse_body_mult': 2.0, 'max_block_lookback': 30, 'min_block_body_frac': 0.5, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.98, 'tau_bars': 100, 'min_zone_width': 10.0}
+[FORCE-OB] OB detection failed: detect_order_blocks() got an unexpected keyword argument 'min_zone_width'
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 5.0, 'min_impulse_body_mult': 2.0, 'max_block_lookback': 30, 'min_block_body_frac': 0.5, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.98, 'tau_bars': 100}
+[FORCE-OB] Added 0 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 0 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 2.0, 'min_impulse_body_mult': 1.5, 'max_block_lookback': 30, 'min_block_body_frac': 0.3, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.98, 'tau_bars': 100}
+[FORCE-OB] Added 0 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 0 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.98, 'tau_bars': 100}
+[FORCE-OB] Added 5 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 5 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.98, 'tau_bars': 100}
+[FORCE-OB] Added 40 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 40 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-03-07 16:15:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2024-03-07 16:16:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2024-03-07 16:17:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2024-03-07 16:18:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2024-03-07 16:19:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.98, 'tau_bars': 100}
+[FORCE-OB] Added 40 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 40 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.1, 'max_impulse_bars': 50, 'min_impulse_score': 5.0, 'min_impulse_body_mult': 3.0, 'max_block_lookback': 50, 'min_block_body_frac': 0.5, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.98, 'tau_bars': 500}
+[FORCE-OB] Added 2 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 2 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.1, 'max_impulse_bars': 30, 'min_impulse_score': 3.0, 'min_impulse_body_mult': 2.0, 'max_block_lookback': 30, 'min_block_body_frac': 0.3, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.98, 'tau_bars': 500}
+[FORCE-OB] Added 5 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 5 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-03-07 16:15:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2024-03-07 16:16:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2024-03-07 16:17:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2024-03-07 16:18:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2024-03-07 16:19:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.1, 'max_impulse_bars': 30, 'min_impulse_score': 3.0, 'min_impulse_body_mult': 2.0, 'max_block_lookback': 30, 'min_block_body_frac': 0.3, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.98, 'tau_bars': 500}
+[FORCE-OB] Added 5 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 5 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-03-07 16:15:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2024-03-07 16:16:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2024-03-07 16:17:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2024-03-07 16:18:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2024-03-07 16:19:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.98, 'tau_bars': 100}
+[FORCE-OB] Added 40 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 40 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-03-07 16:15:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2024-03-07 16:16:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2024-03-07 16:17:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2024-03-07 16:18:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2024-03-07 16:19:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.98, 'tau_bars': 100}
+[FORCE-OB] Added 40 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 40 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.98, 'tau_bars': 100}
+[FORCE-OB] Added 40 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 40 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-03-07 16:15:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2024-03-07 16:16:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2024-03-07 16:17:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2024-03-07 16:18:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2024-03-07 16:19:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.98, 'tau_bars': 100}
+[FORCE-OB] Added 40 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 40 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.9, 'tau_bars': 80}
+[FORCE-OB] Added 40 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 40 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-03-07 16:15:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2024-03-07 16:16:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2024-03-07 16:17:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2024-03-07 16:18:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2024-03-07 16:19:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.9, 'tau_bars': 80}
+[FORCE-OB] Added 40 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 40 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.9, 'tau_bars': 80}
+[FORCE-OB] Added 40 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 40 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.9, 'tau_bars': 80}
+[FORCE-OB] Added 40 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 40 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-03-07 16:15:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2024-03-07 16:16:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2024-03-07 16:17:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2024-03-07 16:18:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2024-03-07 16:19:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.9, 'tau_bars': 80}
+[FORCE-OB] Added 40 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 40 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2023-01-01 00:00:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2023-01-01 00:01:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2023-01-01 00:02:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2023-01-01 00:03:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2023-01-01 00:04:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.9, 'tau_bars': 80}
+[FORCE-OB] Added 40 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 40 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-03-07 16:15:00', open=18264.25, high=18266.75, low=18200.25, close=18204.75, volume=3424.0)
+Bar(dt='2024-03-07 16:16:00', open=18204.5, high=18212.5, low=18159.0, close=18176.0, volume=3426.0)
+Bar(dt='2024-03-07 16:17:00', open=18177.0, high=18230.5, low=18174.75, close=18229.25, volume=2457.0)
+Bar(dt='2024-03-07 16:18:00', open=18229.0, high=18272.75, low=18226.25, close=18246.5, volume=2613.0)
+Bar(dt='2024-03-07 16:19:00', open=18245.25, high=18245.75, low=18215.0, close=18221.25, volume=1169.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.9, 'tau_bars': 80}
+[FORCE-OB] Added 40 OB zones to results['zones'] (forced run)
+[FORCE-OB] Removed 40 existing OB zones to prevent duplicates

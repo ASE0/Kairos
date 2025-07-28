@@ -1,0 +1,368 @@
+System Overview
+Market Environment Classification (Tick-Based)
+Every 5000 ticks, calculate:
+1. Order Flow Efficiency = |CVD[0] - CVD[5000]| / Sum(|Volume_i|)
+2. Trade Size Distribution = Large_Trades / Total_Trades
+3. Spread Volatility = StdDev(Bid_Ask_Spread) / Mean(Spread)
+
+Market States:
+- TRENDING: Order Flow Efficiency > 0.3 AND Large Trade Ratio > 0.4
+- RANGING: Bid/Ask Balance within 45-55% AND Spread stable
+- VOLATILE: Spread Volatility > 2.0 OR Sweep frequency > normal
+- TOXIC: Spread > 2 ticks OR Quote changes > 100/second
+News Time Handling
+News Windows (ET):
+- 8:30 AM ± 10 min: Major economic data
+- 10:00 AM ± 10 min: Secondary data
+- 2:00 PM ± 5 min: Fed minutes (when applicable)
+
+During news windows:
+- Increase minimum trade size filter by 2x
+- Require 2x normal edge to enter
+- Exit all positions 30 seconds before
+
+Strategy 1: Order Flow Momentum (OFM)
+Best for: Institutional accumulation/distribution phases
+Parameters (5):
+CVD_Period = 1000 ticks
+Imbalance_Threshold = 1500 contracts (net delta)
+Large_Trade_Size = 10 contracts minimum
+Absorption_Ratio = 400 (volume per tick movement)
+Trail_Ticks = 3
+Entry Conditions:
+python
+# Calculate on every tick
+cvd = cumulative_volume_delta(CVD_Period)
+trade_sizes = [t.size for t in last_n_trades(CVD_Period)]
+large_ratio = len([t for t in trade_sizes if t >= Large_Trade_Size]) / len(trade_sizes)
+absorption = volume_last_100_ticks / price_range_ticks
+
+# Microstructure signals
+bid_pulling = bid_size_decreased > ask_size_decreased  # Bullish
+ask_pulling = ask_size_decreased > bid_size_decreased  # Bearish
+
+# LONG Entry (all conditions must be true):
+1. cvd > Imbalance_Threshold
+2. large_ratio > 0.35  # Institutional involvement
+3. absorption < Absorption_Ratio  # Not hitting resistance
+4. bid_pulling == True  # Market makers bullish
+5. spread <= 1 tick
+
+# SHORT Entry (opposite conditions)
+
+# Execution: 
+- Place limit at best_bid + 1 (aggressive post)
+- If not filled in 100ms, market order
+- Cancel if spread widens > 1 tick
+Exit Conditions:
+python
+# Initial Stop:
+Long: Largest bid cluster below entry - 1 tick
+Short: Largest ask cluster above entry + 1 tick
+
+# Dynamic Exit based on order flow:
+if position == LONG:
+    # Trail when flow continues
+    if cvd_since_entry > 0:
+        stop = max(stop, current_bid - Trail_Ticks)
+    
+    # Exit on flow reversal
+    if cvd_last_200_ticks < -Imbalance_Threshold/3:
+        exit_market()
+    
+    # Exit on absorption (resistance)
+    if volume_at_price_level > Absorption_Ratio * 2:
+        exit_limit(current_bid)
+Position Sizing:
+python
+# Tick-based volatility
+tick_changes_per_minute = count_tick_changes(60_seconds)
+volatility_scalar = min(1.0, 20 / tick_changes_per_minute)
+
+Risk_Per_Trade = Account_Value * 0.01 * volatility_scalar
+Tick_Risk = abs(entry - stop) / tick_size
+Contracts = floor(Risk_Per_Trade / (Tick_Risk * tick_value))
+
+Strategy 2: Microstructure Mean Reversion (MMR)
+Best for: Sweep exhaustion and liquidity gaps
+Parameters (5):
+Sweep_Threshold = 75 contracts (single aggressive order)
+Book_Imbalance = 3.0 (bid/ask ratio)
+Quiet_Period = 200 ticks
+Reversion_Percent = 0.6
+Max_Heat = 4 ticks
+Setup Identification:
+python
+# Detect aggressive sweep
+sweep = None
+for trade in trades:
+    if trade.size >= Sweep_Threshold and trade.aggressor:
+        levels_taken = count_price_levels(trade)
+        if levels_taken >= 3:  # Swept multiple levels
+            sweep = {
+                'price': trade.price,
+                'direction': trade.side,
+                'size': trade.size,
+                'levels': levels_taken,
+                'timestamp': trade.time
+            }
+
+# Monitor post-sweep activity
+if sweep:
+    quiet_ticks = 0
+    total_volume = 0
+    
+    for tick in subsequent_ticks:
+        quiet_ticks += 1
+        total_volume += tick.volume
+        
+        if quiet_ticks >= Quiet_Period:
+            avg_volume = total_volume / quiet_ticks
+            if avg_volume < sweep.size * 0.2:  # Volume dried up
+                setup_ready = True
+Entry Conditions:
+python
+# Book analysis at each price level
+def analyze_book_support():
+    bid_support = sum([level.size for level in bid_book[:5]])
+    ask_pressure = sum([level.size for level in ask_book[:5]])
+    return bid_support / ask_pressure
+
+# LONG Entry (fade down sweep):
+if sweep.direction == 'SELL' and setup_ready:
+    if analyze_book_support() > Book_Imbalance:
+        # Strong bid support after sweep
+        entry_price = sweep.price + 1_tick
+        place_limit_order(LONG, entry_price)
+
+# SHORT Entry (fade up sweep):
+if sweep.direction == 'BUY' and setup_ready:
+    if 1/analyze_book_support() > Book_Imbalance:
+        # Strong ask resistance after sweep
+        entry_price = sweep.price - 1_tick
+        place_limit_order(SHORT, entry_price)
+
+# Cancel if not filled within 50 ticks
+Exit Logic:
+python
+# Fixed stops based on sweep range
+Long: sweep.price - (sweep.levels * tick_size)
+Short: sweep.price + (sweep.levels * tick_size)
+
+# Target: Reversion percentage
+Long: entry + (Reversion_Percent * (entry - sweep.price))
+Short: entry - (Reversion_Percent * (sweep.price - entry))
+
+# Time stop
+if ticks_since_entry > 500 and pnl < 0:
+    exit_market()
+
+# Max heat protection
+if adverse_excursion > Max_Heat:
+    exit_market()
+
+Strategy 3: Liquidity Vacuum Breakout (LVB)
+Best for: Pre-breakout consolidation with dried up volume
+Parameters (5):
+Consolidation_Ticks = 500
+Volume_Reduction = 0.3 (vs average)
+Range_Ticks = 5 (max during consolidation)
+Breakout_Volume = 100 contracts
+Target_Multiple = 2.5
+Consolidation Detection:
+python
+# Rolling window analysis
+windows = []
+for i in range(0, total_ticks, Consolidation_Ticks):
+    window = ticks[i:i+Consolidation_Ticks]
+    
+    window_stats = {
+        'high': max([t.price for t in window]),
+        'low': min([t.price for t in window]),
+        'volume': sum([t.volume for t in window]),
+        'range': (high - low) / tick_size
+    }
+    
+    # Check if consolidating
+    if window_stats['range'] <= Range_Ticks:
+        avg_volume_prior = mean([w.volume for w in windows[-10:]])
+        if window_stats['volume'] < avg_volume_prior * Volume_Reduction:
+            consolidation = {
+                'high': window_stats['high'],
+                'low': window_stats['low'],
+                'mid': (high + low) / 2,
+                'start_tick': i
+            }
+Entry Triggers:
+python
+# Monitor for breakout
+if consolidation:
+    for tick in subsequent_ticks:
+        # Volume surge detection
+        tick_cvd = tick.ask_volume - tick.bid_volume
+        
+        # LONG Breakout:
+        if (tick.price > consolidation['high'] and 
+            tick.volume >= Breakout_Volume and
+            tick_cvd > 0):  # Buying pressure
+            
+            # Confirm with next tick
+            if next_tick.price >= tick.price:
+                enter_long_market()
+                
+        # SHORT Breakout:
+        if (tick.price < consolidation['low'] and
+            tick.volume >= Breakout_Volume and
+            tick_cvd < 0):  # Selling pressure
+            
+            # Confirm with next tick
+            if next_tick.price <= tick.price:
+                enter_short_market()
+Stop and Target:
+python
+# Stops: Other side of consolidation
+Long: consolidation['low'] - 1_tick
+Short: consolidation['high'] + 1_tick
+
+# Targets: Multiple of risk
+Long: entry + (Target_Multiple * (entry - stop))
+Short: entry - (Target_Multiple * (stop - entry))
+
+# Breakout failure protection
+if ticks_since_entry > 100:
+    if position == LONG and price < consolidation['high']:
+        exit_market()  # Failed breakout
+    if position == SHORT and price > consolidation['low']:
+        exit_market()
+
+Master Control Layer (Tick-Based)
+Tick Data Quality Checks:
+python
+def validate_tick_data():
+    # Check for data issues
+    if bid > ask:
+        return False  # Crossed market
+    if spread > 5 * normal_spread:
+        return False  # Wide spread
+    if time_since_last_tick > 1000ms:
+        return False  # Stale data
+    if bid_size == 0 or ask_size == 0:
+        return False  # No liquidity
+    return True
+Strategy Selection:
+python
+def select_strategy(market_state, tick_metrics):
+    # Toxic market - no trading
+    if market_state == "TOXIC" or not validate_tick_data():
+        return None
+    
+    # Clear institutional flow
+    if abs(cvd_5000) > 5000 and large_trade_ratio > 0.4:
+        return "OFM"
+    
+    # Post-sweep opportunity
+    if recent_sweep_detected and ticks_since_sweep > 100:
+        return "MMR"
+    
+    # Consolidation breakout setup
+    if volatility_contraction and volume_decline:
+        return "LVB"
+    
+    return None  # No clear opportunity
+Risk Management:
+python
+# Tick-based risk metrics
+MAX_TICKS_PER_SECOND = 50  # Above this = news/unusual
+MIN_BOOK_DEPTH = 100  # Contracts each side minimum
+MAX_SPREAD = 2  # Ticks
+
+# Pre-trade checks
+if ticks_per_second > MAX_TICKS_PER_SECOND:
+    disable_trading(60_seconds)
+
+if book_depth < MIN_BOOK_DEPTH:
+    reduce_size_by_half()
+
+if spread > MAX_SPREAD:
+    cancel_all_orders()
+    flatten_positions()
+
+Mathematical Validation Framework (Tick Data)
+1. Microstructure Statistics:
+python
+# Tick-level metrics
+- Fill_Rate = Filled_Orders / Total_Orders
+- Adverse_Selection = mean(price_1000_ticks_later - fill_price)
+- Implementation_Shortfall = (fill_price - decision_price) / decision_price
+
+# Acceptance criteria:
+Fill_Rate > 0.85
+Adverse_Selection < 0.5 * average_profit
+Implementation_Shortfall < 0.1 * tick_size
+2. Execution Quality:
+python
+# Slippage analysis
+Slippage_Distribution = histogram(fill_price - intended_price)
+Expected_Slippage = mean(slippage)
+Slippage_95th = percentile(slippage, 95)
+
+# Queue position analysis
+Queue_Position = (our_order_id - first_order_id) / total_orders
+Time_To_Fill = timestamp_fill - timestamp_place
+
+# Targets:
+Expected_Slippage < 0.5 ticks
+Queue_Position < 0.3  # Front of queue
+median(Time_To_Fill) < 500ms
+3. Market Impact:
+python
+# Temporary impact
+Temp_Impact = (price_at_fill - price_at_decision) / order_size
+# Permanent impact  
+Perm_Impact = (price_10min_later - price_at_decision) / order_size
+
+# Model: Impact = α√size + β*participation_rate
+Run regression to find α, β
+
+# Capacity constraint
+Max_Order_Size = Daily_Volume * 0.001  # 0.1% participation
+4. Information Ratio:
+python
+# Tick-based Sharpe
+tick_returns = [exit_price/entry_price - 1 for each trade]
+tick_sharpe = mean(tick_returns) / std(tick_returns) * sqrt(trades_per_year)
+
+# Information coefficient
+IC = correlation(predicted_move, actual_move)
+Breadth = number_of_independent_bets
+
+Information_Ratio = IC * sqrt(Breadth)
+Target: IR > 0.5
+
+Implementation Requirements
+Technology Stack:
+Data Feed: Direct exchange connections (not consolidated)
+Processing: In-memory tick database (kdb+ or Arctic)
+Execution: Native exchange protocols (FIX/OUCH)
+Latency: Sub-100ms tick-to-trade
+Minimum Data Requirements:
+python
+# Per tick:
+- Timestamp (microsecond precision)
+- Bid/Ask price and size
+- Trade price, size, and aggressor flag
+- Book depth (5 levels minimum)
+
+# Calculated in real-time:
+- CVD (cumulative volume delta)
+- Trade size distribution  
+- Book imbalance ratios
+- Microstructure features
+Critical Success Factors:
+Data Quality: Direct feeds, no aggregation
+Fast Execution: Limit orders with quick cancels
+Risk First: Many "no trade" conditions
+Small Edge: 0.1-0.3 ticks per trade after costs
+High Frequency: 10-50 trades per day
+Tight Stops: 3-5 ticks maximum
+This tick-based architecture captures real order flow and microstructure inefficiencies that time-based bars completely miss.

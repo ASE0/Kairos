@@ -1,0 +1,11 @@
+{
+  "name": "Test_Doji",
+  "actions": [
+    {
+      "name": "doji",
+      "pattern": {
+        "params": {}
+      }
+    }
+  ]
+} 
