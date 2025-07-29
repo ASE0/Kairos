@@ -1,0 +1,43 @@
+{
+  "name": "NQ_5s",
+  "created_at": "2025-07-28T12:32:23.386621",
+  "source_file": null,
+  "rows_original": 3286734,
+  "rows_processed": 312582,
+  "columns_kept": [],
+  "columns_removed": [],
+  "filters_applied": [],
+  "volatility": {
+    "value": 31,
+    "category": "medium",
+    "calculated_metrics": {
+      "method": "atr",
+      "raw_value": 0.00035824922130874676,
+      "period": 20
+    },
+    "user_defined": false
+  },
+  "tags": [
+    "source:unknown",
+    "detected:metatrader"
+  ],
+  "source": "data_stripper",
+  "original_timeframes": [
+    "1m",
+    "5m",
+    "15m"
+  ],
+  "original_rows": 3286734,
+  "saved_at": "2025-07-28T12:32:47.066320",
+  "rows": 3286734,
+  "columns": [
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume",
+    " NumberOfTrades",
+    " BidVolume",
+    " AskVolume"
+  ]
+}

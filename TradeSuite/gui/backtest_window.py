@@ -67,36 +67,65 @@ class BacktestWorker(QThread):
         try:
             self.log.emit("Starting backtest...")
 
-            # Import MultiTimeframeBacktestEngine here to avoid circular imports
-            from strategies.strategy_builders import MultiTimeframeBacktestEngine
-            engine = MultiTimeframeBacktestEngine()
-
             initial_capital = self.parameters.get('initial_capital', 100000)
             position_size = self.parameters.get('position_size', 0.02)
             
-            # Process in chunks to allow cancellation and progress updates
-            chunk_size = 1000
-            total_bars = len(self.data)
+            # Check if we should use the new architecture
+            use_new_architecture = self._should_use_new_architecture()
             
-            for i in range(0, total_bars, chunk_size):
-                if self._should_stop:
-                    self.log.emit("Backtest cancelled by user")
-                    return
+            if use_new_architecture:
+                self.log.emit("Using NEW MODULAR ARCHITECTURE...")
+                print(f"[DEBUG] BacktestWorker: Using new architecture for strategy: {self.strategy.name}")
                 
-                # Update progress
-                progress = int((i / total_bars) * 100)
-                self.progress.emit(progress)
+                # Convert strategy to new architecture format
+                strategy_config = self._convert_to_new_architecture_config()
                 
-                # Allow GUI updates
-                self.msleep(1)
+                # Use new architecture
+                try:
+                    from core.new_gui_integration import new_gui_integration
+                    results = new_gui_integration.run_strategy_backtest(
+                        strategy_config, 
+                        self.data,
+                        initial_capital=initial_capital,
+                        risk_per_trade=position_size
+                    )
+                    print(f"[DEBUG] BacktestWorker: New architecture backtest completed successfully")
+                except Exception as e:
+                    print(f"[DEBUG] BacktestWorker: New architecture failed: {e}")
+                    self.log.emit(f"New architecture failed, falling back to old system: {e}")
+                    use_new_architecture = False
             
-            # Use risk_per_trade as position_size for compatibility
-            results = engine.run_backtest(
-                self.strategy,
-                self.data,
-                initial_capital=initial_capital,
-                risk_per_trade=position_size
-            )
+            if not use_new_architecture:
+                self.log.emit("Using legacy backtest engine...")
+                print(f"[DEBUG] BacktestWorker: Using old architecture for strategy: {self.strategy.name}")
+                
+                # Import MultiTimeframeBacktestEngine here to avoid circular imports
+                from strategies.strategy_builders import MultiTimeframeBacktestEngine
+                engine = MultiTimeframeBacktestEngine()
+                
+                # Process in chunks to allow cancellation and progress updates
+                chunk_size = 1000
+                total_bars = len(self.data)
+                
+                for i in range(0, total_bars, chunk_size):
+                    if self._should_stop:
+                        self.log.emit("Backtest cancelled by user")
+                        return
+                    
+                    # Update progress
+                    progress = int((i / total_bars) * 100)
+                    self.progress.emit(progress)
+                    
+                    # Allow GUI updates
+                    self.msleep(1)
+                
+                # Use risk_per_trade as position_size for compatibility
+                results = engine.run_backtest(
+                    self.strategy,
+                    self.data,
+                    initial_capital=initial_capital,
+                    risk_per_trade=position_size
+                )
 
             import pprint
             with open('gui_debug_output.txt', 'a', encoding='utf-8') as f:
@@ -120,9 +149,18 @@ class BacktestWorker(QThread):
         self._should_stop = True
         self.is_running = False
 
-    def _calculate_metrics(self, trades: List[Dict], equity_curve: List[float], initial_capital: float) -> Dict[str, Any]:
+    def _calculate_metrics(self, trades: List[Dict], equity_curve, initial_capital: float) -> Dict[str, Any]:
         """Calculate backtest metrics"""
-        if not trades or not equity_curve:
+        # Handle both old list format and new Series format for equity_curve
+        equity_empty = False
+        if isinstance(equity_curve, pd.Series):
+            equity_empty = equity_curve.empty
+        elif isinstance(equity_curve, list):
+            equity_empty = not equity_curve
+        else:
+            equity_empty = True
+            
+        if not trades or equity_empty:
             return {
                 'total_trades': 0,
                 'total_return': 0,
@@ -133,14 +171,22 @@ class BacktestWorker(QThread):
                 'trades': trades
             }
 
-        returns = pd.Series(equity_curve).pct_change().dropna()
-        total_return = (equity_curve[-1] - initial_capital) / initial_capital
+        # Handle both Series and list formats
+        if isinstance(equity_curve, pd.Series):
+            returns = equity_curve.pct_change().dropna()
+            final_value = equity_curve.iloc[-1]
+            n_days = len(equity_curve)
+        else:
+            returns = pd.Series(equity_curve).pct_change().dropna()
+            final_value = equity_curve[-1]
+            n_days = len(equity_curve)
+        
+        total_return = (final_value - initial_capital) / initial_capital
 
         # Annual return calculation
-        n_days = len(equity_curve)
         if n_days > 1:
             years = n_days / 252  # Assume 252 trading days/year
-            annual_return = (equity_curve[-1] / initial_capital) ** (1 / years) - 1
+            annual_return = (final_value / initial_capital) ** (1 / years) - 1
         else:
             annual_return = 0
 
@@ -151,7 +197,11 @@ class BacktestWorker(QThread):
             sharpe_ratio = 0
 
         # Max drawdown
-        cumulative = pd.Series(equity_curve)
+        if isinstance(equity_curve, pd.Series):
+            cumulative = equity_curve
+        else:
+            cumulative = pd.Series(equity_curve)
+        
         running_max = cumulative.expanding().max()
         drawdown = (cumulative - running_max) / running_max
         max_drawdown = drawdown.min()
@@ -175,6 +225,72 @@ class BacktestWorker(QThread):
             'equity_curve': equity_curve,
             'trades': trades
         }
+    
+    def _should_use_new_architecture(self) -> bool:
+        """Determine if we should use the new modular architecture"""
+        try:
+            # Check if this is a JSON-based strategy (new format)
+            if hasattr(self.strategy, 'to_dict'):
+                strategy_dict = self.strategy.to_dict()
+            elif hasattr(self.strategy, '__dict__'):
+                strategy_dict = self.strategy.__dict__
+            else:
+                return False
+            
+            # Look for filter-only strategies with recognized filters
+            if 'actions' in strategy_dict:
+                for action in strategy_dict['actions']:
+                    filters = action.get('filters', [])
+                    for filter_config in filters:
+                        filter_type = filter_config.get('type', '')
+                        # Check if it's a filter type that the new architecture supports
+                        if filter_type in ['vwap', 'momentum', 'volatility', 'ma', 'bollinger_bands']:
+                            print(f"[DEBUG] BacktestWorker: Found supported filter type: {filter_type}")
+                            return True
+            
+            return False
+            
+        except Exception as e:
+            print(f"[DEBUG] BacktestWorker: Error checking for new architecture: {e}")
+            return False
+    
+    def _convert_to_new_architecture_config(self) -> dict:
+        """Convert strategy to new architecture format"""
+        try:
+            if hasattr(self.strategy, 'to_dict'):
+                strategy_dict = self.strategy.to_dict()
+            elif hasattr(self.strategy, '__dict__'):
+                strategy_dict = self.strategy.__dict__.copy()
+            else:
+                strategy_dict = {
+                    'name': getattr(self.strategy, 'name', 'Unknown Strategy'),
+                    'actions': []
+                }
+            
+            # Ensure it has the right structure
+            if 'name' not in strategy_dict:
+                strategy_dict['name'] = getattr(self.strategy, 'name', 'Unknown Strategy')
+            
+            if 'actions' not in strategy_dict:
+                strategy_dict['actions'] = []
+            
+            if 'combination_logic' not in strategy_dict:
+                strategy_dict['combination_logic'] = 'AND'
+            
+            if 'gates_and_logic' not in strategy_dict:
+                strategy_dict['gates_and_logic'] = {}
+            
+            print(f"[DEBUG] BacktestWorker: Converted strategy config: {strategy_dict}")
+            return strategy_dict
+            
+        except Exception as e:
+            print(f"[DEBUG] BacktestWorker: Error converting strategy config: {e}")
+            return {
+                'name': 'Fallback Strategy',
+                'actions': [],
+                'combination_logic': 'AND',
+                'gates_and_logic': {}
+            }
 
 
 class BacktestWindow(QMainWindow):
@@ -855,15 +971,69 @@ class BacktestWindow(QMainWindow):
                             ax.scatter(df.index[idx], comb_price, color='orange', s=20, alpha=0.9, zorder=12)
                 zones_plotted += 1
         
-        # Add VWAP indicator
-        if 'volume' in df.columns and len(df) > 20:
+        # NEW ARCHITECTURE: Add indicators from strategy visualization data (SAME AS CHART TAB)
+        indicators_added = False
+        try:
+            from core.new_gui_integration import new_gui_integration
+            
+            # Check if results have new architecture visualization data
+            viz_data = results.get('visualization_data', {})
+            if viz_data:
+                print(f"[DEBUG] Popout chart: Using NEW ARCHITECTURE visualization data")
+                
+                # Render all line indicators (VWAP, MA, RSI, etc.)
+                for line_data in viz_data.get('lines', []):
+                    line_name = line_data.get('name', 'Unknown')
+                    line_values = line_data.get('data')
+                    line_config = line_data.get('config', {})
+                    
+                    if line_values is not None and not line_values.empty:
+                        # Match line data index to chart data index
+                        common_index = df.index.intersection(line_values.index)
+                        if len(common_index) > 0:
+                            chart_values = line_values.reindex(common_index)
+                            
+                            ax.plot(common_index, chart_values.values,
+                                   color=line_config.get('color', 'purple'),
+                                   linewidth=line_config.get('linewidth', 1),
+                                   alpha=line_config.get('alpha', 0.8),
+                                   linestyle=line_config.get('linestyle', '-'),
+                                   label=line_config.get('label', line_name),
+                                   zorder=line_config.get('zorder', 5))
+                            
+                            print(f"[DEBUG] Popout chart: Added {line_name} indicator from new architecture")
+                            indicators_added = True
+                        else:
+                            print(f"[DEBUG] Popout chart: No common index for {line_name}")
+                
+                # Render zones from new architecture
+                for zone_data in viz_data.get('zones', []):
+                    start_idx = zone_data.get('start_idx', 0)
+                    end_idx = zone_data.get('end_idx', len(df) - 1)
+                    min_price = zone_data.get('min_price')
+                    max_price = zone_data.get('max_price')
+                    color = zone_data.get('color', 'blue')
+                    alpha = zone_data.get('alpha', 0.3)
+                    
+                    if min_price is not None and max_price is not None and start_idx < len(df) and end_idx < len(df):
+                        x_range = df.index[start_idx:end_idx+1]
+                        ax.fill_between(x_range, min_price, max_price, 
+                                       color=color, alpha=alpha, zorder=10)
+                        print(f"[DEBUG] Popout chart: Added zone from new architecture")
+                        
+        except Exception as e:
+            print(f"[DEBUG] Popout chart: Failed to load new architecture data: {e}")
+        
+        # FALLBACK: Add VWAP indicator if no new architecture data
+        if not indicators_added and 'volume' in df.columns and len(df) > 20:
             try:
+                print(f"[DEBUG] Popout chart: Using FALLBACK VWAP calculation")
                 # Calculate VWAP
                 vwap = (df['close'] * df['volume']).cumsum() / df['volume'].cumsum()
                 ax.plot(df.index, vwap, color='purple', linewidth=1, alpha=0.8, linestyle='-', label='VWAP', zorder=5)
-                print(f"[DEBUG] Added VWAP indicator to chart")
+                print(f"[DEBUG] Popout chart: Added fallback VWAP indicator")
             except Exception as e:
-                print(f"[DEBUG] Failed to add VWAP indicator: {e}")
+                print(f"[DEBUG] Popout chart: Failed to add VWAP indicator: {e}")
         
         # Overlay entries/exits
         if self.overlay_toggles.get('Entries/Exits', QCheckBox()).isChecked() and 'trades' in results:
@@ -1277,10 +1447,15 @@ class BacktestWindow(QMainWindow):
         # Get multi-timeframe information
         multi_tf_data = results.get('multi_tf_data', {})
         strategy_timeframes = []
-        if multi_tf_data:
+        
+        # Handle both old dict format and new DataFrame format
+        if isinstance(multi_tf_data, dict) and multi_tf_data:
             for tf_key in multi_tf_data.keys():
                 if tf_key != 'execution':
                     strategy_timeframes.append(tf_key)
+        elif isinstance(multi_tf_data, pd.DataFrame) and not multi_tf_data.empty:
+            # New architecture returns DataFrame, treat as single timeframe
+            strategy_timeframes.append('1min')
         # Summary text
         summary = f"""
 Backtest Results
@@ -1289,9 +1464,14 @@ Strategy: {results.get('strategy_name', 'Unknown')}
 """
         if strategy_timeframes:
             summary += f"Strategy Timeframes: {', '.join(strategy_timeframes)}\n"
-            execution_data = multi_tf_data.get('execution')
-            if execution_data is not None:
-                summary += f"Execution Timeframe: {len(execution_data)} bars\n"
+            
+            # Handle execution data differently for old vs new architecture
+            if isinstance(multi_tf_data, dict):
+                execution_data = multi_tf_data.get('execution')
+                if execution_data is not None:
+                    summary += f"Execution Timeframe: {len(execution_data)} bars\n"
+            elif isinstance(multi_tf_data, pd.DataFrame):
+                summary += f"Execution Timeframe: {len(multi_tf_data)} bars\n"
         summary += f"""
 Initial Capital: ${results.get('initial_capital', 0):,.2f}
 Final Capital: ${results.get('final_capital', 0):,.2f}
@@ -1317,24 +1497,59 @@ Total Trades: {results.get('total_trades', 0)}
         self.equity_chart.clear()
 
         equity_curve = results.get('equity_curve', [])
-        if not equity_curve:
-            return
+        
+        # Handle both old list format and new Series format
+        if isinstance(equity_curve, pd.Series):
+            if equity_curve.empty:
+                return
+        elif isinstance(equity_curve, list):
+            if not equity_curve:
+                return
+        else:
+            return  # Unknown format
 
         # Plot equity curve
-        x = np.arange(len(equity_curve))
-        self.equity_chart.plot(x, equity_curve, pen='w', name='Equity')
+        if isinstance(equity_curve, pd.Series):
+            # Convert Series to numpy arrays for plotting
+            if isinstance(equity_curve.index, pd.DatetimeIndex):
+                # Use time-based x-axis for datetime index
+                x = np.arange(len(equity_curve))
+                y = equity_curve.values
+            else:
+                # Use index values as x
+                x = np.arange(len(equity_curve))
+                y = equity_curve.values
+            
+            # Plot
+            self.equity_chart.plot(x, y, pen='w', name='Equity')
+            
+            # Add initial capital line
+            self.equity_chart.plot([0, len(equity_curve)-1],
+                                 [self.initial_capital.value(), self.initial_capital.value()],
+                                 pen=pg.mkPen('y', style=Qt.PenStyle.DashLine),
+                                 name='Initial Capital')
+            
+            # Calculate and display statistics
+            stats_text = f"Final Equity: ${equity_curve.iloc[-1]:,.2f} | "
+            stats_text += f"Peak: ${equity_curve.max():,.2f} | "
+            stats_text += f"Max Drawdown: {results['max_drawdown']:.2%}"
+            
+        else:
+            # Handle old list format
+            x = np.arange(len(equity_curve))
+            self.equity_chart.plot(x, equity_curve, pen='w', name='Equity')
 
-        # Add initial capital line
-        self.equity_chart.plot([0, len(equity_curve)-1],
-                             [self.initial_capital.value(), self.initial_capital.value()],
-                             pen=pg.mkPen('y', style=Qt.PenStyle.DashLine),
-                             name='Initial Capital')
+            # Add initial capital line
+            self.equity_chart.plot([0, len(equity_curve)-1],
+                                 [self.initial_capital.value(), self.initial_capital.value()],
+                                 pen=pg.mkPen('y', style=Qt.PenStyle.DashLine),
+                                 name='Initial Capital')
 
-        # Calculate and display statistics1
-        equity_series = pd.Series(equity_curve)
-        stats_text = f"Final Equity: ${equity_curve[-1]:,.2f} | "
-        stats_text += f"Peak: ${equity_series.max():,.2f} | "
-        stats_text += f"Max Drawdown: {results['max_drawdown']:.2%}"
+            # Calculate and display statistics
+            equity_series = pd.Series(equity_curve)
+            stats_text = f"Final Equity: ${equity_curve[-1]:,.2f} | "
+            stats_text += f"Peak: ${equity_series.max():,.2f} | "
+            stats_text += f"Max Drawdown: {results['max_drawdown']:.2%}"
         self.equity_stats.setText(stats_text)
 
     def _update_trade_stats(self, results: Dict[str, Any]):
@@ -1349,8 +1564,20 @@ Total Trades: {results.get('total_trades', 0)}
         """Update detailed statistics tab with real data"""
         # --- Monthly returns ---
         equity_curve = results.get('equity_curve', [])
-        if equity_curve:
-            equity_series = pd.Series(equity_curve)
+        
+        # Handle both old list format and new Series format
+        equity_has_data = False
+        if isinstance(equity_curve, pd.Series):
+            equity_has_data = not equity_curve.empty
+        elif isinstance(equity_curve, list):
+            equity_has_data = bool(equity_curve)
+        
+        if equity_has_data:
+            # Handle both Series and list input
+            if isinstance(equity_curve, pd.Series):
+                equity_series = equity_curve
+            else:
+                equity_series = pd.Series(equity_curve)
             n = len(equity_series)
             if 'trades' in results and results['trades'] and 'entry_time' in results['trades'][0]:
                 try:
@@ -1369,7 +1596,12 @@ Total Trades: {results.get('total_trades', 0)}
         else:
             monthly_returns = pd.Series(dtype=float)
 
-        months = list(monthly_returns.index.strftime('%b %Y'))
+        # Defensive check for proper datetime index
+        if len(monthly_returns) > 0 and hasattr(monthly_returns.index, 'strftime'):
+            months = list(monthly_returns.index.strftime('%b %Y'))
+        else:
+            # Fallback for non-datetime index or empty series
+            months = [f"Month {i+1}" for i in range(len(monthly_returns))]
         returns = monthly_returns.values
         self.monthly_table.setRowCount(1)
         self.monthly_table.setColumnCount(len(months))
@@ -1609,15 +1841,79 @@ Avg Holding Time: {avg_holding}
                             ax.scatter(df.index[idx], comb_price, color='orange', s=20, alpha=0.9, zorder=12)
                 zones_plotted += 1
         
-        # Add VWAP indicator to chart tab
-        if 'volume' in df.columns and len(df) > 20:
-            try:
-                # Calculate VWAP
-                vwap = (df['close'] * df['volume']).cumsum() / df['volume'].cumsum()
-                ax.plot(df.index, vwap, color='purple', linewidth=1, alpha=0.8, linestyle='-', label='VWAP', zorder=5)
-                print(f"[DEBUG] Chart tab: Added VWAP indicator")
-            except Exception as e:
-                print(f"[DEBUG] Chart tab: Failed to add VWAP indicator: {e}")
+        # NEW ARCHITECTURE: Add indicators from strategy visualization data
+        try:
+            from core.new_gui_integration import new_gui_integration
+            
+            # Check if results have new architecture visualization data
+            viz_data = results.get('visualization_data', {})
+            if viz_data:
+                print(f"[DEBUG] Chart tab: Using NEW ARCHITECTURE visualization data")
+                
+                # Render all line indicators (VWAP, MA, RSI, etc.)
+                for line_data in viz_data.get('lines', []):
+                    line_name = line_data.get('name', 'Unknown')
+                    line_values = line_data.get('data')
+                    line_config = line_data.get('config', {})
+                    
+                    if line_values is not None and not line_values.empty:
+                        # Match line data index to chart data index
+                        common_index = df.index.intersection(line_values.index)
+                        if len(common_index) > 0:
+                            chart_values = line_values.reindex(common_index)
+                            
+                            ax.plot(common_index, chart_values.values,
+                                   color=line_config.get('color', 'purple'),
+                                   linewidth=line_config.get('linewidth', 1),
+                                   alpha=line_config.get('alpha', 0.8),
+                                   linestyle=line_config.get('linestyle', '-'),
+                                   label=line_config.get('label', line_name),
+                                   zorder=line_config.get('zorder', 5))
+                            
+                            print(f"[DEBUG] Chart tab: Added {line_name} indicator from new architecture")
+                        else:
+                            print(f"[DEBUG] Chart tab: No common index for {line_name} indicator")
+                
+                # Render zones from new architecture
+                for zone_data in viz_data.get('zones', []):
+                    start_idx = zone_data.get('start_idx', 0)
+                    end_idx = zone_data.get('end_idx', len(df) - 1)
+                    min_price = zone_data.get('min_price')
+                    max_price = zone_data.get('max_price')
+                    color = zone_data.get('color', 'blue')
+                    alpha = zone_data.get('alpha', 0.3)
+                    
+                    if min_price is not None and max_price is not None and start_idx < len(df) and end_idx < len(df):
+                        x_range = df.index[start_idx:end_idx+1]
+                        ax.fill_between(x_range, min_price, max_price, 
+                                       color=color, alpha=alpha, zorder=10)
+                        print(f"[DEBUG] Chart tab: Added zone from new architecture")
+                
+                # Add legend for new architecture indicators
+                handles, labels = ax.get_legend_handles_labels()
+                if handles:
+                    ax.legend()
+                    
+            else:
+                print(f"[DEBUG] Chart tab: No new architecture data, using FALLBACK VWAP")
+                # FALLBACK: Use old hardcoded VWAP calculation if no new architecture data
+                if 'volume' in df.columns and len(df) > 20:
+                    # Calculate VWAP
+                    vwap = (df['close'] * df['volume']).cumsum() / df['volume'].cumsum()
+                    ax.plot(df.index, vwap, color='purple', linewidth=1, alpha=0.8, linestyle='-', label='VWAP', zorder=5)
+                    print(f"[DEBUG] Chart tab: Added fallback VWAP indicator")
+                    
+        except Exception as e:
+            print(f"[DEBUG] Chart tab: Error with new architecture indicators: {e}")
+            print(f"[DEBUG] Chart tab: Using FALLBACK VWAP")
+            # FALLBACK: Use old hardcoded VWAP calculation
+            if 'volume' in df.columns and len(df) > 20:
+                try:
+                    vwap = (df['close'] * df['volume']).cumsum() / df['volume'].cumsum()
+                    ax.plot(df.index, vwap, color='purple', linewidth=1, alpha=0.8, linestyle='-', label='VWAP', zorder=5)
+                    print(f"[DEBUG] Chart tab: Added fallback VWAP indicator")
+                except Exception as e2:
+                    print(f"[DEBUG] Chart tab: Failed to add fallback VWAP: {e2}")
         
         print(f"[DEBUG] Chart tab: Plotted {zones_plotted} zones")
         

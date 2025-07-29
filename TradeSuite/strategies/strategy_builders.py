@@ -99,29 +99,35 @@ class Action:
     def apply(self, data: pd.DataFrame) -> pd.Series:
         """Apply action to data and return signals"""
         if not self.pattern:
-            # Location-only action: generate signals based on zone detection
-            signals = pd.Series(False, index=data.index)
-            strategy = getattr(self, 'strategy', None)
-            
-            if strategy is not None:
-                # Run zone detection for all bars to populate simple_zones
-                for i in range(len(data)):
-                    strategy._check_location_gate(data, i)
-                
-                # Generate signals based on the detected zones
-                if hasattr(strategy, 'simple_zones') and strategy.simple_zones:
-                    for zone in strategy.simple_zones:
-                        creation_index = zone.get('creation_index')
-                        if creation_index is not None and creation_index < len(data):
-                            # Mark the creation bar as a signal
-                            signals.iloc[creation_index] = True
-                            print(f"[DEBUG] Generated signal at bar {creation_index} for {zone.get('zone_type', 'unknown')} zone")
-                
-                print(f"[DEBUG] Location-only action: {signals.sum()} signals generated from {len(strategy.simple_zones)} zones")
+            # Check if this is a pure filter-only action (has filters but no location strategy)
+            if self.filters and not self.location_strategy:
+                # Pure filter-only action - generate signals based on filters only
+                signals = pd.Series(True, index=data.index)  # Start with all True
+                print("[DEBUG] Pure filter-only action: generating signals based on filters only")
+                # SKIP: Do not run location gate for pure filter-only actions
+                return signals  # Return early to avoid running location gate
             else:
-                print("[DEBUG] Location-only action: no strategy context, all signals False")
-            
-            return signals
+                # Location-only action: generate signals based on zone detection
+                signals = pd.Series(False, index=data.index)
+                strategy = getattr(self, 'strategy', None)
+                
+                if strategy is not None:
+                    # Run zone detection for all bars to populate simple_zones
+                    for i in range(len(data)):
+                        strategy._check_location_gate(data, i)
+                    
+                    # Generate signals based on the detected zones
+                    if hasattr(strategy, 'simple_zones') and strategy.simple_zones:
+                        for zone in strategy.simple_zones:
+                            creation_index = zone.get('creation_index')
+                            if creation_index is not None and creation_index < len(data):
+                                # Mark the creation bar as a signal
+                                signals.iloc[creation_index] = True
+                                print(f"[DEBUG] Generated signal at bar {creation_index} for {zone.get('zone_type', 'unknown')} zone")
+                    
+                    print(f"[DEBUG] Location-only action: {signals.sum()} signals generated from {len(strategy.simple_zones)} zones")
+                else:
+                    print("[DEBUG] Location-only action: no strategy context, all signals False")
         else:
             # Get pattern signals
             signals = self.pattern.detect(data)
@@ -133,6 +139,7 @@ class Action:
             filter_signals = self._apply_filter(data, filter_config)
             if isinstance(filter_signals, pd.Series):
                 signals = signals & filter_signals
+                print(f"[DEBUG] Applied {filter_config.get('type', 'unknown')} filter: {filter_signals.sum()} bars passed filter")
             else:
                 signals = signals & pd.Series(filter_signals, index=data.index)
         
@@ -159,6 +166,7 @@ class Action:
             signals = (time_index >= start) & (time_index <= end)
 
         elif filter_type == 'vwap':
+            # According to mathematical framework: VWAP = Σ(Price_i × Volume_i) / Σ(Volume_i)
             vwap = (data['close'] * data['volume']).cumsum() / data['volume'].cumsum()
             tolerance = filter_config.get('tolerance', 0.001) # 0.1%
             condition = filter_config.get('condition', 'above') # above, below, near
@@ -203,6 +211,112 @@ class Action:
                 signals = data['high'] >= upper_band
             elif condition == 'touching_lower':
                 signals = data['low'] <= lower_band
+        
+        elif filter_type == 'momentum':
+            # According to mathematical framework: M(t,y) = (1/n) Σ |r_i|·sign(r_i)
+            lookback = filter_config.get('lookback', 10)
+            momentum_threshold = filter_config.get('momentum_threshold', 0.02)
+            rsi_range = filter_config.get('rsi_range', [0, 100])  # Default to full range
+            
+            # Calculate momentum per spec
+            returns = data['close'].pct_change()
+            momentum_signals = pd.Series(False, index=data.index)
+            
+            # Calculate momentum for each bar
+            for i in range(lookback, len(data)):
+                if i >= lookback:
+                    recent_returns = returns.iloc[i-lookback:i]
+                    # M(t,y) = (1/n) Σ |r_i|·sign(r_i)
+                    # For momentum, we want to detect directional movement
+                    momentum = np.mean(recent_returns)  # Simplified momentum
+                    momentum_signals.iloc[i] = abs(momentum) > momentum_threshold
+            
+            # Also check RSI if specified
+            if 'rsi_range' in filter_config:
+                rsi_min, rsi_max = rsi_range
+                # Calculate RSI
+                delta = data['close'].diff()
+                gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+                loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+                # Handle division by zero
+                rs = gain / (loss + 1e-10)  # Add small epsilon to avoid division by zero
+                rsi = 100 - (100 / (1 + rs))
+                rsi_signals = (rsi >= rsi_min) & (rsi <= rsi_max)
+                
+                # Only apply RSI filter if we have valid RSI values
+                valid_rsi = rsi.notna()
+                if valid_rsi.sum() > 0:
+                    signals = momentum_signals & rsi_signals
+                else:
+                    # If no valid RSI, just use momentum
+                    signals = momentum_signals
+                
+                # Debug RSI values
+                print(f"[RSI DEBUG] RSI range: [{rsi_min}, {rsi_max}]")
+                print(f"[RSI DEBUG] RSI values (first 5): {rsi.head().values}")
+                print(f"[RSI DEBUG] Valid RSI bars: {valid_rsi.sum()}")
+                print(f"[RSI DEBUG] RSI signals: {rsi_signals.sum()}")
+            else:
+                signals = momentum_signals
+            
+            # Debug output
+            print(f"[MOMENTUM DEBUG] Lookback: {lookback}, Threshold: {momentum_threshold}")
+            print(f"[MOMENTUM DEBUG] Momentum signals: {momentum_signals.sum()}")
+            if 'rsi_range' in filter_config:
+                print(f"[MOMENTUM DEBUG] RSI signals: {rsi_signals.sum()}")
+            print(f"[MOMENTUM DEBUG] Final signals: {signals.sum()}")
+        
+        elif filter_type == 'volatility':
+            # According to mathematical framework: ATR = Average True Range, Realized Vol = std(returns)
+            min_atr_ratio = filter_config.get('min_atr_ratio', 0.01)
+            max_atr_ratio = filter_config.get('max_atr_ratio', 0.05)
+            
+            # Calculate ATR
+            high_low = data['high'] - data['low']
+            high_close = np.abs(data['high'] - data['close'].shift())
+            low_close = np.abs(data['low'] - data['close'].shift())
+            true_range = np.maximum(high_low, np.maximum(high_close, low_close))
+            atr = true_range.rolling(window=14).mean()
+            
+            # Calculate ATR ratio
+            avg_price = data['close'].rolling(window=14).mean()
+            atr_ratio = atr / avg_price
+            
+            # Check if ATR ratio is within bounds
+            signals = (atr_ratio >= min_atr_ratio) & (atr_ratio <= max_atr_ratio)
+        
+        elif filter_type == 'tick_frequency':
+            # Microstructure filter for tick-based data
+            max_ticks_per_second = filter_config.get('max_ticks_per_second', 50)
+            min_book_depth = filter_config.get('min_book_depth', 100)
+            
+            # For now, use volume as proxy for tick frequency
+            avg_volume = data['volume'].rolling(window=20).mean()
+            signals = (data['volume'] <= max_ticks_per_second * 1000) & (avg_volume >= min_book_depth)
+        
+        elif filter_type == 'spread':
+            # Spread filter for microstructure
+            max_spread_ticks = filter_config.get('max_spread_ticks', 2)
+            normal_spread_multiple = filter_config.get('normal_spread_multiple', 5)
+            
+            # For now, use price volatility as proxy for spread
+            price_volatility = data['close'].rolling(window=20).std()
+            avg_price = data['close'].rolling(window=20).mean()
+            spread_ratio = price_volatility / avg_price
+            
+            signals = spread_ratio <= (max_spread_ticks * 0.001)
+        
+        elif filter_type == 'order_flow':
+            # Order flow filter for microstructure
+            min_cvd_threshold = filter_config.get('min_cvd_threshold', 1000)
+            large_trade_ratio = filter_config.get('large_trade_ratio', 0.35)
+            
+            # For now, use volume as proxy for order flow
+            avg_volume = data['volume'].rolling(window=20).mean()
+            large_trades = data['volume'] > (avg_volume * large_trade_ratio)
+            large_trade_ratio_actual = large_trades.rolling(window=20).mean()
+            
+            signals = (data['volume'] >= min_cvd_threshold) & (large_trade_ratio_actual >= large_trade_ratio)
             
         return signals
 
@@ -340,7 +454,17 @@ class PatternStrategy(BaseStrategy):
         
         # --- Full Gate Logic ---
         final_signals = pd.Series(False, index=data.index)
-        if self.gates_and_logic:
+        
+        # Check if this is a pure filter-only strategy (no location strategies)
+        has_pure_filter_actions = any(
+            not action.pattern and action.filters and not action.location_strategy 
+            for action in self.actions
+        )
+        
+        if has_pure_filter_actions:
+            print("[DEBUG] Pure filter-only strategy detected - bypassing location gates")
+            final_signals = combined_signals
+        elif self.gates_and_logic:
             # Get indices where there is a potential signal
             potential_signal_indices = combined_signals[combined_signals].index
             
@@ -2332,12 +2456,19 @@ class MultiTimeframeBacktestEngine:
         else:
             self.results['zones'] = deduped_fvg_zones
         # --- END PATCH ---
-        # --- PATCH: Always run location gate logic for any location-gate actions ---
-        if any((not getattr(a, 'pattern', None)) for a in strategy.actions):
-            print('[PATCH] Entering location gate loop for strategy with at least one location-gate action (run_backtest)')
+        # --- PATCH: Only run location gate logic for location-gate actions (not pure filter-only) ---
+        # Check if there are any actions that need location gates (have no pattern and no filters, or have location strategy)
+        location_gate_actions = [a for a in strategy.actions 
+                               if (not getattr(a, 'pattern', None) and 
+                                   not (getattr(a, 'filters', None) and not getattr(a, 'location_strategy', None)))]
+        
+        if location_gate_actions:
+            print(f'[PATCH] Entering location gate loop for {len(location_gate_actions)} location-gate actions (run_backtest)')
             for i in range(len(execution_data)):
                 print(f'[PATCH] Calling _check_location_gate for bar {i}')
                 strategy._check_location_gate(execution_data, i)
+        else:
+            print('[PATCH] No location gate actions detected - skipping location gate for pure filter-only strategy')
         try:
             signals, action_details, mtf_zones, mtf_patterns = self.evaluate_strategy_multi_timeframe(strategy, multi_tf_data)
         except Exception as e:

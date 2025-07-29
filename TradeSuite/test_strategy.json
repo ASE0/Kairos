@@ -1,0 +1,36 @@
+{
+  "name": "Test FVG Strategy",
+  "actions": [
+    {
+      "name": "fvg_test",
+      "location_strategy": "FVG",
+      "location_params": {
+        "fvg_epsilon": 0.0,
+        "fvg_N": 3,
+        "fvg_sigma": 0.1,
+        "fvg_beta1": 0.7,
+        "fvg_beta2": 0.3,
+        "fvg_phi": 0.2,
+        "fvg_lambda": 0.0,
+        "fvg_gamma": 0.95,
+        "fvg_tau_bars": 15,
+        "fvg_drop_threshold": 0.01
+      }
+    }
+  ],
+  "combination_logic": "AND",
+  "gates_and_logic": {"location_gate": true},
+  "location_gate_params": {
+    "fvg_epsilon": 1.0,
+    "fvg_N": 3,
+    "fvg_sigma": 0.1,
+    "fvg_beta1": 0.7,
+    "fvg_beta2": 0.3,
+    "fvg_phi": 0.2,
+    "fvg_lambda": 0.0,
+    "fvg_gamma": 0.95,
+    "fvg_tau_bars": 50,
+    "fvg_drop_threshold": 0.01,
+    "fvg_min_gap_size": 0.1
+  }
+} 

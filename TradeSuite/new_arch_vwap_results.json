@@ -1,0 +1,86 @@
+{
+  "trades": [
+    {
+      "entry_time": "2024-03-07 09:05:00",
+      "exit_time": "2024-03-07 09:10:00",
+      "entry_price": 18202.20135937614,
+      "exit_price": 18200.310396803463,
+      "size": 0.10987681986990983,
+      "pnl": -0.20777295397881387,
+      "mae": 0.27522080862166143,
+      "mfe": 0.052278280004151696,
+      "exit_reason": "Signal Exit"
+    },
+    {
+      "entry_time": "2024-03-07 09:15:00",
+      "exit_time": "2024-03-07 09:30:00",
+      "entry_price": 18202.043699869973,
+      "exit_price": 18198.5983263755,
+      "size": 0.10987777158310454,
+      "pnl": -0.37856996184415764,
+      "mae": 0.5363285027568785,
+      "mfe": 0.2888360747390998,
+      "exit_reason": "Signal Exit"
+    },
+    {
+      "entry_time": "2024-03-07 12:15:00",
+      "exit_time": "2024-03-07 17:15:00",
+      "entry_price": 18188.565725018867,
+      "exit_price": 18232.68994245486,
+      "size": 0.10995919250790323,
+      "pnl": 4.851863319305052,
+      "mae": 0.0,
+      "mfe": 0.0,
+      "exit_reason": "End of Data"
+    }
+  ],
+  "total_signals": 65,
+  "zones": [],
+  "performance": {
+    "total_return": 4.265520403482081e-05,
+    "total_pnl": 4.265520403482081,
+    "win_rate": 0.3333333333333333,
+    "avg_trade": 1.421840134494027,
+    "max_drawdown": 3.7856996184415758e-06,
+    "sharpe_ratio": 0.5859887955955112,
+    "num_trades": 3
+  },
+  "strategy_name": "New VWAP Only Strategy",
+  "component_summary": {
+    "filters": [
+      "vwap"
+    ],
+    "patterns": [],
+    "locations": [],
+    "gates": [],
+    "visualization_types": {
+      "lines": 1,
+      "zones": 0,
+      "markers": 0,
+      "bands": 0,
+      "histograms": 0
+    }
+  },
+  "visualization_data": {
+    "lines": [
+      {
+        "name": "vwap",
+        "data": "datetime\n2024-03-07 09:00:00    18200.130567\n2024-03-07 09:05:00    18200.773312\n2024-03-07 09:10:00    18200.741754\n2024-03-07 09:15:00    18201.040627\n2024-03-07 09:20:00    18201.746908\n                           ...     \n2024-03-07 16:55:00    18205.666659\n2024-03-07 17:00:00    18206.000927\n2024-03-07 17:05:00    18206.220173\n2024-03-07 17:10:00    18206.577947\n2024-03-07 17:15:00    18206.781192\nLength: 100, dtype: float64",
+        "config": {
+          "type": "line",
+          "color": "purple",
+          "linewidth": 1.5,
+          "alpha": 0.8,
+          "linestyle": "-",
+          "label": "VWAP (above)",
+          "zorder": 5
+        },
+        "component_type": "filter"
+      }
+    ],
+    "zones": [],
+    "markers": [],
+    "bands": [],
+    "histograms": []
+  }
+}

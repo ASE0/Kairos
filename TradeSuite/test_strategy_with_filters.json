@@ -1,0 +1,57 @@
+{
+  "name": "Test Strategy with Filters",
+  "actions": [
+    {
+      "name": "fvg_with_vwap",
+      "location_strategy": "FVG",
+      "location_params": {
+        "fvg_epsilon": 0.0,
+        "fvg_N": 3,
+        "fvg_sigma": 0.1,
+        "fvg_beta1": 0.7,
+        "fvg_beta2": 0.3,
+        "fvg_phi": 0.2,
+        "fvg_lambda": 0.0,
+        "fvg_gamma": 0.95,
+        "fvg_tau_bars": 15,
+        "fvg_drop_threshold": 0.01
+      },
+      "filters": [
+        {
+          "type": "vwap",
+          "condition": "above"
+        },
+        {
+          "type": "momentum",
+          "momentum_threshold": 0.001,
+          "rsi_range": [
+            0,
+            100
+          ]
+        },
+        {
+          "type": "volatility",
+          "min_atr_ratio": 0.01,
+          "max_atr_ratio": 0.05
+        }
+      ]
+    }
+  ],
+  "combination_logic": "AND",
+  "gates_and_logic": {
+    "location_gate": true
+  },
+  "location_gate_params": {
+    "fvg_epsilon": 1.0,
+    "fvg_N": 3,
+    "fvg_sigma": 0.1,
+    "fvg_beta1": 0.7,
+    "fvg_beta2": 0.3,
+    "fvg_phi": 0.2,
+    "fvg_lambda": 0.0,
+    "fvg_gamma": 0.95,
+    "fvg_tau_bars": 50,
+    "fvg_drop_threshold": 0.01,
+    "fvg_gate_threshold": 0.5
+  }
+}

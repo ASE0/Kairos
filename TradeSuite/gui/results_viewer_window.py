@@ -379,10 +379,15 @@ class ResultsViewerWindow(QMainWindow):
         # Get multi-timeframe information
         multi_tf_data = result_data.get('multi_tf_data', {})
         strategy_timeframes = []
-        if multi_tf_data:
+        
+        # Handle both old dict format and new DataFrame format
+        if isinstance(multi_tf_data, dict) and multi_tf_data:
             for tf_key in multi_tf_data.keys():
                 if tf_key != 'execution':
                     strategy_timeframes.append(tf_key)
+        elif isinstance(multi_tf_data, pd.DataFrame) and not multi_tf_data.empty:
+            # New architecture returns DataFrame, treat as single timeframe
+            strategy_timeframes.append('1min')
         
         # Create info text
         info_text = f"""
@@ -431,9 +436,16 @@ Max Drawdown: {result_data.get('max_drawdown', 0):.2%}
         
         # Access equity curve directly from result data
         equity_curve = data.get('equity_curve', [])
-        if equity_curve:
-            x = np.arange(len(equity_curve))
-            self.single_equity_chart.plot(x, equity_curve, pen='w')
+        
+        # Handle both old list format and new Series format
+        if isinstance(equity_curve, pd.Series):
+            if not equity_curve.empty:
+                x = np.arange(len(equity_curve))
+                self.single_equity_chart.plot(x, equity_curve.values, pen='w')
+        elif isinstance(equity_curve, list):
+            if equity_curve:
+                x = np.arange(len(equity_curve))
+                self.single_equity_chart.plot(x, equity_curve, pen='w')
     
     def _update_drawdown_chart(self, data: Dict[str, Any]):
         """Update the drawdown chart"""
@@ -441,8 +453,18 @@ Max Drawdown: {result_data.get('max_drawdown', 0):.2%}
         
         # Access equity curve directly from result data
         equity_curve = data.get('equity_curve', [])
-        if equity_curve:
-            equity_series = pd.Series(equity_curve)
+        
+        # Handle both old list format and new Series format
+        if isinstance(equity_curve, pd.Series):
+            if not equity_curve.empty:
+                equity_series = equity_curve
+        elif isinstance(equity_curve, list):
+            if equity_curve:
+                equity_series = pd.Series(equity_curve)
+        else:
+            return  # No valid equity curve data
+            
+        if 'equity_series' in locals():
             running_max = equity_series.expanding().max()
             drawdown = (equity_series - running_max) / running_max * 100
             x = np.arange(len(equity_curve))
@@ -522,17 +544,27 @@ Max Drawdown: {result_data.get('max_drawdown', 0):.2%}
         # Get multi-timeframe information
         multi_tf_data = result.get('multi_tf_data', {})
         strategy_timeframes = []
-        if multi_tf_data:
+        
+        # Handle both old dict format and new DataFrame format
+        if isinstance(multi_tf_data, dict) and multi_tf_data:
             for tf_key in multi_tf_data.keys():
                 if tf_key != 'execution':
                     strategy_timeframes.append(tf_key)
+        elif isinstance(multi_tf_data, pd.DataFrame) and not multi_tf_data.empty:
+            # New architecture returns DataFrame, treat as single timeframe
+            strategy_timeframes.append('1min')
         
         details = f"Strategy: {result.get('strategy_name', 'Unknown')}\n"
         details += f"Display Timeframe: {result.get('timeframe', 'Unknown')}\n"
         
         if strategy_timeframes:
             details += f"Strategy Timeframes: {', '.join(strategy_timeframes)}\n"
-            details += f"Execution Timeframe: {len(multi_tf_data.get('execution', []))} bars\n\n"
+            
+            # Handle execution data differently for old vs new architecture
+            if isinstance(multi_tf_data, dict):
+                details += f"Execution Timeframe: {len(multi_tf_data.get('execution', []))} bars\n\n"
+            elif isinstance(multi_tf_data, pd.DataFrame):
+                details += f"Execution Timeframe: {len(multi_tf_data)} bars\n\n"
         
         # Strategy actions
         actions = strategy.get('actions', [])
@@ -655,11 +687,21 @@ Max Drawdown: {result_data.get('max_drawdown', 0):.2%}
         
         for i, result in enumerate(results):
             equity_curve = result['data'].get('equity_curve', [])
-            if equity_curve:
-                x = np.arange(len(equity_curve))
+            
+            # Handle both old list format and new Series format
+            plot_data = None
+            if isinstance(equity_curve, pd.Series):
+                if not equity_curve.empty:
+                    plot_data = equity_curve.values
+            elif isinstance(equity_curve, list):
+                if equity_curve:
+                    plot_data = equity_curve
+            
+            if plot_data is not None:
+                x = np.arange(len(plot_data))
                 color = colors[i % len(colors)]
                 strategy_name = result.get('strategy', 'Unknown Strategy')
-                self.compare_equity_chart.plot(x, equity_curve, pen=color, 
+                self.compare_equity_chart.plot(x, plot_data, pen=color, 
                                              name=strategy_name)
                 
         # Plot metrics comparison
@@ -1445,22 +1487,30 @@ Total Trades: {result_data.get('total_trades', 0)}
         # Priority 1: Use multi-timeframe data if available (preserves strategy timeframes)
         data = None
         multi_tf_data = result_data.get('multi_tf_data', {})
-        print(f"[DEBUG] Multi-timeframe data keys: {list(multi_tf_data.keys()) if multi_tf_data else 'None'}")
         
-        if multi_tf_data:
-            # Use execution timeframe data for playback (this is what the strategy actually ran on)
-            execution_data = multi_tf_data.get('execution')
-            print(f"[DEBUG] Execution data type: {type(execution_data)}")
-            if execution_data is not None and isinstance(execution_data, pd.DataFrame):
-                data = execution_data
-                print(f"[DEBUG] Using multi-timeframe execution data with shape: {data.shape}")
-                print(f"[DEBUG] Execution data columns: {list(data.columns)}")
-                print(f"[DEBUG] Strategy timeframes: {[tf for tf in multi_tf_data.keys() if tf != 'execution']}")
-                print(f"[DEBUG] Execution timeframe data range: {data.index[0] if len(data) > 0 else 'Empty'} to {data.index[-1] if len(data) > 0 else 'Empty'}")
-            else:
-                print(f"[DEBUG] Multi-timeframe data found but no execution data available")
-                print(f"[DEBUG] Execution data is None: {execution_data is None}")
-                print(f"[DEBUG] Execution data is DataFrame: {isinstance(execution_data, pd.DataFrame)}")
+        # Handle both old dict format and new DataFrame format
+        if isinstance(multi_tf_data, dict):
+            print(f"[DEBUG] Multi-timeframe data keys: {list(multi_tf_data.keys()) if multi_tf_data else 'None'}")
+            
+            if multi_tf_data:
+                # Use execution timeframe data for playback (this is what the strategy actually ran on)
+                execution_data = multi_tf_data.get('execution')
+                print(f"[DEBUG] Execution data type: {type(execution_data)}")
+                if execution_data is not None and isinstance(execution_data, pd.DataFrame):
+                    data = execution_data
+        elif isinstance(multi_tf_data, pd.DataFrame) and not multi_tf_data.empty:
+            print(f"[DEBUG] Multi-timeframe data is DataFrame: {len(multi_tf_data)} bars")
+            # New architecture returns DataFrame directly
+            data = multi_tf_data
+            print(f"[DEBUG] Using new architecture DataFrame with shape: {data.shape}")
+            print(f"[DEBUG] DataFrame columns: {list(data.columns)}")
+            print(f"[DEBUG] DataFrame data range: {data.index[0] if len(data) > 0 else 'Empty'} to {data.index[-1] if len(data) > 0 else 'Empty'}")
+        
+        # Check if we found execution data from multi-timeframe
+        if data is not None and isinstance(data, pd.DataFrame):
+            print(f"[DEBUG] Found execution data from multi-timeframe source")
+        else:
+            print(f"[DEBUG] No execution data found in multi-timeframe, checking fallback options")
         
         # Priority 2: Use the resampled data from the backtest results
         if data is None and 'data' in result_data and isinstance(result_data['data'], pd.DataFrame):
@@ -1475,38 +1525,48 @@ Total Trades: {result_data.get('total_trades', 0)}
                 print(f"[DEBUG] 'data' type: {type(result_data['data'])}")
             
         # Priority 3: Create synthetic data from equity curve if no resampled data available
-        elif data is None and 'equity_curve' in result_data and result_data['equity_curve']:
-            print(f"[DEBUG] ⚠️ FALLING BACK TO SYNTHETIC DATA - This will show diagonal line!")
-            print(f"[DEBUG] Creating synthetic data from equity curve with {len(result_data['equity_curve'])} points")
+        elif data is None and 'equity_curve' in result_data:
             equity_curve = result_data['equity_curve']
-            n_points = len(equity_curve)
             
-            # Use the timeframe from the backtest results if available
-            timeframe = result_data.get('timeframe', '1d')
-            if timeframe == '1d':
-                freq = 'D'
-            elif timeframe == '1h':
-                freq = 'H'
-            elif timeframe == '15min':
-                freq = '15T'
-            elif timeframe == '5min':
-                freq = '5T'
-            elif timeframe == '1min':
-                freq = '1T'
-            else:
-                freq = '1T'  # Default to 1 minute
+            # Handle both old list format and new Series format
+            has_equity_data = False
+            if isinstance(equity_curve, pd.Series):
+                has_equity_data = not equity_curve.empty
+            elif isinstance(equity_curve, list):
+                has_equity_data = bool(equity_curve)
+            
+            if has_equity_data:
+                print(f"[DEBUG] ⚠️ FALLING BACK TO SYNTHETIC DATA - This will show diagonal line!")
+                print(f"[DEBUG] Creating synthetic data from equity curve with {len(result_data['equity_curve'])} points")
+                equity_curve = result_data['equity_curve']
+                n_points = len(equity_curve)
                 
-            time_index = pd.date_range('2023-01-01', periods=n_points, freq=freq)
-            base_price = 100.0
-            data = pd.DataFrame({
-                'open': [base_price + i * 0.1 for i in range(n_points)],
-                'high': [base_price + i * 0.1 + 0.5 for i in range(n_points)],
-                'low': [base_price + i * 0.1 - 0.5 for i in range(n_points)],
-                'close': [base_price + i * 0.1 + (equity_curve[i] - equity_curve[0]) / 1000 for i in range(n_points)],
-                'volume': [1000 + i * 10 for i in range(n_points)]
-            }, index=time_index)
-            print(f"[DEBUG] Created synthetic DataFrame with shape: {data.shape} and frequency: {freq}")
-            print(f"[DEBUG] ⚠️ WARNING: This synthetic data will show diagonal line, not real price data!")
+                # Use the timeframe from the backtest results if available
+                timeframe = result_data.get('timeframe', '1d')
+                if timeframe == '1d':
+                    freq = 'D'
+                elif timeframe == '1h':
+                    freq = 'H'
+                elif timeframe == '15min':
+                    freq = '15T'
+                elif timeframe == '5min':
+                    freq = '5T'
+                elif timeframe == '1min':
+                    freq = '1T'
+                else:
+                    freq = '1T'  # Default to 1 minute
+                    
+                time_index = pd.date_range('2023-01-01', periods=n_points, freq=freq)
+                base_price = 100.0
+                data = pd.DataFrame({
+                    'open': [base_price + i * 0.1 for i in range(n_points)],
+                    'high': [base_price + i * 0.1 + 0.5 for i in range(n_points)],
+                    'low': [base_price + i * 0.1 - 0.5 for i in range(n_points)],
+                    'close': [base_price + i * 0.1 + (equity_curve[i] - equity_curve[0]) / 1000 for i in range(n_points)],
+                    'volume': [1000 + i * 10 for i in range(n_points)]
+                }, index=time_index)
+                print(f"[DEBUG] Created synthetic DataFrame with shape: {data.shape} and frequency: {freq}")
+                print(f"[DEBUG] ⚠️ WARNING: This synthetic data will show diagonal line, not real price data!")
             
         # Priority 4: Only fall back to parent dataset if absolutely necessary (and with warning)
         elif data is None and hasattr(self, 'parent_window') and self.parent_window and hasattr(self.parent_window, 'datasets'):

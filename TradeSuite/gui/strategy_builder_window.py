@@ -481,11 +481,43 @@ class StrategyBuilderWindow(QMainWindow):
         # --- VWAP Filter ---
         self.vwap_filter_check = QCheckBox("VWAP")
         self.vwap_filter_widget = QWidget()
-        vwap_layout = QHBoxLayout(self.vwap_filter_widget)
+        vwap_layout = QVBoxLayout(self.vwap_filter_widget)
+        
+        # Basic condition row
+        condition_row = QWidget()
+        condition_layout = QHBoxLayout(condition_row)
         self.vwap_condition_combo = QComboBox()
         self.vwap_condition_combo.addItems(["above", "below", "near"])
-        vwap_layout.addWidget(QLabel("Price is:"))
-        vwap_layout.addWidget(self.vwap_condition_combo)
+        condition_layout.addWidget(QLabel("Price is:"))
+        condition_layout.addWidget(self.vwap_condition_combo)
+        condition_layout.setContentsMargins(0, 0, 0, 0)
+        vwap_layout.addWidget(condition_row)
+        
+        # Parameters row
+        params_row = QWidget()
+        params_layout = QHBoxLayout(params_row)
+        
+        # Tolerance parameter (for 'near' condition)
+        self.vwap_tolerance_spin = QDoubleSpinBox()
+        self.vwap_tolerance_spin.setRange(0.0001, 0.05)
+        self.vwap_tolerance_spin.setValue(0.001)
+        self.vwap_tolerance_spin.setSingleStep(0.0001)
+        self.vwap_tolerance_spin.setDecimals(4)
+        self.vwap_tolerance_spin.setToolTip("Tolerance for 'near' condition (0.001 = 0.1%)")
+        params_layout.addWidget(QLabel("Tolerance:"))
+        params_layout.addWidget(self.vwap_tolerance_spin)
+        
+        # Lookback period parameter
+        self.vwap_period_spin = QSpinBox()
+        self.vwap_period_spin.setRange(10, 500)
+        self.vwap_period_spin.setValue(200)
+        self.vwap_period_spin.setToolTip("VWAP calculation period (bars)")
+        params_layout.addWidget(QLabel("Period:"))
+        params_layout.addWidget(self.vwap_period_spin)
+        
+        params_layout.setContentsMargins(0, 0, 0, 0)
+        vwap_layout.addWidget(params_row)
+        
         vwap_layout.setContentsMargins(10, 0, 0, 0)
         self.vwap_filter_widget.setVisible(False)
         self.vwap_filter_check.toggled.connect(self.vwap_filter_widget.setVisible)
@@ -628,17 +660,36 @@ class StrategyBuilderWindow(QMainWindow):
         # --- Volatility Filter ---
         self.volatility_filter_check = QCheckBox("Volatility Filter")
         self.volatility_filter_widget = QWidget()
-        volatility_layout = QHBoxLayout(self.volatility_filter_widget)
+        volatility_layout = QVBoxLayout(self.volatility_filter_widget)
+        
+        # ATR ratios row
+        ratio_row = QWidget()
+        ratio_layout = QHBoxLayout(ratio_row)
         self.min_atr_ratio_spin = QDoubleSpinBox()
         self.min_atr_ratio_spin.setRange(0.001, 0.1)
         self.min_atr_ratio_spin.setValue(0.01)
         self.max_atr_ratio_spin = QDoubleSpinBox()
         self.max_atr_ratio_spin.setRange(0.01, 0.2)
         self.max_atr_ratio_spin.setValue(0.05)
-        volatility_layout.addWidget(QLabel("Min ATR Ratio:"))
-        volatility_layout.addWidget(self.min_atr_ratio_spin)
-        volatility_layout.addWidget(QLabel("Max ATR Ratio:"))
-        volatility_layout.addWidget(self.max_atr_ratio_spin)
+        ratio_layout.addWidget(QLabel("Min ATR Ratio:"))
+        ratio_layout.addWidget(self.min_atr_ratio_spin)
+        ratio_layout.addWidget(QLabel("Max ATR Ratio:"))
+        ratio_layout.addWidget(self.max_atr_ratio_spin)
+        ratio_layout.setContentsMargins(0, 0, 0, 0)
+        volatility_layout.addWidget(ratio_row)
+        
+        # ATR period row
+        period_row = QWidget()
+        period_layout = QHBoxLayout(period_row)
+        self.atr_period_spin = QSpinBox()
+        self.atr_period_spin.setRange(5, 50)
+        self.atr_period_spin.setValue(14)
+        self.atr_period_spin.setToolTip("ATR calculation period")
+        period_layout.addWidget(QLabel("ATR Period:"))
+        period_layout.addWidget(self.atr_period_spin)
+        period_layout.addStretch()  # Add stretch to keep widgets compact
+        period_layout.setContentsMargins(0, 0, 0, 0)
+        volatility_layout.addWidget(period_row)
         volatility_layout.setContentsMargins(10, 0, 0, 0)
         self.volatility_filter_widget.setVisible(False)
         self.volatility_filter_check.toggled.connect(self.volatility_filter_widget.setVisible)
@@ -648,22 +699,40 @@ class StrategyBuilderWindow(QMainWindow):
         # --- Momentum Filter ---
         self.momentum_filter_check = QCheckBox("Momentum Filter")
         self.momentum_filter_widget = QWidget()
-        momentum_layout = QHBoxLayout(self.momentum_filter_widget)
+        momentum_layout = QVBoxLayout(self.momentum_filter_widget)
+        
+        # First row: Momentum threshold and lookback
+        threshold_row = QWidget()
+        threshold_layout = QHBoxLayout(threshold_row)
         self.momentum_threshold_spin = QDoubleSpinBox()
         self.momentum_threshold_spin.setRange(0.001, 0.1)
         self.momentum_threshold_spin.setValue(0.02)
+        self.momentum_lookback_spin = QSpinBox()
+        self.momentum_lookback_spin.setRange(5, 50)
+        self.momentum_lookback_spin.setValue(10)
+        self.momentum_lookback_spin.setToolTip("Lookback period for momentum calculation")
+        threshold_layout.addWidget(QLabel("Threshold:"))
+        threshold_layout.addWidget(self.momentum_threshold_spin)
+        threshold_layout.addWidget(QLabel("Lookback:"))
+        threshold_layout.addWidget(self.momentum_lookback_spin)
+        threshold_layout.setContentsMargins(0, 0, 0, 0)
+        momentum_layout.addWidget(threshold_row)
+        
+        # Second row: RSI range
+        rsi_row = QWidget()
+        rsi_layout = QHBoxLayout(rsi_row)
         self.rsi_min_spin = QSpinBox()
         self.rsi_min_spin.setRange(0, 100)
         self.rsi_min_spin.setValue(30)
         self.rsi_max_spin = QSpinBox()
         self.rsi_max_spin.setRange(0, 100)
         self.rsi_max_spin.setValue(70)
-        momentum_layout.addWidget(QLabel("Momentum Threshold:"))
-        momentum_layout.addWidget(self.momentum_threshold_spin)
-        momentum_layout.addWidget(QLabel("RSI Range:"))
-        momentum_layout.addWidget(self.rsi_min_spin)
-        momentum_layout.addWidget(QLabel("-"))
-        momentum_layout.addWidget(self.rsi_max_spin)
+        rsi_layout.addWidget(QLabel("RSI Range:"))
+        rsi_layout.addWidget(self.rsi_min_spin)
+        rsi_layout.addWidget(QLabel("-"))
+        rsi_layout.addWidget(self.rsi_max_spin)
+        rsi_layout.setContentsMargins(0, 0, 0, 0)
+        momentum_layout.addWidget(rsi_row)
         momentum_layout.setContentsMargins(10, 0, 0, 0)
         self.momentum_filter_widget.setVisible(False)
         self.momentum_filter_check.toggled.connect(self.momentum_filter_widget.setVisible)
@@ -1240,7 +1309,9 @@ class StrategyBuilderWindow(QMainWindow):
         if self.vwap_filter_check.isChecked():
             filters.append({
                 'type': 'vwap',
-                'condition': self.vwap_condition_combo.currentText()
+                'condition': self.vwap_condition_combo.currentText(),
+                'tolerance': self.vwap_tolerance_spin.value(),
+                'period': self.vwap_period_spin.value()
             })
         if self.bb_filter_check.isChecked():
             filters.append({
@@ -1287,12 +1358,14 @@ class StrategyBuilderWindow(QMainWindow):
             filters.append({
                 'type': 'volatility',
                 'min_atr_ratio': self.min_atr_ratio_spin.value(),
-                'max_atr_ratio': self.max_atr_ratio_spin.value()
+                'max_atr_ratio': self.max_atr_ratio_spin.value(),
+                'atr_period': self.atr_period_spin.value()
             })
         if self.momentum_filter_check.isChecked():
             filters.append({
                 'type': 'momentum',
                 'momentum_threshold': self.momentum_threshold_spin.value(),
+                'lookback': self.momentum_lookback_spin.value(),
                 'rsi_range': [self.rsi_min_spin.value(), self.rsi_max_spin.value()]
             })
         if self.price_filter_check.isChecked():

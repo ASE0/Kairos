@@ -1,0 +1,82 @@
+{
+  "trades": [],
+  "total_signals": 0,
+  "zones": [],
+  "performance": {
+    "total_return": 0.0,
+    "total_pnl": 0.0,
+    "win_rate": 0.0,
+    "avg_trade": 0.0,
+    "max_drawdown": 0.0,
+    "sharpe_ratio": 0.0,
+    "num_trades": 0
+  },
+  "strategy_name": "Multi-Component Strategy",
+  "component_summary": {
+    "filters": [
+      "vwap",
+      "ma",
+      "volatility"
+    ],
+    "patterns": [],
+    "locations": [],
+    "gates": [],
+    "visualization_types": {
+      "lines": 3,
+      "zones": 0,
+      "markers": 0,
+      "bands": 0,
+      "histograms": 0
+    }
+  },
+  "visualization_data": {
+    "lines": [
+      {
+        "name": "vwap",
+        "data": "0     18199.717125\n1     18197.740699\n2     18197.853534\n3     18197.706432\n4     18198.233686\n          ...     \n95    18174.717141\n96    18174.991598\n97    18175.104186\n98    18175.606987\n99    18176.033279\nLength: 100, dtype: float64",
+        "config": {
+          "type": "line",
+          "color": "purple",
+          "linewidth": 1.5,
+          "alpha": 0.8,
+          "linestyle": "-",
+          "label": "VWAP (above)",
+          "zorder": 5
+        },
+        "component_type": "filter"
+      },
+      {
+        "name": "ma",
+        "data": "0              NaN\n1              NaN\n2              NaN\n3              NaN\n4              NaN\n          ...     \n95    18192.686535\n96    18193.692341\n97    18194.714826\n98    18196.653756\n99    18198.212583\nName: close, Length: 100, dtype: float64",
+        "config": {
+          "type": "line",
+          "color": "blue",
+          "linewidth": 1,
+          "alpha": 0.8,
+          "linestyle": "-",
+          "label": "MA20",
+          "zorder": 4
+        },
+        "component_type": "filter"
+      },
+      {
+        "name": "volatility",
+        "data": "0          NaN\n1          NaN\n2          NaN\n3          NaN\n4          NaN\n        ...   \n95    0.000299\n96    0.000307\n97    0.000297\n98    0.000288\n99    0.000292\nLength: 100, dtype: float64",
+        "config": {
+          "type": "line",
+          "color": "red",
+          "linewidth": 1,
+          "alpha": 0.6,
+          "linestyle": "--",
+          "label": "ATR Ratio",
+          "zorder": 3
+        },
+        "component_type": "filter"
+      }
+    ],
+    "zones": [],
+    "markers": [],
+    "bands": [],
+    "histograms": []
+  }
+}

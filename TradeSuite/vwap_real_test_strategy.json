@@ -1,0 +1,17 @@
+{
+  "name": "VWAP Only Test Strategy",
+  "actions": [
+    {
+      "name": "vwap_filter_only",
+      "filters": [
+        {
+          "type": "vwap",
+          "condition": "above"
+        }
+      ]
+    }
+  ],
+  "combination_logic": "AND",
+  "gates_and_logic": {},
+  "location_gate_params": {}
+}
