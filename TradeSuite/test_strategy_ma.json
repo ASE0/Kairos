@@ -1,0 +1,18 @@
+{
+  "name": "Moving Average Strategy",
+  "actions": [
+    {
+      "name": "Ma Filter",
+      "filters": [
+        {
+          "type": "ma",
+          "condition": "above",
+          "params": {
+            "period": 20
+          }
+        }
+      ]
+    }
+  ],
+  "combination_logic": "AND"
+}

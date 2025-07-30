@@ -1,0 +1,13 @@
+{
+  "name": "Fair Value Gap Strategy",
+  "actions": [
+    {
+      "name": "Fvg Pattern",
+      "pattern": {
+        "type": "fvg",
+        "params": {}
+      }
+    }
+  ],
+  "combination_logic": "AND"
+}

@@ -1,0 +1,107 @@
+{
+  "tick_frequency": {
+    "filter_name": "tick_frequency",
+    "filter_config": {
+      "type": "tick_frequency",
+      "max_ticks_per_second": 50,
+      "min_book_depth": 100
+    },
+    "error": "'Action' object has no attribute 'evaluate'",
+    "timestamp": "2025-07-29T20:37:32.857617"
+  },
+  "spread": {
+    "filter_name": "spread",
+    "filter_config": {
+      "type": "spread",
+      "max_spread_ticks": 2,
+      "normal_spread_multiple": 5
+    },
+    "error": "'Action' object has no attribute 'evaluate'",
+    "timestamp": "2025-07-29T20:37:33.862298"
+  },
+  "order_flow": {
+    "filter_name": "order_flow",
+    "filter_config": {
+      "type": "order_flow",
+      "min_cvd_threshold": 1000,
+      "large_trade_ratio": 0.35
+    },
+    "error": "'Action' object has no attribute 'evaluate'",
+    "timestamp": "2025-07-29T20:37:34.866019"
+  },
+  "volume": {
+    "filter_name": "volume",
+    "filter_config": {
+      "type": "volume",
+      "min_volume": 1000,
+      "volume_ratio": 1.5
+    },
+    "error": "'Action' object has no attribute 'evaluate'",
+    "timestamp": "2025-07-29T20:37:35.869611"
+  },
+  "time": {
+    "filter_name": "time",
+    "filter_config": {
+      "type": "time",
+      "start_time": "09:30",
+      "end_time": "16:00"
+    },
+    "error": "'Action' object has no attribute 'evaluate'",
+    "timestamp": "2025-07-29T20:37:36.873884"
+  },
+  "volatility": {
+    "filter_name": "volatility",
+    "filter_config": {
+      "type": "volatility",
+      "min_atr_ratio": 0.01,
+      "max_atr_ratio": 0.05
+    },
+    "error": "'Action' object has no attribute 'evaluate'",
+    "timestamp": "2025-07-29T20:37:37.878267"
+  },
+  "momentum": {
+    "filter_name": "momentum",
+    "filter_config": {
+      "type": "momentum",
+      "momentum_threshold": 0.02,
+      "rsi_range": [
+        30,
+        70
+      ]
+    },
+    "error": "'Action' object has no attribute 'evaluate'",
+    "timestamp": "2025-07-29T20:37:38.882821"
+  },
+  "price": {
+    "filter_name": "price",
+    "filter_config": {
+      "type": "price",
+      "min_price": 1.0,
+      "max_price": 1000.0
+    },
+    "error": "'Action' object has no attribute 'evaluate'",
+    "timestamp": "2025-07-29T20:37:39.886823"
+  },
+  "vwap": {
+    "filter_name": "vwap",
+    "filter_config": {
+      "type": "vwap",
+      "condition": "near",
+      "tolerance": 0.001,
+      "period": 20
+    },
+    "error": "'Action' object has no attribute 'evaluate'",
+    "timestamp": "2025-07-29T20:37:40.890458"
+  },
+  "bollinger_bands": {
+    "filter_name": "bollinger_bands",
+    "filter_config": {
+      "type": "bollinger_bands",
+      "period": 20,
+      "std_dev": 2,
+      "condition": "between"
+    },
+    "error": "'Action' object has no attribute 'evaluate'",
+    "timestamp": "2025-07-29T20:37:41.894742"
+  }
+}

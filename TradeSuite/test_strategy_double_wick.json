@@ -1,0 +1,13 @@
+{
+  "name": "Double Wick Strategy",
+  "actions": [
+    {
+      "name": "Double_Wick Pattern",
+      "pattern": {
+        "type": "double_wick",
+        "params": {}
+      }
+    }
+  ],
+  "combination_logic": "AND"
+}

@@ -1,0 +1,26 @@
+{
+  "strategy": "fvg",
+  "description": "Fair Value Gap test dataset with 3 clear gap patterns",
+  "patterns": [
+    {
+      "type": "bullish_fvg",
+      "start_bar": 70,
+      "end_bar": 100,
+      "expected_entry": "LONG"
+    },
+    {
+      "type": "bearish_fvg",
+      "start_bar": 270,
+      "end_bar": 300,
+      "expected_entry": "SHORT"
+    },
+    {
+      "type": "multiple_fvgs",
+      "start_bar": 480,
+      "end_bar": 520,
+      "expected_entry": "LONG"
+    }
+  ],
+  "total_bars": 600,
+  "created": "2025-07-29T18:29:42.206900"
+}

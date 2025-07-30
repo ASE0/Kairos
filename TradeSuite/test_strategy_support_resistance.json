@@ -1,0 +1,11 @@
+{
+  "name": "Support Resistance Strategy",
+  "actions": [
+    {
+      "name": "Support_Resistance Gate",
+      "location_strategy": "Support Resistance",
+      "location_params": {}
+    }
+  ],
+  "combination_logic": "AND"
+}

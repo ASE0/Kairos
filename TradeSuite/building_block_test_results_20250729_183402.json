@@ -1,0 +1,334 @@
+{
+  "vwap": {
+    "strategy": "vwap",
+    "timestamp": "2025-07-29T18:33:42.002962",
+    "creation": {
+      "status": "success",
+      "strategy": "vwap",
+      "action": "creation",
+      "timestamp": "2025-07-29T18:33:39.405559"
+    },
+    "backtest": {
+      "status": "success",
+      "strategy": "vwap",
+      "action": "backtest",
+      "dataset": "test_vwap_dataset.csv",
+      "timestamp": "2025-07-29T18:33:41.992616"
+    },
+    "analysis": {
+      "strategy": "vwap",
+      "timestamp": "2025-07-29T18:33:42.001911",
+      "patterns_validated": {
+        "reversion_down": {
+          "pattern_type": "reversion_down",
+          "expected_entry": "SHORT",
+          "expected_range": "bars 50-100",
+          "signals_found": 1,
+          "status": "validated",
+          "notes": [
+            "Found 1 correct SHORT signals",
+            "Price correctly above VWAP before reversion"
+          ]
+        },
+        "reversion_up": {
+          "pattern_type": "reversion_up",
+          "expected_entry": "LONG",
+          "expected_range": "bars 250-300",
+          "signals_found": 0,
+          "status": "failed",
+          "notes": [
+            "No signals found in expected range"
+          ]
+        },
+        "support_bounce": {
+          "pattern_type": "support_bounce",
+          "expected_entry": "LONG",
+          "expected_range": "bars 500-550",
+          "signals_found": 0,
+          "status": "failed",
+          "notes": [
+            "No signals found in expected range"
+          ]
+        }
+      },
+      "overall_score": 0.3333333333333333,
+      "total_patterns": 3,
+      "validated_patterns": 1
+    },
+    "metadata": {
+      "strategy": "vwap",
+      "description": "VWAP mean reversion test dataset with 3 clear patterns",
+      "patterns": [
+        {
+          "type": "reversion_down",
+          "start_bar": 50,
+          "end_bar": 100,
+          "expected_entry": "SHORT"
+        },
+        {
+          "type": "reversion_up",
+          "start_bar": 250,
+          "end_bar": 300,
+          "expected_entry": "LONG"
+        },
+        {
+          "type": "support_bounce",
+          "start_bar": 500,
+          "end_bar": 550,
+          "expected_entry": "LONG"
+        }
+      ],
+      "total_bars": 600,
+      "created": "2025-07-29T18:29:42.171538"
+    }
+  },
+  "order_block": {
+    "strategy": "order_block",
+    "timestamp": "2025-07-29T18:33:48.182281",
+    "creation": {
+      "status": "success",
+      "strategy": "order_block",
+      "action": "creation",
+      "timestamp": "2025-07-29T18:33:46.096867"
+    },
+    "backtest": {
+      "status": "success",
+      "strategy": "order_block",
+      "action": "backtest",
+      "dataset": "test_order_block_dataset.csv",
+      "timestamp": "2025-07-29T18:33:48.181387"
+    },
+    "analysis": {
+      "strategy": "order_block",
+      "timestamp": "2025-07-29T18:33:48.181763",
+      "patterns_validated": {
+        "bullish_order_block": {
+          "pattern_type": "bullish_order_block",
+          "expected_entry": "LONG",
+          "expected_range": "bars 50-80",
+          "signals_found": 1,
+          "status": "failed",
+          "notes": [
+            "Expected LONG signals, found different directions",
+            "Correctly identified bullish order block with volume surge"
+          ]
+        },
+        "bearish_order_block": {
+          "pattern_type": "bearish_order_block",
+          "expected_entry": "SHORT",
+          "expected_range": "bars 250-280",
+          "signals_found": 0,
+          "status": "failed",
+          "notes": [
+            "No signals found in expected range"
+          ]
+        },
+        "multiple_order_blocks": {
+          "pattern_type": "multiple_order_blocks",
+          "expected_entry": "LONG",
+          "expected_range": "bars 480-520",
+          "signals_found": 0,
+          "status": "failed",
+          "notes": [
+            "No signals found in expected range"
+          ]
+        }
+      },
+      "overall_score": 0.0,
+      "total_patterns": 3,
+      "validated_patterns": 0
+    },
+    "metadata": {
+      "strategy": "order_block",
+      "description": "Order block test dataset with 3 clear institutional patterns",
+      "patterns": [
+        {
+          "type": "bullish_order_block",
+          "start_bar": 50,
+          "end_bar": 80,
+          "expected_entry": "LONG"
+        },
+        {
+          "type": "bearish_order_block",
+          "start_bar": 250,
+          "end_bar": 280,
+          "expected_entry": "SHORT"
+        },
+        {
+          "type": "multiple_order_blocks",
+          "start_bar": 480,
+          "end_bar": 520,
+          "expected_entry": "LONG"
+        }
+      ],
+      "total_bars": 600,
+      "created": "2025-07-29T18:29:42.189411"
+    }
+  },
+  "fvg": {
+    "strategy": "fvg",
+    "timestamp": "2025-07-29T18:33:54.370660",
+    "creation": {
+      "status": "success",
+      "strategy": "fvg",
+      "action": "creation",
+      "timestamp": "2025-07-29T18:33:52.277610"
+    },
+    "backtest": {
+      "status": "success",
+      "strategy": "fvg",
+      "action": "backtest",
+      "dataset": "test_fvg_dataset.csv",
+      "timestamp": "2025-07-29T18:33:54.369802"
+    },
+    "analysis": {
+      "strategy": "fvg",
+      "timestamp": "2025-07-29T18:33:54.370152",
+      "patterns_validated": {
+        "bullish_fvg": {
+          "pattern_type": "bullish_fvg",
+          "expected_entry": "LONG",
+          "expected_range": "bars 70-100",
+          "signals_found": 1,
+          "status": "failed",
+          "notes": [
+            "Expected LONG signals, found different directions",
+            "Gap up not detected in bullish FVG"
+          ]
+        },
+        "bearish_fvg": {
+          "pattern_type": "bearish_fvg",
+          "expected_entry": "SHORT",
+          "expected_range": "bars 270-300",
+          "signals_found": 0,
+          "status": "failed",
+          "notes": [
+            "No signals found in expected range"
+          ]
+        },
+        "multiple_fvgs": {
+          "pattern_type": "multiple_fvgs",
+          "expected_entry": "LONG",
+          "expected_range": "bars 480-520",
+          "signals_found": 0,
+          "status": "failed",
+          "notes": [
+            "No signals found in expected range"
+          ]
+        }
+      },
+      "overall_score": 0.0,
+      "total_patterns": 3,
+      "validated_patterns": 0
+    },
+    "metadata": {
+      "strategy": "fvg",
+      "description": "Fair Value Gap test dataset with 3 clear gap patterns",
+      "patterns": [
+        {
+          "type": "bullish_fvg",
+          "start_bar": 70,
+          "end_bar": 100,
+          "expected_entry": "LONG"
+        },
+        {
+          "type": "bearish_fvg",
+          "start_bar": 270,
+          "end_bar": 300,
+          "expected_entry": "SHORT"
+        },
+        {
+          "type": "multiple_fvgs",
+          "start_bar": 480,
+          "end_bar": 520,
+          "expected_entry": "LONG"
+        }
+      ],
+      "total_bars": 600,
+      "created": "2025-07-29T18:29:42.206900"
+    }
+  },
+  "support_resistance": {
+    "strategy": "support_resistance",
+    "timestamp": "2025-07-29T18:34:00.550544",
+    "creation": {
+      "status": "success",
+      "strategy": "support_resistance",
+      "action": "creation",
+      "timestamp": "2025-07-29T18:33:58.464723"
+    },
+    "backtest": {
+      "status": "success",
+      "strategy": "support_resistance",
+      "action": "backtest",
+      "dataset": "test_support_resistance_dataset.csv",
+      "timestamp": "2025-07-29T18:34:00.549641"
+    },
+    "analysis": {
+      "strategy": "support_resistance",
+      "timestamp": "2025-07-29T18:34:00.550056",
+      "patterns_validated": {
+        "resistance_bounce": {
+          "pattern_type": "resistance_bounce",
+          "expected_entry": "SHORT",
+          "expected_range": "bars 50-80",
+          "signals_found": 1,
+          "status": "validated",
+          "notes": [
+            "Found 1 correct SHORT signals",
+            "Correctly identified resistance level test"
+          ]
+        },
+        "support_bounce": {
+          "pattern_type": "support_bounce",
+          "expected_entry": "LONG",
+          "expected_range": "bars 250-280",
+          "signals_found": 0,
+          "status": "failed",
+          "notes": [
+            "No signals found in expected range"
+          ]
+        },
+        "breakout_failure": {
+          "pattern_type": "breakout_failure",
+          "expected_entry": "SHORT",
+          "expected_range": "bars 500-530",
+          "signals_found": 0,
+          "status": "failed",
+          "notes": [
+            "No signals found in expected range"
+          ]
+        }
+      },
+      "overall_score": 0.3333333333333333,
+      "total_patterns": 3,
+      "validated_patterns": 1
+    },
+    "metadata": {
+      "strategy": "support_resistance",
+      "description": "Support/Resistance test dataset with 3 clear level patterns",
+      "patterns": [
+        {
+          "type": "resistance_bounce",
+          "start_bar": 50,
+          "end_bar": 80,
+          "expected_entry": "SHORT"
+        },
+        {
+          "type": "support_bounce",
+          "start_bar": 250,
+          "end_bar": 280,
+          "expected_entry": "LONG"
+        },
+        {
+          "type": "breakout_failure",
+          "start_bar": 500,
+          "end_bar": 530,
+          "expected_entry": "SHORT"
+        }
+      ],
+      "total_bars": 600,
+      "created": "2025-07-29T18:29:42.224376"
+    }
+  }
+}

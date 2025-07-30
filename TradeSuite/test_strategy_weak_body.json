@@ -1,0 +1,13 @@
+{
+  "name": "Weak Body Strategy",
+  "actions": [
+    {
+      "name": "Weak_Body Pattern",
+      "pattern": {
+        "type": "weak_body",
+        "params": {}
+      }
+    }
+  ],
+  "combination_logic": "AND"
+}

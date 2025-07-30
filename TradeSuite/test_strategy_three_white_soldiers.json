@@ -1,0 +1,13 @@
+{
+  "name": "Three White Soldiers Strategy",
+  "actions": [
+    {
+      "name": "Three_White_Soldiers Pattern",
+      "pattern": {
+        "type": "three_white_soldiers",
+        "params": {}
+      }
+    }
+  ],
+  "combination_logic": "AND"
+}

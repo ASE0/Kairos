@@ -1,0 +1,11 @@
+{
+  "name": "Order Block Strategy",
+  "actions": [
+    {
+      "name": "Order_Block Gate",
+      "location_strategy": "Order Block",
+      "location_params": {}
+    }
+  ],
+  "combination_logic": "AND"
+}

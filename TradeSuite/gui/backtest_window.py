@@ -99,33 +99,33 @@ class BacktestWorker(QThread):
                 self.log.emit("Using legacy backtest engine...")
                 print(f"[DEBUG] BacktestWorker: Using old architecture for strategy: {self.strategy.name}")
                 
-                # Import MultiTimeframeBacktestEngine here to avoid circular imports
-                from strategies.strategy_builders import MultiTimeframeBacktestEngine
-                engine = MultiTimeframeBacktestEngine()
+            # Import MultiTimeframeBacktestEngine here to avoid circular imports
+            from strategies.strategy_builders import MultiTimeframeBacktestEngine
+            engine = MultiTimeframeBacktestEngine()
+            
+            # Process in chunks to allow cancellation and progress updates
+            chunk_size = 1000
+            total_bars = len(self.data)
+            
+            for i in range(0, total_bars, chunk_size):
+                if self._should_stop:
+                    self.log.emit("Backtest cancelled by user")
+                    return
                 
-                # Process in chunks to allow cancellation and progress updates
-                chunk_size = 1000
-                total_bars = len(self.data)
+                # Update progress
+                progress = int((i / total_bars) * 100)
+                self.progress.emit(progress)
                 
-                for i in range(0, total_bars, chunk_size):
-                    if self._should_stop:
-                        self.log.emit("Backtest cancelled by user")
-                        return
-                    
-                    # Update progress
-                    progress = int((i / total_bars) * 100)
-                    self.progress.emit(progress)
-                    
-                    # Allow GUI updates
-                    self.msleep(1)
-                
-                # Use risk_per_trade as position_size for compatibility
-                results = engine.run_backtest(
-                    self.strategy,
-                    self.data,
-                    initial_capital=initial_capital,
-                    risk_per_trade=position_size
-                )
+                # Allow GUI updates
+                self.msleep(1)
+            
+            # Use risk_per_trade as position_size for compatibility
+            results = engine.run_backtest(
+                self.strategy,
+                self.data,
+                initial_capital=initial_capital,
+                risk_per_trade=position_size
+            )
 
             import pprint
             with open('gui_debug_output.txt', 'a', encoding='utf-8') as f:
@@ -290,7 +290,7 @@ class BacktestWorker(QThread):
                 'actions': [],
                 'combination_logic': 'AND',
                 'gates_and_logic': {}
-            }
+        }
 
 
 class BacktestWindow(QMainWindow):
@@ -1550,7 +1550,7 @@ Total Trades: {results.get('total_trades', 0)}
             stats_text = f"Final Equity: ${equity_curve[-1]:,.2f} | "
             stats_text += f"Peak: ${equity_series.max():,.2f} | "
             stats_text += f"Max Drawdown: {results['max_drawdown']:.2%}"
-        self.equity_stats.setText(stats_text)
+            self.equity_stats.setText(stats_text)
 
     def _update_trade_stats(self, results: Dict[str, Any]):
         """Update trade statistics tab (skip avg_win_label, etc. as they no longer exist)"""

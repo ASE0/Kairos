@@ -1,0 +1,13 @@
+{
+  "name": "Doji Pattern Strategy",
+  "actions": [
+    {
+      "name": "Doji Pattern",
+      "pattern": {
+        "type": "doji",
+        "params": {}
+      }
+    }
+  ],
+  "combination_logic": "AND"
+}

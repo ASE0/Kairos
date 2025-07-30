@@ -1,2 +1,2 @@
 run_headless function called
-Args: Namespace(headless=True, strategy='test_sr_strategy.json', data='test_sr_clear_levels.csv', output='test_sr_final_results.json')
+Args: Namespace(headless=True, strategy='test_backtest_strategy.json', data='workspaces/datasets/NQ_5s_1m.csv', output='test_backtest_results.json')

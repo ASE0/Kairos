@@ -1,0 +1,132 @@
+{
+  "test_timestamp": "2025-07-29T18:18:24.058421",
+  "components": {
+    "dataset_explorer": {
+      "status": "success",
+      "action": "dataset_explorer_test",
+      "timestamp": "2025-07-29T18:18:27.669994"
+    }
+  },
+  "strategies": {
+    "vwap": {
+      "creation": {
+        "status": "success",
+        "strategy": "vwap",
+        "action": "creation_test",
+        "timestamp": "2025-07-29T18:18:29.764747"
+      },
+      "backtest": {
+        "status": "error",
+        "strategy": "vwap",
+        "action": "backtest_test",
+        "error": "expected an indented block after 'if' statement on line 1600 (backtest_window.py, line 1601)",
+        "timestamp": "2025-07-29T18:18:29.807362"
+      }
+    },
+    "order_block": {
+      "creation": {
+        "status": "success",
+        "strategy": "order_block",
+        "action": "creation_test",
+        "timestamp": "2025-07-29T18:18:32.898394"
+      },
+      "backtest": {
+        "status": "error",
+        "strategy": "order_block",
+        "action": "backtest_test",
+        "error": "expected an indented block after 'if' statement on line 1600 (backtest_window.py, line 1601)",
+        "timestamp": "2025-07-29T18:18:32.935425"
+      }
+    },
+    "fvg": {
+      "creation": {
+        "status": "success",
+        "strategy": "fvg",
+        "action": "creation_test",
+        "timestamp": "2025-07-29T18:18:36.026143"
+      },
+      "backtest": {
+        "status": "error",
+        "strategy": "fvg",
+        "action": "backtest_test",
+        "error": "expected an indented block after 'if' statement on line 1600 (backtest_window.py, line 1601)",
+        "timestamp": "2025-07-29T18:18:36.063362"
+      }
+    },
+    "support_resistance": {
+      "creation": {
+        "status": "success",
+        "strategy": "support_resistance",
+        "action": "creation_test",
+        "timestamp": "2025-07-29T18:18:39.152549"
+      },
+      "backtest": {
+        "status": "error",
+        "strategy": "support_resistance",
+        "action": "backtest_test",
+        "error": "expected an indented block after 'if' statement on line 1600 (backtest_window.py, line 1601)",
+        "timestamp": "2025-07-29T18:18:39.190608"
+      }
+    },
+    "bollinger_bands": {
+      "creation": {
+        "status": "success",
+        "strategy": "bollinger_bands",
+        "action": "creation_test",
+        "timestamp": "2025-07-29T18:18:42.281496"
+      },
+      "backtest": {
+        "status": "error",
+        "strategy": "bollinger_bands",
+        "action": "backtest_test",
+        "error": "expected an indented block after 'if' statement on line 1600 (backtest_window.py, line 1601)",
+        "timestamp": "2025-07-29T18:18:42.319110"
+      }
+    },
+    "ma": {
+      "creation": {
+        "status": "success",
+        "strategy": "ma",
+        "action": "creation_test",
+        "timestamp": "2025-07-29T18:18:45.409499"
+      },
+      "backtest": {
+        "status": "error",
+        "strategy": "ma",
+        "action": "backtest_test",
+        "error": "expected an indented block after 'if' statement on line 1600 (backtest_window.py, line 1601)",
+        "timestamp": "2025-07-29T18:18:45.447096"
+      }
+    },
+    "volatility": {
+      "creation": {
+        "status": "success",
+        "strategy": "volatility",
+        "action": "creation_test",
+        "timestamp": "2025-07-29T18:18:48.613514"
+      },
+      "backtest": {
+        "status": "error",
+        "strategy": "volatility",
+        "action": "backtest_test",
+        "error": "expected an indented block after 'if' statement on line 1600 (backtest_window.py, line 1601)",
+        "timestamp": "2025-07-29T18:18:48.652058"
+      }
+    },
+    "momentum": {
+      "creation": {
+        "status": "success",
+        "strategy": "momentum",
+        "action": "creation_test",
+        "timestamp": "2025-07-29T18:18:51.742540"
+      },
+      "backtest": {
+        "status": "error",
+        "strategy": "momentum",
+        "action": "backtest_test",
+        "error": "expected an indented block after 'if' statement on line 1600 (backtest_window.py, line 1601)",
+        "timestamp": "2025-07-29T18:18:51.809184"
+      }
+    }
+  }
+}

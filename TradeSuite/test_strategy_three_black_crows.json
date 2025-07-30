@@ -1,0 +1,13 @@
+{
+  "name": "Three Black Crows Strategy",
+  "actions": [
+    {
+      "name": "Three_Black_Crows Pattern",
+      "pattern": {
+        "type": "three_black_crows",
+        "params": {}
+      }
+    }
+  ],
+  "combination_logic": "AND"
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Marubozu Strategy",
+  "actions": [
+    {
+      "name": "Marubozu Pattern",
+      "pattern": {
+        "type": "marubozu",
+        "params": {}
+      }
+    }
+  ],
+  "combination_logic": "AND"
+}

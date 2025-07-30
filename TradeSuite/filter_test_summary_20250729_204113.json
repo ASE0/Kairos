@@ -1,0 +1,20 @@
+{
+  "test_timestamp": "2025-07-29T20:41:13.513538",
+  "total_filters": 10,
+  "working_filters": 5,
+  "error_filters": 0,
+  "success_rate": "50.0%",
+  "average_signal_rate": "40.40%",
+  "filters_tested": [
+    "tick_frequency",
+    "spread",
+    "order_flow",
+    "volume",
+    "time",
+    "volatility",
+    "momentum",
+    "price",
+    "vwap",
+    "bollinger_bands"
+  ]
+}

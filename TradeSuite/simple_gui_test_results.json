@@ -1,0 +1,215 @@
+[
+  {
+    "module": "gui.main_hub",
+    "status": "success"
+  },
+  {
+    "module": "gui.backtest_window",
+    "status": "error",
+    "error": "expected an indented block after 'if' statement on line 1900 (backtest_window.py, line 1902)"
+  },
+  {
+    "module": "strategies.strategy_builders",
+    "status": "success"
+  },
+  {
+    "module": "core.data_structures",
+    "status": "success"
+  },
+  {
+    "module": "patterns.candlestick_patterns",
+    "status": "success"
+  },
+  {
+    "module": "patterns.enhanced_candlestick_patterns",
+    "status": "success"
+  },
+  {
+    "module": "core.microstructure_analysis",
+    "status": "success"
+  },
+  {
+    "test": "application_startup",
+    "status": "error"
+  },
+  {
+    "strategy": "VWAP Strategy",
+    "type": "vwap",
+    "category": "filter",
+    "timestamp": "2025-07-29T17:53:33.321356",
+    "config_valid": true,
+    "config_errors": [],
+    "strategy_file": "test_strategy_vwap.json"
+  },
+  {
+    "strategy": "Momentum Strategy",
+    "type": "momentum",
+    "category": "filter",
+    "timestamp": "2025-07-29T17:53:33.324849",
+    "config_valid": true,
+    "config_errors": [],
+    "strategy_file": "test_strategy_momentum.json"
+  },
+  {
+    "strategy": "Volatility Strategy",
+    "type": "volatility",
+    "category": "filter",
+    "timestamp": "2025-07-29T17:53:33.327712",
+    "config_valid": true,
+    "config_errors": [],
+    "strategy_file": "test_strategy_volatility.json"
+  },
+  {
+    "strategy": "Moving Average Strategy",
+    "type": "ma",
+    "category": "filter",
+    "timestamp": "2025-07-29T17:53:33.330296",
+    "config_valid": true,
+    "config_errors": [],
+    "strategy_file": "test_strategy_ma.json"
+  },
+  {
+    "strategy": "Bollinger Bands Strategy",
+    "type": "bollinger_bands",
+    "category": "filter",
+    "timestamp": "2025-07-29T17:53:33.333892",
+    "config_valid": true,
+    "config_errors": [],
+    "strategy_file": "test_strategy_bollinger_bands.json"
+  },
+  {
+    "strategy": "Support Resistance Strategy",
+    "type": "support_resistance",
+    "category": "gate",
+    "timestamp": "2025-07-29T17:53:33.336783",
+    "config_valid": true,
+    "config_errors": [],
+    "strategy_file": "test_strategy_support_resistance.json"
+  },
+  {
+    "strategy": "Order Block Strategy",
+    "type": "order_block",
+    "category": "gate",
+    "timestamp": "2025-07-29T17:53:33.339982",
+    "config_valid": true,
+    "config_errors": [],
+    "strategy_file": "test_strategy_order_block.json"
+  },
+  {
+    "strategy": "Fair Value Gap Strategy",
+    "type": "fvg",
+    "category": "pattern",
+    "timestamp": "2025-07-29T17:53:33.343546",
+    "config_valid": true,
+    "config_errors": [],
+    "strategy_file": "test_strategy_fvg.json"
+  },
+  {
+    "strategy": "Engulfing Pattern Strategy",
+    "type": "engulfing",
+    "category": "pattern",
+    "timestamp": "2025-07-29T17:53:33.346528",
+    "config_valid": true,
+    "config_errors": [],
+    "strategy_file": "test_strategy_engulfing.json"
+  },
+  {
+    "strategy": "Hammer Pattern Strategy",
+    "type": "hammer",
+    "category": "pattern",
+    "timestamp": "2025-07-29T17:53:33.349789",
+    "config_valid": true,
+    "config_errors": [],
+    "strategy_file": "test_strategy_hammer.json"
+  },
+  {
+    "strategy": "Doji Pattern Strategy",
+    "type": "doji",
+    "category": "pattern",
+    "timestamp": "2025-07-29T17:53:33.352885",
+    "config_valid": true,
+    "config_errors": [],
+    "strategy_file": "test_strategy_doji.json"
+  },
+  {
+    "strategy": "Double Wick Strategy",
+    "type": "double_wick",
+    "category": "pattern",
+    "timestamp": "2025-07-29T17:53:33.355832",
+    "config_valid": true,
+    "config_errors": [],
+    "strategy_file": "test_strategy_double_wick.json"
+  },
+  {
+    "strategy": "II Bars Strategy",
+    "type": "ii_bars",
+    "category": "pattern",
+    "timestamp": "2025-07-29T17:53:33.358986",
+    "config_valid": true,
+    "config_errors": [],
+    "strategy_file": "test_strategy_ii_bars.json"
+  },
+  {
+    "strategy": "Weak Body Strategy",
+    "type": "weak_body",
+    "category": "pattern",
+    "timestamp": "2025-07-29T17:53:33.361803",
+    "config_valid": true,
+    "config_errors": [],
+    "strategy_file": "test_strategy_weak_body.json"
+  },
+  {
+    "strategy": "Marubozu Strategy",
+    "type": "marubozu",
+    "category": "pattern",
+    "timestamp": "2025-07-29T17:53:33.364732",
+    "config_valid": true,
+    "config_errors": [],
+    "strategy_file": "test_strategy_marubozu.json"
+  },
+  {
+    "strategy": "Spinning Top Strategy",
+    "type": "spinning_top",
+    "category": "pattern",
+    "timestamp": "2025-07-29T17:53:33.367946",
+    "config_valid": true,
+    "config_errors": [],
+    "strategy_file": "test_strategy_spinning_top.json"
+  },
+  {
+    "strategy": "Three White Soldiers Strategy",
+    "type": "three_white_soldiers",
+    "category": "pattern",
+    "timestamp": "2025-07-29T17:53:33.371178",
+    "config_valid": true,
+    "config_errors": [],
+    "strategy_file": "test_strategy_three_white_soldiers.json"
+  },
+  {
+    "strategy": "Three Black Crows Strategy",
+    "type": "three_black_crows",
+    "category": "pattern",
+    "timestamp": "2025-07-29T17:53:33.374238",
+    "config_valid": true,
+    "config_errors": [],
+    "strategy_file": "test_strategy_three_black_crows.json"
+  },
+  {
+    "strategy": "Imbalance Memory Zone Strategy",
+    "type": "imbalance_memory_zone",
+    "category": "zone",
+    "timestamp": "2025-07-29T17:53:33.376988",
+    "config_valid": true,
+    "config_errors": [],
+    "strategy_file": "test_strategy_imbalance_memory_zone.json"
+  },
+  {
+    "test": "headless_backtest",
+    "status": "success",
+    "strategy_name": "Test VWAP Strategy",
+    "data_length": 312582,
+    "signals_count": 0,
+    "trades_count": 0,
+    "zones_count": 0
+  }
+]

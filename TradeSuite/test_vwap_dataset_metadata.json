@@ -1,0 +1,26 @@
+{
+  "strategy": "vwap",
+  "description": "VWAP mean reversion test dataset with 3 clear patterns",
+  "patterns": [
+    {
+      "type": "reversion_down",
+      "start_bar": 50,
+      "end_bar": 100,
+      "expected_entry": "SHORT"
+    },
+    {
+      "type": "reversion_up",
+      "start_bar": 250,
+      "end_bar": 300,
+      "expected_entry": "LONG"
+    },
+    {
+      "type": "support_bounce",
+      "start_bar": 500,
+      "end_bar": 550,
+      "expected_entry": "LONG"
+    }
+  ],
+  "total_bars": 600,
+  "created": "2025-07-29T18:29:42.171538"
+}

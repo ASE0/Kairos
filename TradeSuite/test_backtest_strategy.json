@@ -1,0 +1,16 @@
+{
+  "name": "Test VWAP Strategy",
+  "actions": [
+    {
+      "name": "VWAP Filter",
+      "filters": [
+        {
+          "type": "vwap",
+          "condition": "above",
+          "params": {}
+        }
+      ]
+    }
+  ],
+  "combination_logic": "AND"
+}

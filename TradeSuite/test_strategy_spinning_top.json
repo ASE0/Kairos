@@ -1,0 +1,13 @@
+{
+  "name": "Spinning Top Strategy",
+  "actions": [
+    {
+      "name": "Spinning_Top Pattern",
+      "pattern": {
+        "type": "spinning_top",
+        "params": {}
+      }
+    }
+  ],
+  "combination_logic": "AND"
+}

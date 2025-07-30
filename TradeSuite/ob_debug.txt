@@ -458,3 +458,84 @@ Bar(dt='2024-03-07 16:19:00', open=18245.25, high=18245.75, low=18215.0, close=1
 [FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.9, 'tau_bars': 80}
 [FORCE-OB] Added 40 OB zones to results['zones'] (forced run)
 [FORCE-OB] Removed 40 existing OB zones to prevent duplicates
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-01-01 09:30:00', open=4999.956180167257, high=5000.676142983964, low=4999.531919245058, close=4999.723190451456, volume=1186.0)
+Bar(dt='2024-01-01 09:31:00', open=5000.144281676014, high=5000.87386633078, low=4999.387240385639, close=5000.06946741206, volume=960.0)
+Bar(dt='2024-01-01 09:32:00', open=5000.295243034257, high=5000.40070411016, low=5000.229471138261, close=5000.420059228939, volume=953.0)
+Bar(dt='2024-01-01 09:33:00', open=4999.48682766699, high=4999.982116314229, low=4998.603630806167, close=4999.4372137478895, volume=890.0)
+Bar(dt='2024-01-01 09:34:00', open=4999.440574674015, high=4999.973248047259, low=4999.367411258738, close=4999.3048298883, volume=1084.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.9, 'tau_bars': 80}
+[FORCE-OB] OB detection failed: '>=' not supported between instances of 'complex' and 'float'
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-01-01 09:30:00', open=4999.956180167257, high=5000.676142983964, low=4999.531919245058, close=4999.723190451456, volume=1186.0)
+Bar(dt='2024-01-01 09:31:00', open=5000.144281676014, high=5000.87386633078, low=4999.387240385639, close=5000.06946741206, volume=960.0)
+Bar(dt='2024-01-01 09:32:00', open=5000.295243034257, high=5000.40070411016, low=5000.229471138261, close=5000.420059228939, volume=953.0)
+Bar(dt='2024-01-01 09:33:00', open=4999.48682766699, high=4999.982116314229, low=4998.603630806167, close=4999.4372137478895, volume=890.0)
+Bar(dt='2024-01-01 09:34:00', open=4999.440574674015, high=4999.973248047259, low=4999.367411258738, close=4999.3048298883, volume=1084.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.9, 'tau_bars': 80}
+[FORCE-OB] OB detection failed: '>=' not supported between instances of 'complex' and 'float'
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-01-01 09:30:00', open=4999.956180167257, high=5000.676142983964, low=4999.531919245058, close=4999.723190451456, volume=1186.0)
+Bar(dt='2024-01-01 09:31:00', open=5000.144281676014, high=5000.87386633078, low=4999.387240385639, close=5000.06946741206, volume=960.0)
+Bar(dt='2024-01-01 09:32:00', open=5000.295243034257, high=5000.40070411016, low=5000.229471138261, close=5000.420059228939, volume=953.0)
+Bar(dt='2024-01-01 09:33:00', open=4999.48682766699, high=4999.982116314229, low=4998.603630806167, close=4999.4372137478895, volume=890.0)
+Bar(dt='2024-01-01 09:34:00', open=4999.440574674015, high=4999.973248047259, low=4999.367411258738, close=4999.3048298883, volume=1084.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.9, 'tau_bars': 80}
+[FORCE-OB] OB detection failed: '>=' not supported between instances of 'complex' and 'float'
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-01-01 09:30:00', open=4999.956180167257, high=5000.676142983964, low=4999.531919245058, close=4999.723190451456, volume=1186.0)
+Bar(dt='2024-01-01 09:31:00', open=5000.144281676014, high=5000.87386633078, low=4999.387240385639, close=5000.06946741206, volume=960.0)
+Bar(dt='2024-01-01 09:32:00', open=5000.295243034257, high=5000.40070411016, low=5000.229471138261, close=5000.420059228939, volume=953.0)
+Bar(dt='2024-01-01 09:33:00', open=4999.48682766699, high=4999.982116314229, low=4998.603630806167, close=4999.4372137478895, volume=890.0)
+Bar(dt='2024-01-01 09:34:00', open=4999.440574674015, high=4999.973248047259, low=4999.367411258738, close=4999.3048298883, volume=1084.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.9, 'tau_bars': 80}
+[FORCE-OB] OB detection failed: '>=' not supported between instances of 'complex' and 'float'
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-01-01 09:30:00', open=4999.956180167257, high=5000.676142983964, low=4999.531919245058, close=4999.723190451456, volume=1186.0)
+Bar(dt='2024-01-01 09:31:00', open=5000.144281676014, high=5000.87386633078, low=4999.387240385639, close=5000.06946741206, volume=960.0)
+Bar(dt='2024-01-01 09:32:00', open=5000.295243034257, high=5000.40070411016, low=5000.229471138261, close=5000.420059228939, volume=953.0)
+Bar(dt='2024-01-01 09:33:00', open=4999.48682766699, high=4999.982116314229, low=4998.603630806167, close=4999.4372137478895, volume=890.0)
+Bar(dt='2024-01-01 09:34:00', open=4999.440574674015, high=4999.973248047259, low=4999.367411258738, close=4999.3048298883, volume=1084.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.9, 'tau_bars': 80}
+[FORCE-OB] OB detection failed: '>=' not supported between instances of 'complex' and 'float'
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-01-01 09:30:00', open=4999.956180167257, high=5000.676142983964, low=4999.531919245058, close=4999.723190451456, volume=1186.0)
+Bar(dt='2024-01-01 09:31:00', open=5000.144281676014, high=5000.87386633078, low=4999.387240385639, close=5000.06946741206, volume=960.0)
+Bar(dt='2024-01-01 09:32:00', open=5000.295243034257, high=5000.40070411016, low=5000.229471138261, close=5000.420059228939, volume=953.0)
+Bar(dt='2024-01-01 09:33:00', open=4999.48682766699, high=4999.982116314229, low=4998.603630806167, close=4999.4372137478895, volume=890.0)
+Bar(dt='2024-01-01 09:34:00', open=4999.440574674015, high=4999.973248047259, low=4999.367411258738, close=4999.3048298883, volume=1084.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.9, 'tau_bars': 80}
+[FORCE-OB] OB detection failed: '>=' not supported between instances of 'complex' and 'float'
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-01-01 09:30:00', open=4999.956180167257, high=5000.676142983964, low=4999.531919245058, close=4999.723190451456, volume=1186.0)
+Bar(dt='2024-01-01 09:31:00', open=5000.144281676014, high=5000.87386633078, low=4999.387240385639, close=5000.06946741206, volume=960.0)
+Bar(dt='2024-01-01 09:32:00', open=5000.295243034257, high=5000.40070411016, low=5000.229471138261, close=5000.420059228939, volume=953.0)
+Bar(dt='2024-01-01 09:33:00', open=4999.48682766699, high=4999.982116314229, low=4998.603630806167, close=4999.4372137478895, volume=890.0)
+Bar(dt='2024-01-01 09:34:00', open=4999.440574674015, high=4999.973248047259, low=4999.367411258738, close=4999.3048298883, volume=1084.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.9, 'tau_bars': 80}
+[FORCE-OB] OB detection failed: '>=' not supported between instances of 'complex' and 'float'
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-01-01 09:30:00', open=4999.956180167257, high=5000.676142983964, low=4999.531919245058, close=4999.723190451456, volume=1186.0)
+Bar(dt='2024-01-01 09:31:00', open=5000.144281676014, high=5000.87386633078, low=4999.387240385639, close=5000.06946741206, volume=960.0)
+Bar(dt='2024-01-01 09:32:00', open=5000.295243034257, high=5000.40070411016, low=5000.229471138261, close=5000.420059228939, volume=953.0)
+Bar(dt='2024-01-01 09:33:00', open=4999.48682766699, high=4999.982116314229, low=4998.603630806167, close=4999.4372137478895, volume=890.0)
+Bar(dt='2024-01-01 09:34:00', open=4999.440574674015, high=4999.973248047259, low=4999.367411258738, close=4999.3048298883, volume=1084.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.9, 'tau_bars': 80}
+[FORCE-OB] OB detection failed: '>=' not supported between instances of 'complex' and 'float'
+[FORCE-OB] Entered forced OB detection block in run_backtest
+[FORCE-OB-DEBUG] First 5 Bar objects:
+Bar(dt='2024-01-01 09:30:00', open=4999.956180167257, high=5000.676142983964, low=4999.531919245058, close=4999.723190451456, volume=1186.0)
+Bar(dt='2024-01-01 09:31:00', open=5000.144281676014, high=5000.87386633078, low=4999.387240385639, close=5000.06946741206, volume=960.0)
+Bar(dt='2024-01-01 09:32:00', open=5000.295243034257, high=5000.40070411016, low=5000.229471138261, close=5000.420059228939, volume=953.0)
+Bar(dt='2024-01-01 09:33:00', open=4999.48682766699, high=4999.982116314229, low=4998.603630806167, close=4999.4372137478895, volume=890.0)
+Bar(dt='2024-01-01 09:34:00', open=4999.440574674015, high=4999.973248047259, low=4999.367411258738, close=4999.3048298883, volume=1084.0)
+[FORCE-OB-DEBUG] OB parameters: {'epsilon_pts': 0.5, 'max_impulse_bars': 30, 'min_impulse_score': 0.1, 'min_impulse_body_mult': 0.1, 'max_block_lookback': 30, 'min_block_body_frac': 0.05, 'gamma_imp': 2.0, 'delta_imp': 1.5, 'gamma_decay': 0.9, 'tau_bars': 80}
+[FORCE-OB] OB detection failed: '>=' not supported between instances of 'complex' and 'float'

@@ -1,0 +1,68 @@
+2025-07-29 17:53:15,769 - INFO - Starting simple GUI test suite...
+2025-07-29 17:53:15,769 - INFO - Testing module imports...
+2025-07-29 17:53:16,053 - INFO - NumExpr defaulting to 12 threads.
+2025-07-29 17:53:17,319 - INFO - Testing application startup...
+2025-07-29 17:53:17,321 - INFO - Testing strategy creation...
+2025-07-29 17:53:17,387 - INFO - Testing backtest functionality...
+2025-07-29 17:53:19,158 - INFO - Test results saved to simple_gui_test_results.json
+2025-07-29 17:53:19,158 - INFO - === SIMPLE GUI TEST SUMMARY ===
+2025-07-29 17:53:19,158 - INFO - Total tests: 28
+2025-07-29 17:53:19,159 - INFO - Successful tests: 7
+2025-07-29 17:53:19,159 - INFO - Failed tests: 21
+2025-07-29 17:53:19,159 - INFO - Failed tests:
+2025-07-29 17:53:19,159 - INFO -   - Unknown: expected an indented block after 'if' statement on line 1600 (backtest_window.py, line 1601)
+2025-07-29 17:53:19,159 - INFO -   - application_startup: Unknown error
+2025-07-29 17:53:19,160 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:19,160 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:19,160 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:19,160 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:19,161 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:19,161 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:19,161 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:19,161 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:19,161 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:19,161 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:19,162 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:19,162 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:19,162 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:19,162 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:19,162 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:19,162 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:19,163 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:19,163 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:19,163 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:19,163 - INFO - Results saved to: simple_gui_test_results.json
+2025-07-29 17:53:31,846 - INFO - Starting simple GUI test suite...
+2025-07-29 17:53:31,846 - INFO - Testing module imports...
+2025-07-29 17:53:32,125 - INFO - NumExpr defaulting to 12 threads.
+2025-07-29 17:53:33,318 - INFO - Testing application startup...
+2025-07-29 17:53:33,320 - INFO - Testing strategy creation...
+2025-07-29 17:53:33,379 - INFO - Testing backtest functionality...
+2025-07-29 17:53:35,105 - INFO - Test results saved to simple_gui_test_results.json
+2025-07-29 17:53:35,105 - INFO - === SIMPLE GUI TEST SUMMARY ===
+2025-07-29 17:53:35,105 - INFO - Total tests: 28
+2025-07-29 17:53:35,105 - INFO - Successful tests: 7
+2025-07-29 17:53:35,105 - INFO - Failed tests: 21
+2025-07-29 17:53:35,105 - INFO - Failed tests:
+2025-07-29 17:53:35,106 - INFO -   - Unknown: expected an indented block after 'if' statement on line 1900 (backtest_window.py, line 1902)
+2025-07-29 17:53:35,106 - INFO -   - application_startup: Unknown error
+2025-07-29 17:53:35,106 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:35,106 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:35,106 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:35,107 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:35,107 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:35,107 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:35,107 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:35,107 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:35,107 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:35,107 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:35,108 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:35,108 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:35,108 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:35,108 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:35,108 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:35,108 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:35,108 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:35,109 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:35,109 - INFO -   - Unknown: Unknown error
+2025-07-29 17:53:35,109 - INFO - Results saved to: simple_gui_test_results.json

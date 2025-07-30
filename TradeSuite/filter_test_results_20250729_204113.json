@@ -1,0 +1,147 @@
+{
+  "tick_frequency": {
+    "filter_name": "tick_frequency",
+    "filter_config": {
+      "type": "tick_frequency",
+      "max_ticks_per_second": 50,
+      "min_book_depth": 100
+    },
+    "total_bars": 100,
+    "signal_count": 81,
+    "signal_rate": 0.81,
+    "is_working": true,
+    "timestamp": "2025-07-29T20:41:03.442699",
+    "action_details": {}
+  },
+  "spread": {
+    "filter_name": "spread",
+    "filter_config": {
+      "type": "spread",
+      "max_spread_ticks": 2,
+      "normal_spread_multiple": 5
+    },
+    "total_bars": 100,
+    "signal_count": 52,
+    "signal_rate": 0.52,
+    "is_working": true,
+    "timestamp": "2025-07-29T20:41:04.448637",
+    "action_details": {}
+  },
+  "order_flow": {
+    "filter_name": "order_flow",
+    "filter_config": {
+      "type": "order_flow",
+      "min_cvd_threshold": 1000,
+      "large_trade_ratio": 0.35
+    },
+    "total_bars": 100,
+    "signal_count": 37,
+    "signal_rate": 0.37,
+    "is_working": true,
+    "timestamp": "2025-07-29T20:41:05.454149",
+    "action_details": {}
+  },
+  "volume": {
+    "filter_name": "volume",
+    "filter_config": {
+      "type": "volume",
+      "min_volume": 1000,
+      "volume_ratio": 1.5
+    },
+    "total_bars": 100,
+    "signal_count": 21,
+    "signal_rate": 0.21,
+    "is_working": true,
+    "timestamp": "2025-07-29T20:41:06.460023",
+    "action_details": {}
+  },
+  "time": {
+    "filter_name": "time",
+    "filter_config": {
+      "type": "time",
+      "start_time": "09:30",
+      "end_time": "16:00"
+    },
+    "total_bars": 100,
+    "signal_count": 0,
+    "signal_rate": 0.0,
+    "is_working": false,
+    "timestamp": "2025-07-29T20:41:07.466444",
+    "action_details": {}
+  },
+  "volatility": {
+    "filter_name": "volatility",
+    "filter_config": {
+      "type": "volatility",
+      "min_atr_ratio": 0.01,
+      "max_atr_ratio": 0.05
+    },
+    "total_bars": 100,
+    "signal_count": 0,
+    "signal_rate": 0.0,
+    "is_working": false,
+    "timestamp": "2025-07-29T20:41:08.473072",
+    "action_details": {}
+  },
+  "momentum": {
+    "filter_name": "momentum",
+    "filter_config": {
+      "type": "momentum",
+      "momentum_threshold": 0.02,
+      "rsi_range": [
+        30,
+        70
+      ]
+    },
+    "total_bars": 100,
+    "signal_count": 0,
+    "signal_rate": 0.0,
+    "is_working": false,
+    "timestamp": "2025-07-29T20:41:09.493864",
+    "action_details": {}
+  },
+  "price": {
+    "filter_name": "price",
+    "filter_config": {
+      "type": "price",
+      "min_price": 1.0,
+      "max_price": 1000.0
+    },
+    "total_bars": 100,
+    "signal_count": 100,
+    "signal_rate": 1.0,
+    "is_working": false,
+    "timestamp": "2025-07-29T20:41:10.499032",
+    "action_details": {}
+  },
+  "vwap": {
+    "filter_name": "vwap",
+    "filter_config": {
+      "type": "vwap",
+      "condition": "near",
+      "tolerance": 0.001,
+      "period": 20
+    },
+    "total_bars": 100,
+    "signal_count": 13,
+    "signal_rate": 0.13,
+    "is_working": true,
+    "timestamp": "2025-07-29T20:41:11.504972",
+    "action_details": {}
+  },
+  "bollinger_bands": {
+    "filter_name": "bollinger_bands",
+    "filter_config": {
+      "type": "bollinger_bands",
+      "period": 20,
+      "std_dev": 2,
+      "condition": "between"
+    },
+    "total_bars": 100,
+    "signal_count": 100,
+    "signal_rate": 1.0,
+    "is_working": false,
+    "timestamp": "2025-07-29T20:41:12.510763",
+    "action_details": {}
+  }
+}

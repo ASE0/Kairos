@@ -1,0 +1,12 @@
+{
+  "tick_frequency": {
+    "filter_name": "tick_frequency",
+    "filter_config": {
+      "type": "tick_frequency",
+      "max_ticks_per_second": 50,
+      "min_book_depth": 100
+    },
+    "total_bars": 100,
+    "signal_count": 81,
+    "signal_rate": 0.81,
+    "is_working": 

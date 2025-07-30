@@ -1,0 +1,11 @@
+{
+  "name": "Imbalance Memory Zone Strategy",
+  "actions": [
+    {
+      "name": "Imbalance_Memory_Zone Zone",
+      "location_strategy": "Imbalance Memory Zone",
+      "location_params": {}
+    }
+  ],
+  "combination_logic": "AND"
+}

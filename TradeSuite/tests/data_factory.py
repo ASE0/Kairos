@@ -316,7 +316,7 @@ def create_negative_dataset(pattern_name: str, params: Dict[str, Any] = None) ->
     base_time = datetime(2024, 3, 7, 16, 15, 0)
     bars = []
     # Support/Resistance band removed
-    elif pattern_name == 'vwap_mean_reversion_band':
+    if pattern_name == 'vwap_mean_reversion_band':
         # All closes at VWAP, no deviation
         vwap = base_price
         for i in range(30):

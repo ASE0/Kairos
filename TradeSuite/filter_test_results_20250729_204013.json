@@ -1,0 +1,107 @@
+{
+  "tick_frequency": {
+    "filter_name": "tick_frequency",
+    "filter_config": {
+      "type": "tick_frequency",
+      "max_ticks_per_second": 50,
+      "min_book_depth": 100
+    },
+    "error": "name 'action_details' is not defined",
+    "timestamp": "2025-07-29T20:40:03.252414"
+  },
+  "spread": {
+    "filter_name": "spread",
+    "filter_config": {
+      "type": "spread",
+      "max_spread_ticks": 2,
+      "normal_spread_multiple": 5
+    },
+    "error": "name 'action_details' is not defined",
+    "timestamp": "2025-07-29T20:40:04.259016"
+  },
+  "order_flow": {
+    "filter_name": "order_flow",
+    "filter_config": {
+      "type": "order_flow",
+      "min_cvd_threshold": 1000,
+      "large_trade_ratio": 0.35
+    },
+    "error": "name 'action_details' is not defined",
+    "timestamp": "2025-07-29T20:40:05.264670"
+  },
+  "volume": {
+    "filter_name": "volume",
+    "filter_config": {
+      "type": "volume",
+      "min_volume": 1000,
+      "volume_ratio": 1.5
+    },
+    "error": "name 'action_details' is not defined",
+    "timestamp": "2025-07-29T20:40:06.269899"
+  },
+  "time": {
+    "filter_name": "time",
+    "filter_config": {
+      "type": "time",
+      "start_time": "09:30",
+      "end_time": "16:00"
+    },
+    "error": "name 'action_details' is not defined",
+    "timestamp": "2025-07-29T20:40:07.277274"
+  },
+  "volatility": {
+    "filter_name": "volatility",
+    "filter_config": {
+      "type": "volatility",
+      "min_atr_ratio": 0.01,
+      "max_atr_ratio": 0.05
+    },
+    "error": "name 'action_details' is not defined",
+    "timestamp": "2025-07-29T20:40:08.283473"
+  },
+  "momentum": {
+    "filter_name": "momentum",
+    "filter_config": {
+      "type": "momentum",
+      "momentum_threshold": 0.02,
+      "rsi_range": [
+        30,
+        70
+      ]
+    },
+    "error": "name 'action_details' is not defined",
+    "timestamp": "2025-07-29T20:40:09.303772"
+  },
+  "price": {
+    "filter_name": "price",
+    "filter_config": {
+      "type": "price",
+      "min_price": 1.0,
+      "max_price": 1000.0
+    },
+    "error": "name 'action_details' is not defined",
+    "timestamp": "2025-07-29T20:40:10.308493"
+  },
+  "vwap": {
+    "filter_name": "vwap",
+    "filter_config": {
+      "type": "vwap",
+      "condition": "near",
+      "tolerance": 0.001,
+      "period": 20
+    },
+    "error": "name 'action_details' is not defined",
+    "timestamp": "2025-07-29T20:40:11.313465"
+  },
+  "bollinger_bands": {
+    "filter_name": "bollinger_bands",
+    "filter_config": {
+      "type": "bollinger_bands",
+      "period": 20,
+      "std_dev": 2,
+      "condition": "between"
+    },
+    "error": "name 'action_details' is not defined",
+    "timestamp": "2025-07-29T20:40:12.318209"
+  }
+}

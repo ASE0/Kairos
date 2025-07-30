@@ -1,0 +1,26 @@
+{
+  "strategy": "order_block",
+  "description": "Order block test dataset with 3 clear institutional patterns",
+  "patterns": [
+    {
+      "type": "bullish_order_block",
+      "start_bar": 50,
+      "end_bar": 80,
+      "expected_entry": "LONG"
+    },
+    {
+      "type": "bearish_order_block",
+      "start_bar": 250,
+      "end_bar": 280,
+      "expected_entry": "SHORT"
+    },
+    {
+      "type": "multiple_order_blocks",
+      "start_bar": 480,
+      "end_bar": 520,
+      "expected_entry": "LONG"
+    }
+  ],
+  "total_bars": 600,
+  "created": "2025-07-29T18:29:42.189411"
+}

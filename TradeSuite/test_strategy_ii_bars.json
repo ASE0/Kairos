@@ -1,0 +1,13 @@
+{
+  "name": "II Bars Strategy",
+  "actions": [
+    {
+      "name": "Ii_Bars Pattern",
+      "pattern": {
+        "type": "ii_bars",
+        "params": {}
+      }
+    }
+  ],
+  "combination_logic": "AND"
+}

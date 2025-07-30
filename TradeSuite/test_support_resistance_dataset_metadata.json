@@ -1,0 +1,26 @@
+{
+  "strategy": "support_resistance",
+  "description": "Support/Resistance test dataset with 3 clear level patterns",
+  "patterns": [
+    {
+      "type": "resistance_bounce",
+      "start_bar": 50,
+      "end_bar": 80,
+      "expected_entry": "SHORT"
+    },
+    {
+      "type": "support_bounce",
+      "start_bar": 250,
+      "end_bar": 280,
+      "expected_entry": "LONG"
+    },
+    {
+      "type": "breakout_failure",
+      "start_bar": 500,
+      "end_bar": 530,
+      "expected_entry": "SHORT"
+    }
+  ],
+  "total_bars": 600,
+  "created": "2025-07-29T18:29:42.224376"
+}

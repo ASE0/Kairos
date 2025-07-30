@@ -1,0 +1,13 @@
+{
+  "name": "Engulfing Pattern Strategy",
+  "actions": [
+    {
+      "name": "Engulfing Pattern",
+      "pattern": {
+        "type": "engulfing",
+        "params": {}
+      }
+    }
+  ],
+  "combination_logic": "AND"
+}

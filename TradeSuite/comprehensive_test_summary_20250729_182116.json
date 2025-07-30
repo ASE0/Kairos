@@ -1,0 +1,25 @@
+{
+  "test_timestamp": "2025-07-29T18:21:16.246988",
+  "components": {
+    "total": 6,
+    "successful": 2,
+    "success_rate": "33.3%"
+  },
+  "strategies": {
+    "total": 8,
+    "successful_creations": 8,
+    "successful_backtests": 0,
+    "creation_success_rate": "100.0%",
+    "backtest_success_rate": "0.0%"
+  },
+  "strategies_tested": [
+    "vwap",
+    "order_block",
+    "fvg",
+    "support_resistance",
+    "bollinger_bands",
+    "ma",
+    "volatility",
+    "momentum"
+  ]
+}

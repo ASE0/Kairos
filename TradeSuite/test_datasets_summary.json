@@ -1,0 +1,10 @@
+{
+  "created": "2025-07-29T18:29:42.225280",
+  "datasets": {
+    "vwap": "test_vwap_dataset.csv",
+    "order_block": "test_order_block_dataset.csv",
+    "fvg": "test_fvg_dataset.csv",
+    "support_resistance": "test_support_resistance_dataset.csv"
+  },
+  "total_datasets": 4
+}

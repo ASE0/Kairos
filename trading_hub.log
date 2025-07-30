@@ -2207,3 +2207,23 @@
 2025-07-28 19:33:21,610 - gui.main_hub - INFO - Loaded workspace: 0 patterns, 0 strategies, 4 datasets
 2025-07-28 19:33:21,610 - gui.main_hub - INFO - Error loading workspace: 'TradingStrategyHub' object has no attribute 'last_loaded_dataset'
 2025-07-28 19:33:21,622 - gui.main_hub - INFO - Loaded 2 strategies, 30 patterns, and 1 result sets from workspace.
+2025-07-29 17:40:40,092 - gui.main_hub - INFO - Loaded 30 comprehensive default patterns
+2025-07-29 17:40:46,910 - gui.main_hub - INFO - Loaded workspace: 0 patterns, 0 strategies, 4 datasets
+2025-07-29 17:40:46,911 - gui.main_hub - INFO - Error loading workspace: 'TradingStrategyHub' object has no attribute 'last_loaded_dataset'
+2025-07-29 17:40:46,923 - gui.main_hub - INFO - Loaded 2 strategies, 30 patterns, and 1 result sets from workspace.
+2025-07-29 17:41:58,298 - gui.main_hub - INFO - Loaded 30 comprehensive default patterns
+2025-07-29 17:42:05,071 - gui.main_hub - INFO - Loaded workspace: 0 patterns, 0 strategies, 4 datasets
+2025-07-29 17:42:05,072 - gui.main_hub - INFO - Error loading workspace: 'TradingStrategyHub' object has no attribute 'last_loaded_dataset'
+2025-07-29 17:42:05,083 - gui.main_hub - INFO - Loaded 2 strategies, 30 patterns, and 1 result sets from workspace.
+2025-07-29 18:22:36,189 - gui.main_hub - INFO - Loaded 30 comprehensive default patterns
+2025-07-29 18:22:42,721 - gui.main_hub - INFO - Loaded workspace: 0 patterns, 0 strategies, 4 datasets
+2025-07-29 18:22:42,722 - gui.main_hub - INFO - Error loading workspace: 'TradingStrategyHub' object has no attribute 'last_loaded_dataset'
+2025-07-29 18:22:42,733 - gui.main_hub - INFO - Loaded 2 strategies, 30 patterns, and 1 result sets from workspace.
+2025-07-29 18:27:07,604 - gui.main_hub - INFO - Loaded 30 comprehensive default patterns
+2025-07-29 18:27:14,160 - gui.main_hub - INFO - Loaded workspace: 0 patterns, 0 strategies, 4 datasets
+2025-07-29 18:27:14,161 - gui.main_hub - INFO - Error loading workspace: 'TradingStrategyHub' object has no attribute 'last_loaded_dataset'
+2025-07-29 18:27:14,172 - gui.main_hub - INFO - Loaded 2 strategies, 30 patterns, and 1 result sets from workspace.
+2025-07-29 20:35:44,124 - gui.main_hub - INFO - Loaded 30 comprehensive default patterns
+2025-07-29 20:35:51,088 - gui.main_hub - INFO - Loaded workspace: 0 patterns, 0 strategies, 4 datasets
+2025-07-29 20:35:51,089 - gui.main_hub - INFO - Error loading workspace: 'TradingStrategyHub' object has no attribute 'last_loaded_dataset'
+2025-07-29 20:35:51,100 - gui.main_hub - INFO - Loaded 2 strategies, 30 patterns, and 1 result sets from workspace.

@@ -1,0 +1,158 @@
+{
+  "test_timestamp": "2025-07-29T18:21:16.245728",
+  "components": {
+    "dataset_explorer": {
+      "status": "success",
+      "action": "dataset_explorer_test",
+      "timestamp": "2025-07-29T18:20:58.029959"
+    },
+    "strategy_builder": {
+      "status": "success",
+      "action": "strategy_builder_test",
+      "timestamp": "2025-07-29T18:20:59.120958"
+    },
+    "backtest_engine": {
+      "status": "error",
+      "action": "backtest_engine_test",
+      "error": "invalid syntax (backtest_window.py, line 1906)",
+      "timestamp": "2025-07-29T18:20:59.168397"
+    },
+    "results_viewer": {
+      "status": "not_implemented",
+      "action": "results_viewer_test",
+      "timestamp": "2025-07-29T18:20:59.168821"
+    },
+    "statistics_window": {
+      "status": "not_implemented",
+      "action": "statistics_window_test",
+      "timestamp": "2025-07-29T18:20:59.169101"
+    },
+    "risk_manager": {
+      "status": "not_implemented",
+      "action": "risk_manager_test",
+      "timestamp": "2025-07-29T18:20:59.169394"
+    }
+  },
+  "strategies": {
+    "vwap": {
+      "creation": {
+        "status": "success",
+        "strategy": "vwap",
+        "action": "creation_test",
+        "timestamp": "2025-07-29T18:21:00.260963"
+      },
+      "backtest": {
+        "status": "error",
+        "strategy": "vwap",
+        "action": "backtest_execution_test",
+        "error": "invalid syntax (backtest_window.py, line 1906)",
+        "timestamp": "2025-07-29T18:21:00.302597"
+      }
+    },
+    "order_block": {
+      "creation": {
+        "status": "success",
+        "strategy": "order_block",
+        "action": "creation_test",
+        "timestamp": "2025-07-29T18:21:02.394395"
+      },
+      "backtest": {
+        "status": "error",
+        "strategy": "order_block",
+        "action": "backtest_execution_test",
+        "error": "invalid syntax (backtest_window.py, line 1906)",
+        "timestamp": "2025-07-29T18:21:02.435988"
+      }
+    },
+    "fvg": {
+      "creation": {
+        "status": "success",
+        "strategy": "fvg",
+        "action": "creation_test",
+        "timestamp": "2025-07-29T18:21:04.526671"
+      },
+      "backtest": {
+        "status": "error",
+        "strategy": "fvg",
+        "action": "backtest_execution_test",
+        "error": "invalid syntax (backtest_window.py, line 1906)",
+        "timestamp": "2025-07-29T18:21:04.568551"
+      }
+    },
+    "support_resistance": {
+      "creation": {
+        "status": "success",
+        "strategy": "support_resistance",
+        "action": "creation_test",
+        "timestamp": "2025-07-29T18:21:06.659049"
+      },
+      "backtest": {
+        "status": "error",
+        "strategy": "support_resistance",
+        "action": "backtest_execution_test",
+        "error": "invalid syntax (backtest_window.py, line 1906)",
+        "timestamp": "2025-07-29T18:21:06.700939"
+      }
+    },
+    "bollinger_bands": {
+      "creation": {
+        "status": "success",
+        "strategy": "bollinger_bands",
+        "action": "creation_test",
+        "timestamp": "2025-07-29T18:21:08.793950"
+      },
+      "backtest": {
+        "status": "error",
+        "strategy": "bollinger_bands",
+        "action": "backtest_execution_test",
+        "error": "invalid syntax (backtest_window.py, line 1906)",
+        "timestamp": "2025-07-29T18:21:08.836083"
+      }
+    },
+    "ma": {
+      "creation": {
+        "status": "success",
+        "strategy": "ma",
+        "action": "creation_test",
+        "timestamp": "2025-07-29T18:21:10.932522"
+      },
+      "backtest": {
+        "status": "error",
+        "strategy": "ma",
+        "action": "backtest_execution_test",
+        "error": "invalid syntax (backtest_window.py, line 1906)",
+        "timestamp": "2025-07-29T18:21:10.974846"
+      }
+    },
+    "volatility": {
+      "creation": {
+        "status": "success",
+        "strategy": "volatility",
+        "action": "creation_test",
+        "timestamp": "2025-07-29T18:21:13.070847"
+      },
+      "backtest": {
+        "status": "error",
+        "strategy": "volatility",
+        "action": "backtest_execution_test",
+        "error": "invalid syntax (backtest_window.py, line 1906)",
+        "timestamp": "2025-07-29T18:21:13.114158"
+      }
+    },
+    "momentum": {
+      "creation": {
+        "status": "success",
+        "strategy": "momentum",
+        "action": "creation_test",
+        "timestamp": "2025-07-29T18:21:15.203743"
+      },
+      "backtest": {
+        "status": "error",
+        "strategy": "momentum",
+        "action": "backtest_execution_test",
+        "error": "invalid syntax (backtest_window.py, line 1906)",
+        "timestamp": "2025-07-29T18:21:15.245461"
+      }
+    }
+  }
+}

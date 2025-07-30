@@ -1,0 +1,13 @@
+{
+  "name": "Hammer Pattern Strategy",
+  "actions": [
+    {
+      "name": "Hammer Pattern",
+      "pattern": {
+        "type": "hammer",
+        "params": {}
+      }
+    }
+  ],
+  "combination_logic": "AND"
+}
