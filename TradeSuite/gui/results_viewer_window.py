@@ -20,6 +20,7 @@ from scipy import stats
 import logging
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import mplfinance as mpf
 
 
@@ -38,8 +39,8 @@ class ResultsViewerWindow(QMainWindow):
         # Setup UI
         self._setup_ui()
         
-        # Load any existing results
-        self._load_results_history()
+        # Load any existing results from disk
+        self._refresh_results_from_disk()
         
         # Apply stylesheet
         self.setStyleSheet("""
@@ -81,6 +82,11 @@ class ResultsViewerWindow(QMainWindow):
         self.run_backtest_btn = QPushButton("Run Backtest")
         self.run_backtest_btn.clicked.connect(self._run_backtest_on_strategy)
         selection_layout.addWidget(self.run_backtest_btn)
+        
+        # Add refresh button
+        self.refresh_btn = QPushButton("🔄 Refresh from Disk")
+        self.refresh_btn.clicked.connect(self._refresh_results_from_disk)
+        selection_layout.addWidget(self.refresh_btn)
         selection_layout.addStretch()
         layout.addLayout(selection_layout)
         # Main content area
@@ -270,6 +276,57 @@ class ResultsViewerWindow(QMainWindow):
         mae_widget.setLayout(mae_layout)
         self.single_tabs.addTab(mae_widget, "MAE Analysis")
 
+        # Heatmap tab
+        heatmap_widget = QWidget()
+        heatmap_layout = QVBoxLayout()
+        
+        # Heatmap controls
+        controls_layout = QHBoxLayout()
+        
+        # Time binning control
+        controls_layout.addWidget(QLabel("Time Binning:"))
+        self.time_binning_combo = QComboBox()
+        self.time_binning_combo.addItems(["1 minute", "5 minutes", "15 minutes", "1 hour", "4 hours", "1 day"])
+        self.time_binning_combo.setCurrentText("15 minutes")
+        self.time_binning_combo.currentTextChanged.connect(self._on_heatmap_control_changed)
+        controls_layout.addWidget(self.time_binning_combo)
+        
+        # Color scheme control
+        controls_layout.addWidget(QLabel("Color Scheme:"))
+        self.color_scheme_combo = QComboBox()
+        self.color_scheme_combo.addItems(["Viridis", "Plasma", "Inferno", "Magma", "RdBu", "Spectral"])
+        self.color_scheme_combo.setCurrentText("Viridis")
+        self.color_scheme_combo.currentTextChanged.connect(self._on_heatmap_control_changed)
+        controls_layout.addWidget(self.color_scheme_combo)
+        
+        # Show legend checkbox
+        self.show_legend_check = QCheckBox("Show Legend")
+        self.show_legend_check.setChecked(True)
+        self.show_legend_check.toggled.connect(self._on_heatmap_control_changed)
+        controls_layout.addWidget(self.show_legend_check)
+        
+        controls_layout.addStretch()
+        heatmap_layout.addLayout(controls_layout)
+        
+        # Heatmap plot
+        self.heatmap_plot = pg.PlotWidget()
+        self.heatmap_plot.setLabel('left', 'Building Blocks')
+        self.heatmap_plot.setLabel('bottom', 'Time')
+        self.heatmap_plot.showGrid(True, True)
+        heatmap_layout.addWidget(self.heatmap_plot)
+        
+        # Heatmap info
+        self.heatmap_info = QLabel("No heatmap data available.")
+        self.heatmap_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        heatmap_layout.addWidget(self.heatmap_info)
+        
+        heatmap_widget.setLayout(heatmap_layout)
+        self.single_tabs.addTab(heatmap_widget, "Heatmap")
+
+        # State Change Heatmap tab
+        state_heatmap_widget = self._create_state_heatmap_tab()
+        self.single_tabs.addTab(state_heatmap_widget, "State Changes")
+
         # Playback tab
         playback_widget = self._create_playback_tab()
         self.single_tabs.addTab(playback_widget, "Playback")
@@ -354,6 +411,9 @@ class ResultsViewerWindow(QMainWindow):
         self.compare_list.addItem(display_name)
         self._save_results_history()
         
+        # Automatically display the result when added
+        self._display_result(result_data)
+        
     def _on_load_selected_result(self):
         """Load and display the currently selected result from the combo box."""
         index = self.results_combo.currentIndex()
@@ -370,58 +430,22 @@ class ResultsViewerWindow(QMainWindow):
 
     def _display_result(self, result_data: Dict[str, Any]):
         """Display a single result"""
-        self.current_result = result_data
+        # Store current result data for heatmap updates
+        self.current_result_data = result_data
         
-        # Update result info with multi-timeframe information
-        strategy_name = result_data.get('strategy_name', 'Unknown Strategy')
-        timeframe = result_data.get('timeframe', 'Unknown')
-        
-        # Get multi-timeframe information
-        multi_tf_data = result_data.get('multi_tf_data', {})
-        strategy_timeframes = []
-        
-        # Handle both old dict format and new DataFrame format
-        if isinstance(multi_tf_data, dict) and multi_tf_data:
-            for tf_key in multi_tf_data.keys():
-                if tf_key != 'execution':
-                    strategy_timeframes.append(tf_key)
-        elif isinstance(multi_tf_data, pd.DataFrame) and not multi_tf_data.empty:
-            # New architecture returns DataFrame, treat as single timeframe
-            strategy_timeframes.append('1min')
-        
-        # Create info text
-        info_text = f"""
-Strategy: {strategy_name}
-Display Timeframe: {timeframe}
-"""
-        
-        if strategy_timeframes:
-            info_text += f"Strategy Timeframes: {', '.join(strategy_timeframes)}\n"
-            execution_data = multi_tf_data.get('execution')
-            if execution_data is not None:
-                info_text += f"Execution Timeframe: {len(execution_data)} bars\n"
-        
-        info_text += f"""
-Total Return: {result_data.get('total_return', 0):.2%}
-Total Trades: {result_data.get('total_trades', 0)}
-Sharpe Ratio: {result_data.get('sharpe_ratio', 0):.2f}
-Max Drawdown: {result_data.get('max_drawdown', 0):.2%}
-"""
-        
-        self.result_info.setPlainText(info_text)
-        
-        # Update metrics
+        # Update performance metrics
         self._update_performance_metrics(result_data)
-        
-        # Update spec-compliant metrics
-        self._update_spec_metrics(result_data)
         
         # Update strategy details
         self._update_strategy_details(result_data)
         
-        # Update charts
+        # Update equity chart
         self._update_equity_chart(result_data)
+        
+        # Update drawdown chart
         self._update_drawdown_chart(result_data)
+        
+        # Update trade returns chart
         self._update_trade_returns_chart(result_data)
         
         # Initialize playback data with multi-timeframe support
@@ -429,6 +453,12 @@ Max Drawdown: {result_data.get('max_drawdown', 0):.2%}
         
         # Update MAE analysis
         self._update_mae_analysis(result_data)
+        
+        # Update heatmap
+        self._update_heatmap(result_data)
+        
+        # Update state change heatmap
+        self._update_state_heatmap(result_data)
         
     def _update_equity_chart(self, data: Dict[str, Any]):
         """Update the equity chart"""
@@ -1305,15 +1335,42 @@ Max Drawdown: {result_data.get('max_drawdown', 0):.2%}
                 else:
                     print(f"[DEBUG] No zones found in result_data")
             
-            # Add VWAP indicator to results viewer
-            if 'volume' in df.columns and len(df) > 20:
+            # Add VWAP indicator to results viewer only if it's part of the strategy
+            # Check if VWAP is in the strategy components
+            has_vwap = False
+            strategy_params = result_data.get('strategy_params', {})
+            component_summary = result_data.get('component_summary', {})
+            action_details = result_data.get('action_details', {})
+            
+            # Check various sources for VWAP
+            if 'filters' in strategy_params:
+                for filter_config in strategy_params['filters']:
+                    if filter_config.get('type', '').lower() == 'vwap':
+                        has_vwap = True
+                        break
+            
+            if not has_vwap and component_summary:
+                filters = component_summary.get('filters', [])
+                if 'vwap' in [f.lower() for f in filters]:
+                    has_vwap = True
+            
+            if not has_vwap and action_details:
+                for action_name in action_details.keys():
+                    if 'vwap' in action_name.lower():
+                        has_vwap = True
+                        break
+            
+            # Only add VWAP if it's actually part of the strategy
+            if has_vwap and 'volume' in df.columns and len(df) > 20:
                 try:
                     # Calculate VWAP
                     vwap = (df['close'] * df['volume']).cumsum() / df['volume'].cumsum()
                     self.playback_ax.plot(df.index, vwap, color='purple', linewidth=1, alpha=0.8, linestyle='-', label='VWAP', zorder=5)
-                    print(f"[DEBUG] Results viewer: Added VWAP indicator")
+                    print(f"[DEBUG] Results viewer: Added VWAP indicator (part of strategy)")
                 except Exception as e:
                     print(f"[DEBUG] Results viewer: Failed to add VWAP indicator: {e}")
+            else:
+                print(f"[DEBUG] Results viewer: VWAP not part of strategy, skipping VWAP indicator")
             
             # Entry/Exit signals
             if getattr(self, 'show_signals', None) and self.show_signals.isChecked():
@@ -1663,8 +1720,11 @@ Total Trades: {result_data.get('total_trades', 0)}
     def _refresh_results_from_disk(self):
         """Reload only the most recent result for each strategy from disk and auto-select the most recent overall."""
         import os
+        print(f"[DEBUG] ResultsViewer: Starting _refresh_results_from_disk")
         if self.parent_window and hasattr(self.parent_window, 'strategy_manager'):
             all_results = self.parent_window.strategy_manager.load_all_results()
+            print(f"[DEBUG] ResultsViewer: Loaded {len(all_results)} results from disk")
+            print(f"[DEBUG] ResultsViewer: Result keys: {list(all_results.keys())}")
             # Keep only the most recent result for each strategy
             most_recent = {}
             for result_id, result in all_results.items():
@@ -1696,3 +1756,621 @@ Total Trades: {result_data.get('total_trades', 0)}
             if self.results_combo.count() > 0:
                 self.results_combo.setCurrentIndex(0)
                 self._on_load_selected_result()
+
+    def _on_heatmap_control_changed(self):
+        """Callback for heatmap UI controls"""
+        if hasattr(self, 'current_result_data') and self.current_result_data:
+            self._update_heatmap(self.current_result_data)
+        else:
+            print("[DEBUG] No current result data available for heatmap update")
+
+    def _update_heatmap(self, result_data: Dict[str, Any] = None):
+        """Update heatmap - SIMPLE VERSION"""
+        print("[DEBUG] SIMPLE HEATMAP: Starting update")
+        
+        # Get result data
+        if result_data is None:
+            if hasattr(self, 'current_result_data') and self.current_result_data:
+                result_data = self.current_result_data
+            else:
+                print("[DEBUG] No result data available")
+                return
+        
+        if not isinstance(result_data, dict):
+            print(f"[DEBUG] Invalid result data: {type(result_data)}")
+            return
+        
+        try:
+            # Clear the plot
+            self.heatmap_plot.clear()
+            
+            # Step 1: Extract ONLY real building blocks
+            building_blocks = []
+            action_details = result_data.get('action_details', {})
+            trades = result_data.get('trades', [])
+            
+            # Get building blocks with actual signals
+            for block_name, signals in action_details.items():
+                if signals is not None:
+                    building_blocks.append(block_name)
+                    print(f"[DEBUG] Found building block: {block_name}")
+                    if isinstance(signals, pd.Series):
+                        print(f"[DEBUG] {block_name} has {signals.sum()} signals")
+                    elif isinstance(signals, str):
+                        print(f"[DEBUG] {block_name} is string with {signals.count('True')} True values")
+            
+            # Add trades if they exist
+            if trades:
+                building_blocks.append('trades')
+                print(f"[DEBUG] Added trades block")
+            
+            if not building_blocks:
+                self.heatmap_info.setText("No building blocks found")
+                return
+            
+            # Step 2: Get time index from data
+            data = result_data.get('data')
+            if data is None or not isinstance(data, pd.DataFrame) or data.empty:
+                print("[DEBUG] No valid data")
+                self.heatmap_info.setText("No data available")
+                return
+            
+            time_index = data.index
+            print(f"[DEBUG] Time range: {time_index[0]} to {time_index[-1]} ({len(time_index)} points)")
+            
+            # Step 3: Create simple time windows (15-minute bins)
+            start_time = time_index[0]
+            end_time = time_index[-1]
+            time_bins = pd.date_range(start=start_time, end=end_time, freq='15min')
+            
+            if len(time_bins) < 2:
+                time_bins = pd.date_range(start=start_time, end=end_time, freq='1H')
+            
+            print(f"[DEBUG] Created {len(time_bins)} time bins")
+            
+            # Step 4: Create matrix
+            matrix = np.zeros((len(building_blocks), len(time_bins)-1))
+            
+            for i, block_name in enumerate(building_blocks):
+                if block_name == 'trades':
+                    # Handle trades
+                    for trade in trades:
+                        entry_time = trade.get('entry_time')
+                        if entry_time:
+                            if isinstance(entry_time, str):
+                                entry_time = pd.to_datetime(entry_time)
+                            
+                            # Find which time bin this trade belongs to
+                            for j in range(len(time_bins)-1):
+                                if time_bins[j] <= entry_time < time_bins[j+1]:
+                                    matrix[i, j] += 1
+                                    break
+                else:
+                    # Handle action_details
+                    signals = action_details.get(block_name)
+                    if signals is not None:
+                        if isinstance(signals, pd.Series):
+                            # Direct series
+                            for j in range(len(time_bins)-1):
+                                bin_start = time_bins[j]
+                                bin_end = time_bins[j+1]
+                                mask = (signals.index >= bin_start) & (signals.index < bin_end)
+                                matrix[i, j] = signals[mask].sum()
+                        elif isinstance(signals, str) and 'True' in signals:
+                            # Parse string - simplified approach
+                            true_count = signals.count('True')
+                            if true_count > 0:
+                                # Distribute signals across time bins
+                                signals_per_bin = true_count / len(time_bins)
+                                for j in range(len(time_bins)-1):
+                                    matrix[i, j] = signals_per_bin
+            
+            # Step 5: Create labels
+            time_labels = []
+            for j in range(len(time_bins)-1):
+                start_label = time_bins[j].strftime('%H:%M')
+                time_labels.append(start_label)
+            
+            # Step 6: Plot proper heatmap tiles
+            if matrix.max() > 0:
+                # Normalize to 0-1
+                normalized_matrix = matrix / matrix.max()
+                
+                # Create proper heatmap image
+                img = pg.ImageItem()
+                img.setImage(normalized_matrix, levels=(0, 1))
+                
+                # Create proper colormap: black (no signals) to white (many signals)
+                lut = np.zeros((256, 4), dtype=np.ubyte)
+                for i in range(256):
+                    val = i
+                    # Black to white gradient
+                    lut[i] = [val, val, val, 255]
+                img.setLookupTable(lut)
+                
+                self.heatmap_plot.addItem(img)
+                
+                # Set proper range for heatmap tiles
+                self.heatmap_plot.setRange(
+                    xRange=(-0.5, len(time_labels) - 0.5),
+                    yRange=(-0.5, len(building_blocks) - 0.5)
+                )
+                
+                # Set proper labels
+                self.heatmap_plot.setLabel('bottom', 'Time Windows', size='12pt')
+                self.heatmap_plot.setLabel('left', 'Building Blocks', size='12pt')
+                self.heatmap_plot.setTitle('Signal Heatmap: White = Active, Black = Inactive', size='14pt')
+                
+                # Set proper ticks
+                if building_blocks:
+                    block_ticks = [(i, block) for i, block in enumerate(building_blocks)]
+                    self.heatmap_plot.getAxis('left').setTicks([block_ticks])
+                
+                if time_labels:
+                    # Show readable time labels
+                    time_ticks = [(i, time_labels[i]) for i in range(0, len(time_labels), 2)]
+                    self.heatmap_plot.getAxis('bottom').setTicks([time_ticks])
+                
+                print(f"[DEBUG] SIMPLE HEATMAP: Created {matrix.shape[0]}x{matrix.shape[1]} matrix")
+                print(f"[DEBUG] SIMPLE HEATMAP: Signal counts - {matrix.sum():.1f} total signals")
+                
+                self.heatmap_info.setText(
+                    f"Simple Heatmap: {len(building_blocks)} blocks, {len(time_labels)} time windows, "
+                    f"{matrix.sum():.0f} total signals. White = More Active."
+                )
+            else:
+                self.heatmap_info.setText("No signals found in any building blocks")
+                
+        except Exception as e:
+            print(f"[DEBUG] SIMPLE HEATMAP ERROR: {e}")
+            import traceback
+            traceback.print_exc()
+            self.heatmap_info.setText(f"Heatmap Error: {str(e)}")
+
+    def _create_state_heatmap_tab(self) -> QWidget:
+        """Create state change heatmap tab"""
+        widget = QWidget()
+        layout = QVBoxLayout()
+        
+        # State heatmap controls
+        controls_layout = QHBoxLayout()
+        
+        # State display mode
+        controls_layout.addWidget(QLabel("State Mode:"))
+        self.state_mode_combo = QComboBox()
+        self.state_mode_combo.addItems([
+            "All States", "Active/Inactive", "Confidence Levels", 
+            "State Transitions", "Probability Thresholds"
+        ])
+        self.state_mode_combo.setCurrentText("All States")
+        self.state_mode_combo.currentTextChanged.connect(self._on_state_heatmap_control_changed)
+        controls_layout.addWidget(self.state_mode_combo)
+        
+        # Time resolution
+        controls_layout.addWidget(QLabel("Time Resolution:"))
+        self.state_time_resolution_combo = QComboBox()
+        self.state_time_resolution_combo.addItems(["1 minute", "5 minutes", "15 minutes", "1 hour"])
+        self.state_time_resolution_combo.setCurrentText("5 minutes")
+        self.state_time_resolution_combo.currentTextChanged.connect(self._on_state_heatmap_control_changed)
+        controls_layout.addWidget(self.state_time_resolution_combo)
+        
+        # Color scheme for states
+        controls_layout.addWidget(QLabel("Color Scheme:"))
+        self.state_color_scheme_combo = QComboBox()
+        self.state_color_scheme_combo.addItems(["State Rainbow", "Traffic Light", "Thermal", "Discrete"])
+        self.state_color_scheme_combo.setCurrentText("State Rainbow")
+        self.state_color_scheme_combo.currentTextChanged.connect(self._on_state_heatmap_control_changed)
+        controls_layout.addWidget(self.state_color_scheme_combo)
+        
+        # Show transitions checkbox
+        self.show_transitions_check = QCheckBox("Show Transitions")
+        self.show_transitions_check.setChecked(True)
+        self.show_transitions_check.toggled.connect(self._on_state_heatmap_control_changed)
+        controls_layout.addWidget(self.show_transitions_check)
+        
+        controls_layout.addStretch()
+        layout.addLayout(controls_layout)
+        
+        # State heatmap plot
+        self.state_heatmap_plot = pg.PlotWidget()
+        self.state_heatmap_plot.setLabel('left', 'Building Blocks')
+        self.state_heatmap_plot.setLabel('bottom', 'Time')
+        self.state_heatmap_plot.setTitle('Building Block State Changes Over Time')
+        self.state_heatmap_plot.showGrid(True, True)
+        layout.addWidget(self.state_heatmap_plot)
+        
+        # State legend and info
+        legend_layout = QHBoxLayout()
+        
+        # State legend
+        self.state_legend = QLabel("State Legend: Loading...")
+        self.state_legend.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        legend_layout.addWidget(self.state_legend)
+        
+        # State statistics
+        self.state_stats = QLabel("State Statistics: Loading...")
+        self.state_stats.setAlignment(Qt.AlignmentFlag.AlignRight)
+        legend_layout.addWidget(self.state_stats)
+        
+        layout.addLayout(legend_layout)
+        
+        # State heatmap info
+        self.state_heatmap_info = QLabel("No state change data available.")
+        self.state_heatmap_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.state_heatmap_info)
+        
+        widget.setLayout(layout)
+        return widget
+
+    def _on_state_heatmap_control_changed(self):
+        """Handle state heatmap control changes"""
+        if hasattr(self, 'current_result_data') and self.current_result_data:
+            self._update_state_heatmap(self.current_result_data)
+
+    def _update_state_heatmap(self, result_data: Dict[str, Any]):
+        """Update state change heatmap"""
+        try:
+            print(f"[DEBUG] STATE HEATMAP: Starting update")
+            self.state_heatmap_plot.clear()
+            
+            # Extract state change data
+            state_data = self._extract_state_change_data(result_data)
+            
+            if not state_data:
+                self.state_heatmap_info.setText("No state change data found")
+                return
+            
+            # Create state matrix
+            state_matrix, building_blocks, time_labels, state_legend = self._create_state_matrix(state_data)
+            
+            if state_matrix is None or state_matrix.size == 0:
+                self.state_heatmap_info.setText("No valid state data to display")
+                return
+            
+            # Plot state heatmap
+            self._plot_state_heatmap(state_matrix, building_blocks, time_labels, state_legend)
+            
+            print(f"[DEBUG] STATE HEATMAP: Successfully updated")
+            
+        except Exception as e:
+            print(f"[DEBUG] STATE HEATMAP ERROR: {e}")
+            import traceback
+            traceback.print_exc()
+            self.state_heatmap_info.setText(f"Error creating state heatmap: {e}")
+
+    def _extract_state_change_data(self, result_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract state change data from backtest results"""
+        print(f"[DEBUG] STATE HEATMAP: Extracting state data")
+        
+        state_data = {}
+        
+        # Extract from action_details (building block signals)
+        action_details = result_data.get('action_details', {})
+        print(f"[DEBUG] STATE HEATMAP: Found action_details with keys: {list(action_details.keys())}")
+        
+        # Get data for time index
+        data = result_data.get('data')
+        if data is None or len(data) == 0:
+            print(f"[DEBUG] STATE HEATMAP: No data found")
+            return {}
+        
+        time_index = data.index
+        print(f"[DEBUG] STATE HEATMAP: Using time index with {len(time_index)} periods")
+        
+        # Process each building block
+        for block_name, block_data in action_details.items():
+            try:
+                print(f"[DEBUG] STATE HEATMAP: Processing {block_name}")
+                
+                if isinstance(block_data, pd.Series):
+                    # Convert boolean signals to state values
+                    states = self._convert_signals_to_states(block_data, block_name)
+                elif isinstance(block_data, str):
+                    # Parse string representation of Series
+                    try:
+                        parsed_series = pd.read_json(block_data, typ='series')
+                        states = self._convert_signals_to_states(parsed_series, block_name)
+                    except:
+                        print(f"[DEBUG] STATE HEATMAP: Failed to parse {block_name} as Series")
+                        continue
+                else:
+                    print(f"[DEBUG] STATE HEATMAP: Unknown data type for {block_name}: {type(block_data)}")
+                    continue
+                
+                # Align states with time index
+                if len(states) != len(time_index):
+                    states = states.reindex(time_index, fill_value=0)
+                
+                state_data[block_name] = states
+                print(f"[DEBUG] STATE HEATMAP: {block_name} has {len(states)} state values")
+                
+            except Exception as e:
+                print(f"[DEBUG] STATE HEATMAP: Error processing {block_name}: {e}")
+                continue
+        
+        # Add trades as a special building block
+        trades = result_data.get('trades', [])
+        if trades and len(trades) > 0:
+            trade_states = self._convert_trades_to_states(trades, time_index)
+            state_data['trades'] = trade_states
+            print(f"[DEBUG] STATE HEATMAP: Added trades with {len(trade_states)} state values")
+        
+        print(f"[DEBUG] STATE HEATMAP: Extracted state data for {len(state_data)} building blocks")
+        return state_data
+
+    def _convert_signals_to_states(self, signals: pd.Series, block_name: str) -> pd.Series:
+        """Convert boolean signals to state values for visualization"""
+        # Define state mappings based on building block type and signal patterns
+        states = signals.copy()
+        
+        if signals.dtype == bool:
+            # Simple boolean signals: 0 = inactive, 1 = active
+            states = signals.astype(int)
+        else:
+            # Numeric signals: convert to state levels
+            # State 0: Inactive (value == 0 or False)
+            # State 1: Low Activity (0 < value <= 0.3)  
+            # State 2: Medium Activity (0.3 < value <= 0.7)
+            # State 3: High Activity (0.7 < value <= 1.0)
+            # State 4: Very High Activity (value > 1.0)
+            
+            states = pd.Series(0, index=signals.index)  # Default to inactive
+            states[signals > 0] = 1      # Low activity
+            states[signals > 0.3] = 2    # Medium activity  
+            states[signals > 0.7] = 3    # High activity
+            states[signals > 1.0] = 4    # Very high activity
+        
+        return states
+
+    def _convert_trades_to_states(self, trades: List[Dict], time_index: pd.DatetimeIndex) -> pd.Series:
+        """Convert trade events to state values"""
+        trade_states = pd.Series(0, index=time_index)  # Default to no trade
+        
+        for trade in trades:
+            try:
+                entry_time = pd.to_datetime(trade.get('entry_time'))
+                exit_time = pd.to_datetime(trade.get('exit_time'))
+                
+                # Find closest times in index
+                entry_idx = time_index.get_indexer([entry_time], method='nearest')[0]
+                exit_idx = time_index.get_indexer([exit_time], method='nearest')[0]
+                
+                if entry_idx >= 0 and entry_idx < len(time_index):
+                    trade_states.iloc[entry_idx] = 2  # Entry signal
+                
+                if exit_idx >= 0 and exit_idx < len(time_index):
+                    trade_states.iloc[exit_idx] = 3   # Exit signal
+                
+                # Mark positions as active (state 1) between entry and exit
+                if entry_idx >= 0 and exit_idx >= 0 and entry_idx < exit_idx:
+                    trade_states.iloc[entry_idx:exit_idx] = 1  # Position active
+                    trade_states.iloc[entry_idx] = 2  # Re-mark entry
+                    trade_states.iloc[exit_idx] = 3   # Re-mark exit
+                    
+            except Exception as e:
+                print(f"[DEBUG] STATE HEATMAP: Error processing trade: {e}")
+                continue
+        
+        return trade_states
+
+    def _create_state_matrix(self, state_data: Dict[str, pd.Series]) -> Tuple[np.ndarray, List[str], List[str], Dict]:
+        """Create state matrix for heatmap visualization"""
+        if not state_data:
+            return None, [], [], {}
+        
+        # Get time resolution
+        time_resolution = self.state_time_resolution_combo.currentText()
+        time_delta_map = {
+            "1 minute": "1min",
+            "5 minutes": "5min", 
+            "15 minutes": "15min",
+            "1 hour": "1H"
+        }
+        time_delta = time_delta_map.get(time_resolution, "5min")
+        
+        # Get all building blocks
+        building_blocks = list(state_data.keys())
+        
+        # Get time range from first series
+        first_series = next(iter(state_data.values()))
+        start_time = first_series.index[0]
+        end_time = first_series.index[-1]
+        
+        # Create time windows
+        time_windows = pd.date_range(start=start_time, end=end_time, freq=time_delta)
+        if len(time_windows) == 0:
+            time_windows = [start_time, end_time]
+        
+        # Create matrix
+        matrix = np.zeros((len(building_blocks), len(time_windows)))
+        
+        # Fill matrix with state values
+        for i, block_name in enumerate(building_blocks):
+            series = state_data[block_name]
+            
+            for j, window_time in enumerate(time_windows):
+                # Find values in this time window
+                if j < len(time_windows) - 1:
+                    next_window = time_windows[j + 1]
+                    window_mask = (series.index >= window_time) & (series.index < next_window)
+                else:
+                    window_mask = series.index >= window_time
+                
+                window_values = series[window_mask]
+                
+                if len(window_values) > 0:
+                    # Get dominant state in this window
+                    state_mode = self.state_mode_combo.currentText()
+                    
+                    if state_mode == "All States":
+                        # Use most common state
+                        matrix[i, j] = window_values.mode().iloc[0] if len(window_values.mode()) > 0 else 0
+                    elif state_mode == "Active/Inactive":
+                        # 0 = inactive, 1 = any activity
+                        matrix[i, j] = 1 if (window_values > 0).any() else 0
+                    elif state_mode == "Confidence Levels":
+                        # Use maximum confidence level
+                        matrix[i, j] = window_values.max()
+                    elif state_mode == "State Transitions":
+                        # Count number of state changes
+                        transitions = (window_values.diff() != 0).sum()
+                        matrix[i, j] = min(transitions, 4)  # Cap at 4 for visualization
+                    elif state_mode == "Probability Thresholds":
+                        # Use average state level
+                        matrix[i, j] = window_values.mean()
+        
+        # Create time labels
+        time_labels = [t.strftime("%H:%M") if t.time() != t.time().replace(hour=0, minute=0) 
+                      else t.strftime("%m/%d") for t in time_windows]
+        
+        # Create state legend
+        state_legend = self._create_state_legend()
+        
+        print(f"[DEBUG] STATE HEATMAP: Created matrix {matrix.shape} with {len(building_blocks)} blocks")
+        
+        return matrix, building_blocks, time_labels, state_legend
+
+    def _create_state_legend(self) -> Dict[int, str]:
+        """Create legend for state values"""
+        state_mode = self.state_mode_combo.currentText()
+        
+        if state_mode == "All States":
+            return {
+                0: "Inactive",
+                1: "Low Activity", 
+                2: "Medium Activity",
+                3: "High Activity",
+                4: "Very High Activity"
+            }
+        elif state_mode == "Active/Inactive":
+            return {
+                0: "Inactive",
+                1: "Active"
+            }
+        elif state_mode == "Confidence Levels":
+            return {
+                0: "No Confidence",
+                1: "Low Confidence",
+                2: "Medium Confidence", 
+                3: "High Confidence",
+                4: "Very High Confidence"
+            }
+        elif state_mode == "State Transitions":
+            return {
+                0: "No Transitions",
+                1: "1 Transition",
+                2: "2 Transitions",
+                3: "3 Transitions", 
+                4: "4+ Transitions"
+            }
+        elif state_mode == "Probability Thresholds":
+            return {
+                0: "Below Threshold",
+                1: "Low Probability",
+                2: "Medium Probability",
+                3: "High Probability",
+                4: "Very High Probability"
+            }
+        
+        return {}
+
+    def _plot_state_heatmap(self, matrix: np.ndarray, building_blocks: List[str], 
+                           time_labels: List[str], state_legend: Dict[int, str]):
+        """Plot the state change heatmap"""
+        try:
+            self.state_heatmap_plot.clear()
+            
+            # Create color map based on selected scheme
+            color_scheme = self.state_color_scheme_combo.currentText()
+            
+            if color_scheme == "State Rainbow":
+                # Rainbow colors for different states
+                colors = [
+                    [0, 0, 0, 255],        # Black - Inactive
+                    [0, 255, 0, 255],      # Green - Low
+                    [255, 255, 0, 255],    # Yellow - Medium  
+                    [255, 165, 0, 255],    # Orange - High
+                    [255, 0, 0, 255],      # Red - Very High
+                ]
+            elif color_scheme == "Traffic Light":
+                colors = [
+                    [100, 100, 100, 255],  # Gray - Inactive
+                    [255, 255, 0, 255],    # Yellow - Low
+                    [255, 165, 0, 255],    # Orange - Medium
+                    [255, 0, 0, 255],      # Red - High
+                    [139, 0, 0, 255],      # Dark Red - Very High
+                ]
+            elif color_scheme == "Thermal":
+                colors = [
+                    [0, 0, 0, 255],        # Black - Cold
+                    [0, 0, 255, 255],      # Blue - Cool
+                    [0, 255, 255, 255],    # Cyan - Warm
+                    [255, 255, 0, 255],    # Yellow - Hot
+                    [255, 0, 0, 255],      # Red - Very Hot
+                ]
+            else:  # Discrete
+                colors = [
+                    [50, 50, 50, 255],     # Dark Gray
+                    [100, 150, 200, 255],  # Light Blue  
+                    [150, 200, 100, 255],  # Light Green
+                    [200, 150, 100, 255],  # Light Orange
+                    [200, 100, 150, 255],  # Light Red
+                ]
+            
+            # Ensure we have enough colors
+            while len(colors) < int(matrix.max()) + 1:
+                colors.append([255, 255, 255, 255])  # White for overflow
+            
+            # Create color map
+            colormap = pg.ColorMap(pos=np.linspace(0, 1, len(colors)), color=colors)
+            
+            # Create image item
+            img = pg.ImageItem()
+            img.setImage(matrix, levels=(0, len(colors)-1))
+            img.setColorMap(colormap)
+            
+            self.state_heatmap_plot.addItem(img)
+            
+            # Set axis labels
+            if building_blocks:
+                block_ticks = [(i, block) for i, block in enumerate(building_blocks)]
+                self.state_heatmap_plot.getAxis('left').setTicks([block_ticks])
+            
+            if time_labels:
+                # Show readable time labels (every 2nd or 3rd label to avoid crowding)
+                step = max(1, len(time_labels) // 10)
+                time_ticks = [(i, time_labels[i]) for i in range(0, len(time_labels), step)]
+                self.state_heatmap_plot.getAxis('bottom').setTicks([time_ticks])
+            
+            # Update legend
+            legend_text = " | ".join([f"{val}: {desc}" for val, desc in state_legend.items()])
+            self.state_legend.setText(f"States: {legend_text}")
+            
+            # Update statistics
+            total_states = matrix.size
+            active_states = np.sum(matrix > 0)
+            max_state = int(matrix.max())
+            avg_state = matrix.mean()
+            
+            self.state_stats.setText(
+                f"Active: {active_states}/{total_states} ({100*active_states/total_states:.1f}%) | "
+                f"Max State: {max_state} | Avg: {avg_state:.2f}"
+            )
+            
+            # Update info
+            state_mode = self.state_mode_combo.currentText()
+            time_resolution = self.state_time_resolution_combo.currentText()
+            
+            self.state_heatmap_info.setText(
+                f"State Heatmap: {len(building_blocks)} blocks × {len(time_labels)} windows | "
+                f"Mode: {state_mode} | Resolution: {time_resolution} | "
+                f"Total States: {total_states} | Active: {active_states}"
+            )
+            
+            print(f"[DEBUG] STATE HEATMAP: Plotted {matrix.shape[0]}×{matrix.shape[1]} matrix")
+            
+        except Exception as e:
+            print(f"[DEBUG] STATE HEATMAP PLOT ERROR: {e}")
+            import traceback
+            traceback.print_exc()
+            self.state_heatmap_info.setText(f"Error plotting state heatmap: {e}")

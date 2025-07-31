@@ -1157,6 +1157,16 @@ class TradingStrategyHub(QMainWindow):
                         window.add_result(results, strategy_name)
                     except Exception as e:
                         self._log(f"Error adding to results viewer: {e}")
+                        
+    def _refresh_results_viewers_from_disk(self):
+        """Refresh all open results viewer windows from disk"""
+        if hasattr(self, 'open_windows'):
+            for window in self.open_windows:
+                if hasattr(window, '_refresh_results_from_disk'):
+                    try:
+                        window._refresh_results_from_disk()
+                    except Exception as e:
+                        self._log(f"Error refreshing results viewer from disk: {e}")
         
     # Window opening methods
     def open_data_stripper(self):
@@ -1234,6 +1244,10 @@ class TradingStrategyHub(QMainWindow):
         window = ResultsViewerWindow(self)
         window.show()
         self.open_windows.append(window)
+        
+        # Refresh the results viewer to load any existing results from disk
+        window._refresh_results_from_disk()
+        
         self._update_dashboard()
         
     def open_strategy_optimizer(self):
@@ -1285,6 +1299,7 @@ class TradingStrategyHub(QMainWindow):
         
     def on_backtest_complete(self, results: Dict[str, Any]):
         """Handle backtest results"""
+        print(f"[DEBUG] MainHub: Received backtest_complete signal with results keys: {list(results.keys())}")
         # Save results to disk
         self.strategy_manager.save_backtest_results(results)
         

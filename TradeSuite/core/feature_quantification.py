@@ -1114,4 +1114,183 @@ def enhanced_execution_score(S_adj, C_align, MMRS_enhanced, tau=0.5):
     execution_score = S_adj * C_align * MMRS_enhanced
     
     # Apply threshold
-    return execution_score > tau 
+    return execution_score > tau
+
+
+# SECTION: Technical Indicators for Advanced Multi-Timeframe Strategies
+# =====================================================================
+
+def calculate_ema(data, period=21):
+    """
+    Calculate Exponential Moving Average
+    
+    Args:
+        data: Price series (close prices) - can be pandas Series or numpy array
+        period: EMA period (default 21)
+    
+    Returns:
+        EMA values - pandas Series if input is Series, numpy array otherwise
+    """
+    import pandas as pd
+    import numpy as np
+    
+    if isinstance(data, pd.Series):
+        return data.ewm(span=period, adjust=False).mean()
+    else:
+        # Convert to pandas Series for calculation, then back to numpy
+        data_series = pd.Series(data)
+        ema_series = data_series.ewm(span=period, adjust=False).mean()
+        return ema_series.values
+
+
+def calculate_keltner_channels(high, low, close, ema_period=21, atr_period=14, multiplier=1.0):
+    """
+    Calculate Keltner Channels
+    
+    Args:
+        high: High prices
+        low: Low prices  
+        close: Close prices
+        ema_period: EMA period (default 21)
+        atr_period: ATR period (default 14)
+        multiplier: ATR multiplier (default 1.0)
+    
+    Returns:
+        Dictionary with 'upper', 'middle', 'lower' channels
+    """
+    import pandas as pd
+    import numpy as np
+    
+    # Calculate EMA (middle line)
+    ema = calculate_ema(close, ema_period)
+    
+    # Calculate ATR using existing function
+    atr_values = atr(high, low, close, atr_period)
+    
+    # Calculate bands
+    if isinstance(close, pd.Series):
+        upper = ema + (multiplier * atr_values)
+        lower = ema - (multiplier * atr_values)
+    else:
+        upper = ema + (multiplier * atr_values)
+        lower = ema - (multiplier * atr_values)
+    
+    return {
+        'upper': upper,
+        'middle': ema,
+        'lower': lower
+    }
+
+
+def calculate_atr_ratio(atr1, atr2):
+    """
+    Calculate ATR ratio between two timeframes
+    
+    Args:
+        atr1: ATR from first timeframe
+        atr2: ATR from second timeframe
+    
+    Returns:
+        ATR ratio (atr1/atr2)
+    """
+    import numpy as np
+    
+    # Handle division by zero
+    with np.errstate(divide='ignore', invalid='ignore'):
+        ratio = atr1 / atr2
+        ratio = np.where(atr2 == 0, 0, ratio)
+    
+    return ratio
+
+
+def detect_market_regime(atr_ratio, mean_reversion_threshold=1.35, expansion_threshold=1.9):
+    """
+    Detect market regime based on ATR ratios
+    
+    Args:
+        atr_ratio: ATR ratio values
+        mean_reversion_threshold: Threshold for mean reversion (default 1.35)
+        expansion_threshold: Threshold for expansion (default 1.9)
+    
+    Returns:
+        Regime labels: 0=mean_reverting, 1=neutral, 2=expanding
+    """
+    import numpy as np
+    
+    regime = np.ones_like(atr_ratio)  # Default to neutral (1)
+    regime[atr_ratio < mean_reversion_threshold] = 0  # mean_reverting
+    regime[atr_ratio > expansion_threshold] = 2  # expanding
+    
+    return regime
+
+
+def check_keltner_ema_alignment(keltner_bands, ema, tolerance=0.001):
+    """
+    Check if Keltner bands align with EMA
+    
+    Args:
+        keltner_bands: Dictionary with 'upper', 'middle', 'lower' bands
+        ema: EMA values to check alignment with
+        tolerance: Alignment tolerance (default 0.001)
+    
+    Returns:
+        Boolean array indicating alignment
+    """
+    import numpy as np
+    
+    upper_aligned = np.abs(keltner_bands['upper'] - ema) <= tolerance
+    lower_aligned = np.abs(keltner_bands['lower'] - ema) <= tolerance
+    
+    return upper_aligned | lower_aligned
+
+
+def detect_location_density(keltner_bands_15m, keltner_bands_5m, 
+                          keltner_bands_2000t, keltner_bands_200t, tolerance=0.002):
+    """
+    Detect when all Keltner bands align within a location density
+    
+    Args:
+        keltner_bands_*: Keltner bands for different timeframes
+        tolerance: Alignment tolerance
+    
+    Returns:
+        Boolean array indicating location density alignment
+    """
+    import numpy as np
+    
+    # Get middle bands (EMA) for each timeframe
+    ema_15m = keltner_bands_15m['middle']
+    ema_5m = keltner_bands_5m['middle'] 
+    ema_2000t = keltner_bands_2000t['middle']
+    ema_200t = keltner_bands_200t['middle']
+    
+    # Check if all EMAs are within tolerance of each other
+    ema_15m_5m_aligned = np.abs(ema_15m - ema_5m) <= tolerance
+    ema_5m_2000t_aligned = np.abs(ema_5m - ema_2000t) <= tolerance
+    ema_2000t_200t_aligned = np.abs(ema_2000t - ema_200t) <= tolerance
+    
+    return ema_15m_5m_aligned & ema_5m_2000t_aligned & ema_2000t_200t_aligned
+
+
+def calculate_vwap(close, volume):
+    """
+    Calculate Volume Weighted Average Price
+    
+    Args:
+        close: Close prices
+        volume: Volume data
+    
+    Returns:
+        VWAP values
+    """
+    import pandas as pd
+    import numpy as np
+    
+    if isinstance(close, pd.Series):
+        return (close * volume).cumsum() / volume.cumsum()
+    else:
+        # Convert to pandas for cumsum operations
+        close_series = pd.Series(close)
+        volume_series = pd.Series(volume)
+        vwap_series = (close_series * volume_series).cumsum() / volume_series.cumsum()
+        return vwap_series.values 

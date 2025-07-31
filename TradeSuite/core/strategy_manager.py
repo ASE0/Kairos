@@ -135,8 +135,10 @@ class StrategyManager:
 
     def save_backtest_results(self, results: Dict[str, Any]):
         """Save backtest results, linked to a strategy."""
+        print(f"[DEBUG] StrategyManager: save_backtest_results called with keys: {list(results.keys())}")
         strategy_name = results.get('strategy_name')
         timeframe = results.get('timeframe', 'UnknownTF')
+        print(f"[DEBUG] StrategyManager: strategy_name={strategy_name}, timeframe={timeframe}")
         if not strategy_name:
             print("Cannot save results without a strategy name.")
             return
@@ -154,21 +156,57 @@ class StrategyManager:
         serializable_results = results.copy()
         
         # Convert DataFrames to JSON format for proper serialization
-        if 'data' in serializable_results and isinstance(serializable_results['data'], pd.DataFrame):
-            serializable_results['data'] = serializable_results['data'].to_json(orient='split')
-        if 'dataset_data' in serializable_results and isinstance(serializable_results['dataset_data'], pd.DataFrame):
-            serializable_results['dataset_data'] = serializable_results['dataset_data'].to_json(orient='split')
-        if 'multi_tf_data' in serializable_results and isinstance(serializable_results['multi_tf_data'], dict):
-            # Handle multi-timeframe data dictionary
-            mtf_data = serializable_results['multi_tf_data']
-            for tf_key, tf_data in mtf_data.items():
-                if isinstance(tf_data, pd.DataFrame):
-                    mtf_data[tf_key] = tf_data.to_json(orient='split')
-            serializable_results['multi_tf_data'] = mtf_data
-        if 'equity_curve' in serializable_results and isinstance(serializable_results['equity_curve'], pd.Series):
-            serializable_results['equity_curve'] = serializable_results['equity_curve'].to_json()
-        if 'trades' in serializable_results and isinstance(serializable_results['trades'], pd.DataFrame):
-             serializable_results['trades'] = serializable_results['trades'].to_json(orient='split')
+        try:
+            if 'data' in serializable_results and isinstance(serializable_results['data'], pd.DataFrame):
+                # Only save a subset of data to avoid huge files
+                if len(serializable_results['data']) > 1000:
+                    serializable_results['data'] = serializable_results['data'].tail(1000).to_json(orient='split')
+                else:
+                    serializable_results['data'] = serializable_results['data'].to_json(orient='split')
+            
+            if 'dataset_data' in serializable_results and isinstance(serializable_results['dataset_data'], pd.DataFrame):
+                if len(serializable_results['dataset_data']) > 1000:
+                    serializable_results['dataset_data'] = serializable_results['dataset_data'].tail(1000).to_json(orient='split')
+                else:
+                    serializable_results['dataset_data'] = serializable_results['dataset_data'].to_json(orient='split')
+            
+            if 'multi_tf_data' in serializable_results and isinstance(serializable_results['multi_tf_data'], dict):
+                # Handle multi-timeframe data dictionary
+                mtf_data = serializable_results['multi_tf_data']
+                for tf_key, tf_data in mtf_data.items():
+                    if isinstance(tf_data, pd.DataFrame):
+                        if len(tf_data) > 1000:
+                            mtf_data[tf_key] = tf_data.tail(1000).to_json(orient='split')
+                        else:
+                            mtf_data[tf_key] = tf_data.to_json(orient='split')
+                serializable_results['multi_tf_data'] = mtf_data
+            
+            if 'equity_curve' in serializable_results and isinstance(serializable_results['equity_curve'], pd.Series):
+                serializable_results['equity_curve'] = serializable_results['equity_curve'].to_json()
+            
+            if 'trades' in serializable_results and isinstance(serializable_results['trades'], pd.DataFrame):
+                serializable_results['trades'] = serializable_results['trades'].to_json(orient='split')
+            
+            # Handle action_details which might contain pandas Series
+            if 'action_details' in serializable_results and isinstance(serializable_results['action_details'], dict):
+                action_details = serializable_results['action_details']
+                for key, value in action_details.items():
+                    if isinstance(value, pd.Series):
+                        action_details[key] = value.to_json()
+                    elif isinstance(value, str):
+                        # If it's already a string, keep it as is
+                        pass
+                    else:
+                        # Convert other types to string
+                        action_details[key] = str(value)
+                serializable_results['action_details'] = action_details
+                
+        except Exception as e:
+            print(f"[DEBUG] StrategyManager: Error during serialization: {e}")
+            # Remove problematic data to ensure we can save at least basic results
+            for key in ['data', 'dataset_data', 'multi_tf_data']:
+                if key in serializable_results:
+                    del serializable_results[key]
 
         try:
             with open(filepath, 'w') as f:
@@ -195,23 +233,47 @@ class StrategyManager:
                             result_id = f"{strategy_folder}_{filename.replace('.json', '')}"
                             
                             # Deserialize pandas objects
-                            if 'data' in result and isinstance(result['data'], str):
-                                result['data'] = pd.read_json(result['data'], orient='split')
-                            if 'dataset_data' in result and isinstance(result['dataset_data'], str):
-                                result['dataset_data'] = pd.read_json(result['dataset_data'], orient='split')
-                            if 'multi_tf_data' in result and isinstance(result['multi_tf_data'], dict):
-                                # Handle multi-timeframe data dictionary
-                                mtf_data = result['multi_tf_data']
-                                for tf_key, tf_data in mtf_data.items():
-                                    if isinstance(tf_data, str):
-                                        mtf_data[tf_key] = pd.read_json(tf_data, orient='split')
-                                result['multi_tf_data'] = mtf_data
-                            if 'equity_curve' in result and isinstance(result['equity_curve'], str):
-                                result['equity_curve'] = pd.read_json(result['equity_curve'], typ='series')
-                            if 'trades' in result and isinstance(result['trades'], str):
-                                result['trades'] = pd.read_json(result['trades'], orient='split')
+                            try:
+                                if 'data' in result and isinstance(result['data'], str):
+                                    result['data'] = pd.read_json(result['data'], orient='split')
+                                if 'dataset_data' in result and isinstance(result['dataset_data'], str):
+                                    result['dataset_data'] = pd.read_json(result['dataset_data'], orient='split')
+                                if 'multi_tf_data' in result and isinstance(result['multi_tf_data'], dict):
+                                    # Handle multi-timeframe data dictionary
+                                    mtf_data = result['multi_tf_data']
+                                    for tf_key, tf_data in mtf_data.items():
+                                        if isinstance(tf_data, str):
+                                            mtf_data[tf_key] = pd.read_json(tf_data, orient='split')
+                                    result['multi_tf_data'] = mtf_data
+                                if 'equity_curve' in result and isinstance(result['equity_curve'], str):
+                                    result['equity_curve'] = pd.read_json(result['equity_curve'], typ='series')
+                                if 'trades' in result and isinstance(result['trades'], str):
+                                    result['trades'] = pd.read_json(result['trades'], orient='split')
+                                
+                                # Handle action_details deserialization
+                                if 'action_details' in result and isinstance(result['action_details'], dict):
+                                    action_details = result['action_details']
+                                    for key, value in action_details.items():
+                                        if isinstance(value, str):
+                                            try:
+                                                # Try to parse as pandas Series
+                                                action_details[key] = pd.read_json(value, typ='series')
+                                            except:
+                                                # If it fails, keep as string
+                                                pass
+                                    result['action_details'] = action_details
+                                    
+                            except Exception as deserialize_error:
+                                print(f"[DEBUG] StrategyManager: Error deserializing pandas objects in {filename}: {deserialize_error}")
+                                # Continue with basic result data
 
                             all_results[result_id] = result
                         except Exception as e:
                             print(f"Error loading result from {filename}: {e}")
+                            # Try to delete corrupted file
+                            try:
+                                os.remove(filepath)
+                                print(f"Deleted corrupted file: {filename}")
+                            except:
+                                pass
         return all_results 

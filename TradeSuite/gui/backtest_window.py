@@ -1024,16 +1024,43 @@ class BacktestWindow(QMainWindow):
         except Exception as e:
             print(f"[DEBUG] Popout chart: Failed to load new architecture data: {e}")
         
-        # FALLBACK: Add VWAP indicator if no new architecture data
-        if not indicators_added and 'volume' in df.columns and len(df) > 20:
-            try:
-                print(f"[DEBUG] Popout chart: Using FALLBACK VWAP calculation")
-                # Calculate VWAP
-                vwap = (df['close'] * df['volume']).cumsum() / df['volume'].cumsum()
-                ax.plot(df.index, vwap, color='purple', linewidth=1, alpha=0.8, linestyle='-', label='VWAP', zorder=5)
-                print(f"[DEBUG] Popout chart: Added fallback VWAP indicator")
-            except Exception as e:
-                print(f"[DEBUG] Popout chart: Failed to add VWAP indicator: {e}")
+        # Only add VWAP if it's actually part of the strategy
+        if not indicators_added:
+            has_vwap = False
+            strategy_params = results.get('strategy_params', {})
+            component_summary = results.get('component_summary', {})
+            action_details = results.get('action_details', {})
+            
+            # Check various sources for VWAP
+            if 'filters' in strategy_params:
+                for filter_config in strategy_params['filters']:
+                    if filter_config.get('type', '').lower() == 'vwap':
+                        has_vwap = True
+                        break
+            
+            if not has_vwap and component_summary:
+                filters = component_summary.get('filters', [])
+                if 'vwap' in [f.lower() for f in filters]:
+                    has_vwap = True
+            
+            if not has_vwap and action_details:
+                for action_name in action_details.keys():
+                    if 'vwap' in action_name.lower():
+                        has_vwap = True
+                        break
+            
+            # Only add VWAP if it's actually part of the strategy
+            if has_vwap and 'volume' in df.columns and len(df) > 20:
+                try:
+                    print(f"[DEBUG] Popout chart: Adding VWAP indicator (part of strategy)")
+                    # Calculate VWAP
+                    vwap = (df['close'] * df['volume']).cumsum() / df['volume'].cumsum()
+                    ax.plot(df.index, vwap, color='purple', linewidth=1, alpha=0.8, linestyle='-', label='VWAP', zorder=5)
+                    print(f"[DEBUG] Popout chart: Added VWAP indicator")
+                except Exception as e:
+                    print(f"[DEBUG] Popout chart: Failed to add VWAP indicator: {e}")
+            else:
+                print(f"[DEBUG] Popout chart: VWAP not part of strategy, skipping VWAP indicator")
         
         # Overlay entries/exits
         if self.overlay_toggles.get('Entries/Exits', QCheckBox()).isChecked() and 'trades' in results:
@@ -1414,7 +1441,9 @@ class BacktestWindow(QMainWindow):
             else:
                 self.chart_tab.popout_btn.setEnabled(False)
         # Emit signal (pass results with naming info)
+        print(f"[DEBUG] BacktestWindow: Emitting backtest_complete signal with results keys: {list(results.keys())}")
         self.backtest_complete.emit(results)
+        print(f"[DEBUG] BacktestWindow: Signal emitted successfully")
         # --- PATCH: Improved user feedback for no trades ---
         if len(results.get('trades', [])) == 0:
             QMessageBox.information(self, "Backtest Complete", "Backtest completed, but no trades were generated.\nCheck your strategy logic, pattern sensitivity, and dataset.")
@@ -1895,25 +1924,77 @@ Avg Holding Time: {avg_holding}
                     ax.legend()
                     
             else:
-                print(f"[DEBUG] Chart tab: No new architecture data, using FALLBACK VWAP")
-                # FALLBACK: Use old hardcoded VWAP calculation if no new architecture data
-                if 'volume' in df.columns and len(df) > 20:
+                print(f"[DEBUG] Chart tab: No new architecture data, checking if VWAP is part of strategy")
+                # Only add VWAP if it's actually part of the strategy
+                has_vwap = False
+                strategy_params = results.get('strategy_params', {})
+                component_summary = results.get('component_summary', {})
+                action_details = results.get('action_details', {})
+                
+                # Check various sources for VWAP
+                if 'filters' in strategy_params:
+                    for filter_config in strategy_params['filters']:
+                        if filter_config.get('type', '').lower() == 'vwap':
+                            has_vwap = True
+                            break
+                
+                if not has_vwap and component_summary:
+                    filters = component_summary.get('filters', [])
+                    if 'vwap' in [f.lower() for f in filters]:
+                        has_vwap = True
+                
+                if not has_vwap and action_details:
+                    for action_name in action_details.keys():
+                        if 'vwap' in action_name.lower():
+                            has_vwap = True
+                            break
+                
+                # Only add VWAP if it's actually part of the strategy
+                if has_vwap and 'volume' in df.columns and len(df) > 20:
                     # Calculate VWAP
                     vwap = (df['close'] * df['volume']).cumsum() / df['volume'].cumsum()
                     ax.plot(df.index, vwap, color='purple', linewidth=1, alpha=0.8, linestyle='-', label='VWAP', zorder=5)
-                    print(f"[DEBUG] Chart tab: Added fallback VWAP indicator")
+                    print(f"[DEBUG] Chart tab: Added VWAP indicator (part of strategy)")
+                else:
+                    print(f"[DEBUG] Chart tab: VWAP not part of strategy, skipping VWAP indicator")
                     
         except Exception as e:
             print(f"[DEBUG] Chart tab: Error with new architecture indicators: {e}")
-            print(f"[DEBUG] Chart tab: Using FALLBACK VWAP")
-            # FALLBACK: Use old hardcoded VWAP calculation
-            if 'volume' in df.columns and len(df) > 20:
+            print(f"[DEBUG] Chart tab: Checking if VWAP is part of strategy for fallback")
+            # Only add VWAP fallback if it's actually part of the strategy
+            has_vwap = False
+            strategy_params = results.get('strategy_params', {})
+            component_summary = results.get('component_summary', {})
+            action_details = results.get('action_details', {})
+            
+            # Check various sources for VWAP
+            if 'filters' in strategy_params:
+                for filter_config in strategy_params['filters']:
+                    if filter_config.get('type', '').lower() == 'vwap':
+                        has_vwap = True
+                        break
+            
+            if not has_vwap and component_summary:
+                filters = component_summary.get('filters', [])
+                if 'vwap' in [f.lower() for f in filters]:
+                    has_vwap = True
+            
+            if not has_vwap and action_details:
+                for action_name in action_details.keys():
+                    if 'vwap' in action_name.lower():
+                        has_vwap = True
+                        break
+            
+            # Only add VWAP if it's actually part of the strategy
+            if has_vwap and 'volume' in df.columns and len(df) > 20:
                 try:
                     vwap = (df['close'] * df['volume']).cumsum() / df['volume'].cumsum()
                     ax.plot(df.index, vwap, color='purple', linewidth=1, alpha=0.8, linestyle='-', label='VWAP', zorder=5)
-                    print(f"[DEBUG] Chart tab: Added fallback VWAP indicator")
+                    print(f"[DEBUG] Chart tab: Added fallback VWAP indicator (part of strategy)")
                 except Exception as e2:
                     print(f"[DEBUG] Chart tab: Failed to add fallback VWAP: {e2}")
+            else:
+                print(f"[DEBUG] Chart tab: VWAP not part of strategy, skipping fallback VWAP indicator")
         
         print(f"[DEBUG] Chart tab: Plotted {zones_plotted} zones")
         

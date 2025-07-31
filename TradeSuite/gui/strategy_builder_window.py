@@ -14,7 +14,7 @@ from datetime import datetime
 from copy import deepcopy
 
 from core.data_structures import BaseStrategy, ProbabilityMetrics
-from strategies.strategy_builders import Action, PatternStrategy, StrategyFactory, BacktestEngine
+from strategies.strategy_builders import Action, PatternStrategy, StrategyFactory, BacktestEngine, AdvancedMTFStrategy
 from patterns.candlestick_patterns import CandlestickPattern
 from core.pattern_registry import registry
 
@@ -322,6 +322,9 @@ class StrategyBuilderWindow(QMainWindow):
 
         form_layout = QGridLayout()
         
+        # Strategy Type Selection removed - all features available
+        # Now showing unified interface with all capabilities
+        
         form_layout.addWidget(QLabel("Action Name:"), 0, 0)
         self.action_name_edit = QLineEdit()
         self.action_name_edit.setPlaceholderText("e.g., 'Buy on Hammer'")
@@ -351,13 +354,13 @@ class StrategyBuilderWindow(QMainWindow):
         
         layout.addLayout(form_layout)
         
-        # Create and add the location params group to the layout
-        self.location_params_group = self._create_location_params_group()
-        self.location_params_group.setVisible(False)
-        layout.addWidget(self.location_params_group)
+        # Create and add the unified params group to the layout (includes both location and MTF)
+        self.unified_params_group = self._create_unified_params_group()
+        self.unified_params_group.setVisible(False)
+        layout.addWidget(self.unified_params_group)
         
         # Connect the toggle button to show/hide parameters
-        self.location_params_toggle_button.toggled.connect(self._toggle_params_visibility)
+        self.location_params_toggle_button.toggled.connect(self._toggle_unified_params_visibility)
         
         # Connect the zone type combo box to update the tab and button visibility
         self.location_gate_combo.currentTextChanged.connect(self._on_zone_type_changed)
@@ -405,17 +408,15 @@ class StrategyBuilderWindow(QMainWindow):
         return action_group
 
     def _toggle_location_params_button(self, text):
-        """Show/hide the location params button based on combo box selection."""
-        is_zone_selected = (text != "None")
-        self.location_params_toggle_button.setVisible(is_zone_selected)
-        if not is_zone_selected:
-            # Also hide the group and uncheck the button if the gate is disabled
-            self.location_params_group.setVisible(False)
-            self.location_params_toggle_button.setChecked(False)
+        """Show/hide the params button - now always visible since MTF params are always available."""
+        # Always show parameters button since we now have MTF params always available
+        self.location_params_toggle_button.setVisible(True)
+        self.location_params_toggle_button.setText("Edit All Parameters ▼")
+        # Don't hide the group automatically anymore since MTF params are always relevant
 
-    def _toggle_params_visibility(self, checked):
-        """Toggle the visibility of the parameters group box."""
-        self.location_params_group.setVisible(checked)
+    def _toggle_unified_params_visibility(self, checked):
+        """Toggle the visibility of the unified parameters group box."""
+        self.unified_params_group.setVisible(checked)
         self.location_params_toggle_button.setText("Edit Parameters ▼" if not checked else "Edit Parameters ▲")
         
         # If showing parameters, switch to the correct tab for the selected zone type
@@ -427,10 +428,8 @@ class StrategyBuilderWindow(QMainWindow):
         """Handle zone type selection change"""
         # Update button visibility
         self._toggle_location_params_button(zone_type)
-        
-        # If parameters are visible, switch to the relevant tab
-        if self.location_params_group.isVisible():
-            self._switch_to_zone_tab(zone_type)
+    
+    # Strategy type change handler removed - unified interface
     
     def _switch_to_zone_tab(self, zone_type):
         """Switch to the appropriate tab based on zone type"""
@@ -439,12 +438,14 @@ class StrategyBuilderWindow(QMainWindow):
             "VWAP Mean-Reversion Band": 1,  # VWAP tab
             "Support/Resistance Band": 2,  # Support/Resistance tab
             "Imbalance Memory Zone": 3,       # Imbalance tab
-            "Order Block": 4                  # Order Block tab
+            "Order Block": 4,                  # Order Block tab
+            "Global": 5,                     # Global tab
+            "Multi-Timeframe": 6             # MTF tab
         }
         
         if zone_type in tab_mapping:
-            # Get the tab widget from the location params group
-            for child in self.location_params_group.children():
+            # Get the tab widget from the unified params group
+            for child in self.unified_params_group.children():
                 if isinstance(child, QTabWidget):
                     child.setCurrentIndex(tab_mapping[zone_type])
                     break
@@ -759,12 +760,81 @@ class StrategyBuilderWindow(QMainWindow):
         layout.addWidget(self.price_filter_check)
         layout.addWidget(self.price_filter_widget)
 
+        # Multi-Timeframe filters section
+        mtf_filters_label = QLabel("Multi-Timeframe Filters:")
+        mtf_filters_label.setStyleSheet("font-weight: bold; color: #ffffff; margin-top: 10px;")
+        layout.addWidget(mtf_filters_label)
+
+        # --- ATR Ratio Filter ---
+        self.atr_ratio_filter_check = QCheckBox("ATR Ratio Filter")
+        self.atr_ratio_filter_widget = QWidget()
+        atr_ratio_layout = QHBoxLayout(self.atr_ratio_filter_widget)
+        self.atr_ratio_min_spin = QDoubleSpinBox()
+        self.atr_ratio_min_spin.setRange(0.1, 5.0)
+        self.atr_ratio_min_spin.setValue(1.35)
+        self.atr_ratio_min_spin.setSingleStep(0.05)
+        self.atr_ratio_min_spin.setDecimals(2)
+        self.atr_ratio_max_spin = QDoubleSpinBox()
+        self.atr_ratio_max_spin.setRange(0.1, 10.0)
+        self.atr_ratio_max_spin.setValue(1.9)
+        self.atr_ratio_max_spin.setSingleStep(0.05)
+        self.atr_ratio_max_spin.setDecimals(2)
+        atr_ratio_layout.addWidget(QLabel("Min Ratio:"))
+        atr_ratio_layout.addWidget(self.atr_ratio_min_spin)
+        atr_ratio_layout.addWidget(QLabel("Max Ratio:"))
+        atr_ratio_layout.addWidget(self.atr_ratio_max_spin)
+        atr_ratio_layout.setContentsMargins(10, 0, 0, 0)
+        self.atr_ratio_filter_widget.setVisible(False)
+        self.atr_ratio_filter_check.toggled.connect(self.atr_ratio_filter_widget.setVisible)
+        layout.addWidget(self.atr_ratio_filter_check)
+        layout.addWidget(self.atr_ratio_filter_widget)
+
+        # --- Keltner Channel Filter ---
+        self.keltner_filter_check = QCheckBox("Keltner Channel Filter")
+        self.keltner_filter_widget = QWidget()
+        keltner_layout = QHBoxLayout(self.keltner_filter_widget)
+        self.keltner_multiplier_filter_spin = QDoubleSpinBox()
+        self.keltner_multiplier_filter_spin.setRange(0.1, 5.0)
+        self.keltner_multiplier_filter_spin.setValue(1.0)
+        self.keltner_multiplier_filter_spin.setSingleStep(0.1)
+        self.keltner_multiplier_filter_spin.setDecimals(1)
+        self.keltner_condition_combo = QComboBox()
+        self.keltner_condition_combo.addItems(["inside", "outside", "touching_upper", "touching_lower"])
+        keltner_layout.addWidget(QLabel("Multiplier:"))
+        keltner_layout.addWidget(self.keltner_multiplier_filter_spin)
+        keltner_layout.addWidget(QLabel("Price is:"))
+        keltner_layout.addWidget(self.keltner_condition_combo)
+        keltner_layout.setContentsMargins(10, 0, 0, 0)
+        self.keltner_filter_widget.setVisible(False)
+        self.keltner_filter_check.toggled.connect(self.keltner_filter_widget.setVisible)
+        layout.addWidget(self.keltner_filter_check)
+        layout.addWidget(self.keltner_filter_widget)
+
+        # --- EMA Filter ---
+        self.ema_filter_check = QCheckBox("EMA Filter")
+        self.ema_filter_widget = QWidget()
+        ema_layout = QHBoxLayout(self.ema_filter_widget)
+        self.ema_period_filter_spin = QSpinBox()
+        self.ema_period_filter_spin.setRange(5, 100)
+        self.ema_period_filter_spin.setValue(21)
+        self.ema_condition_combo = QComboBox()
+        self.ema_condition_combo.addItems(["above", "below", "near"])
+        ema_layout.addWidget(QLabel("Period:"))
+        ema_layout.addWidget(self.ema_period_filter_spin)
+        ema_layout.addWidget(QLabel("Price is:"))
+        ema_layout.addWidget(self.ema_condition_combo)
+        ema_layout.setContentsMargins(10, 0, 0, 0)
+        self.ema_filter_widget.setVisible(False)
+        self.ema_filter_check.toggled.connect(self.ema_filter_widget.setVisible)
+        layout.addWidget(self.ema_filter_check)
+        layout.addWidget(self.ema_filter_widget)
+
         group.setLayout(layout)
         return group
 
-    def _create_location_params_group(self) -> QGroupBox:
-        """Create location parameters group with zone-specific parameters"""
-        group = QGroupBox("Zone Parameters")
+    def _create_unified_params_group(self) -> QGroupBox:
+        """Create unified parameters group with zone-specific and MTF parameters"""
+        group = QGroupBox("All Strategy Parameters")
         layout = QVBoxLayout()
         
         # Create tabs for different parameter categories
@@ -1078,15 +1148,151 @@ class StrategyBuilderWindow(QMainWindow):
         global_tab.setLayout(global_layout)
         tabs.addTab(global_tab, "Global")
         
+        # Multi-Timeframe Strategy parameters tab
+        mtf_tab = QWidget()
+        mtf_layout = QFormLayout()
+        
+        # ATR Ratio Thresholds
+        mtf_layout.addRow(QLabel("ATR Ratio Thresholds:"))
+        mtf_layout.addRow(QLabel(""))  # Spacer
+        
+        self.atr_15_5_low_spin = QDoubleSpinBox()
+        self.atr_15_5_low_spin.setRange(0.1, 5.0)
+        self.atr_15_5_low_spin.setSingleStep(0.05)
+        self.atr_15_5_low_spin.setValue(1.35)
+        self.atr_15_5_low_spin.setDecimals(2)
+        self.atr_15_5_low_spin.setToolTip("15m/5m ATR ratio threshold for mean-reversion regime")
+        mtf_layout.addRow("15m/5m Mean Reversion (<):", self.atr_15_5_low_spin)
+        
+        self.atr_15_5_high_spin = QDoubleSpinBox()
+        self.atr_15_5_high_spin.setRange(0.1, 10.0)
+        self.atr_15_5_high_spin.setSingleStep(0.05)
+        self.atr_15_5_high_spin.setValue(1.9)
+        self.atr_15_5_high_spin.setDecimals(2)
+        self.atr_15_5_high_spin.setToolTip("15m/5m ATR ratio threshold for expansion regime")
+        mtf_layout.addRow("15m/5m Expansion (>):", self.atr_15_5_high_spin)
+        
+        self.atr_2000_200_threshold_spin = QDoubleSpinBox()
+        self.atr_2000_200_threshold_spin.setRange(1.0, 10.0)
+        self.atr_2000_200_threshold_spin.setSingleStep(0.1)
+        self.atr_2000_200_threshold_spin.setValue(2.8)
+        self.atr_2000_200_threshold_spin.setDecimals(1)
+        self.atr_2000_200_threshold_spin.setToolTip("2000T/200T ATR ratio threshold for execution")
+        mtf_layout.addRow("2000T/200T Execution (>):", self.atr_2000_200_threshold_spin)
+        
+        # Technical Indicator Settings
+        mtf_layout.addRow(QLabel(""))  # Spacer
+        mtf_layout.addRow(QLabel("Indicator Settings:"))
+        mtf_layout.addRow(QLabel(""))  # Spacer
+        
+        self.ema_period_spin = QSpinBox()
+        self.ema_period_spin.setRange(5, 100)
+        self.ema_period_spin.setValue(21)
+        self.ema_period_spin.setToolTip("EMA period for all timeframes")
+        mtf_layout.addRow("EMA Period:", self.ema_period_spin)
+        
+        self.atr_period_15m_spin = QSpinBox()
+        self.atr_period_15m_spin.setRange(1, 50)
+        self.atr_period_15m_spin.setValue(5)
+        self.atr_period_15m_spin.setToolTip("ATR calculation period for 15m timeframe")
+        mtf_layout.addRow("ATR Period (15m):", self.atr_period_15m_spin)
+        
+        self.atr_period_5m_spin = QSpinBox()
+        self.atr_period_5m_spin.setRange(1, 50)
+        self.atr_period_5m_spin.setValue(21)
+        self.atr_period_5m_spin.setToolTip("ATR calculation period for 5m timeframe")
+        mtf_layout.addRow("ATR Period (5m):", self.atr_period_5m_spin)
+        
+        self.atr_period_2000t_spin = QSpinBox()
+        self.atr_period_2000t_spin.setRange(1, 50)
+        self.atr_period_2000t_spin.setValue(5)
+        self.atr_period_2000t_spin.setToolTip("ATR calculation period for 2000T timeframe")
+        mtf_layout.addRow("ATR Period (2000T):", self.atr_period_2000t_spin)
+        
+        # Keltner Channel Settings
+        mtf_layout.addRow(QLabel(""))  # Spacer
+        mtf_layout.addRow(QLabel("Keltner Channel Settings:"))
+        mtf_layout.addRow(QLabel(""))  # Spacer
+        
+        self.keltner_multiplier_spin = QDoubleSpinBox()
+        self.keltner_multiplier_spin.setRange(0.1, 5.0)
+        self.keltner_multiplier_spin.setSingleStep(0.1)
+        self.keltner_multiplier_spin.setValue(1.0)
+        self.keltner_multiplier_spin.setDecimals(1)
+        self.keltner_multiplier_spin.setToolTip("Standard Keltner channel multiplier")
+        mtf_layout.addRow("Keltner Multiplier:", self.keltner_multiplier_spin)
+        
+        self.keltner_stop_multiplier_spin = QDoubleSpinBox()
+        self.keltner_stop_multiplier_spin.setRange(0.1, 5.0)
+        self.keltner_stop_multiplier_spin.setSingleStep(0.1)
+        self.keltner_stop_multiplier_spin.setValue(2.0)
+        self.keltner_stop_multiplier_spin.setDecimals(1)
+        self.keltner_stop_multiplier_spin.setToolTip("Keltner channel multiplier for stop-loss calculation")
+        mtf_layout.addRow("Keltner Stop Multiplier:", self.keltner_stop_multiplier_spin)
+        
+        # Alignment Tolerances
+        mtf_layout.addRow(QLabel(""))  # Spacer
+        mtf_layout.addRow(QLabel("Alignment Tolerances:"))
+        mtf_layout.addRow(QLabel(""))  # Spacer
+        
+        self.alignment_tolerance_spin = QDoubleSpinBox()
+        self.alignment_tolerance_spin.setRange(0.0001, 0.1)
+        self.alignment_tolerance_spin.setSingleStep(0.0001)
+        self.alignment_tolerance_spin.setValue(0.001)
+        self.alignment_tolerance_spin.setDecimals(4)
+        self.alignment_tolerance_spin.setToolTip("Tolerance for Keltner-EMA alignment checks")
+        mtf_layout.addRow("Keltner-EMA Alignment:", self.alignment_tolerance_spin)
+        
+        self.location_density_tolerance_spin = QDoubleSpinBox()
+        self.location_density_tolerance_spin.setRange(0.0001, 0.1)
+        self.location_density_tolerance_spin.setSingleStep(0.0001)
+        self.location_density_tolerance_spin.setValue(0.002)
+        self.location_density_tolerance_spin.setDecimals(4)
+        self.location_density_tolerance_spin.setToolTip("Tolerance for location density alignment")
+        mtf_layout.addRow("Location Density:", self.location_density_tolerance_spin)
+        
+        # Time Filters
+        mtf_layout.addRow(QLabel(""))  # Spacer
+        mtf_layout.addRow(QLabel("Time Filters:"))
+        mtf_layout.addRow(QLabel(""))  # Spacer
+        
+        time_info = QLabel("Time restrictions (9:30-9:50, 10:00) are automatically applied for MTF strategies")
+        time_info.setStyleSheet("color: #cccccc; font-style: italic;")
+        mtf_layout.addRow(time_info)
+        
+        mtf_tab.setLayout(mtf_layout)
+        tabs.addTab(mtf_tab, "Multi-Timeframe")
+        
         layout.addWidget(tabs)
         
-        # Reset button
-        reset_btn = QPushButton("Reset to Defaults")
-        reset_btn.clicked.connect(self._reset_location_params)
-        layout.addWidget(reset_btn)
+        # Reset buttons
+        reset_layout = QHBoxLayout()
+        reset_location_btn = QPushButton("Reset Zone Parameters")
+        reset_location_btn.clicked.connect(self._reset_location_params)
+        reset_mtf_btn = QPushButton("Reset MTF Parameters")
+        reset_mtf_btn.clicked.connect(self._reset_mtf_params)
+        reset_layout.addWidget(reset_location_btn)
+        reset_layout.addWidget(reset_mtf_btn)
+        layout.addLayout(reset_layout)
 
         group.setLayout(layout)
         return group
+    
+    # MTF params group creation method removed - now part of unified params
+    
+    def _reset_mtf_params(self):
+        """Reset MTF parameters to defaults"""
+        self.atr_15_5_low_spin.setValue(1.35)
+        self.atr_15_5_high_spin.setValue(1.9)
+        self.atr_2000_200_threshold_spin.setValue(2.8)
+        self.ema_period_spin.setValue(21)
+        self.atr_period_15m_spin.setValue(5)
+        self.atr_period_5m_spin.setValue(21)
+        self.atr_period_2000t_spin.setValue(5)
+        self.keltner_multiplier_spin.setValue(1.0)
+        self.keltner_stop_multiplier_spin.setValue(2.0)
+        self.alignment_tolerance_spin.setValue(0.001)
+        self.location_density_tolerance_spin.setValue(0.002)
 
     def _reset_location_params(self):
         """Reset all parameters to spec-compliant defaults"""
@@ -1135,6 +1341,12 @@ class StrategyBuilderWindow(QMainWindow):
         self.strategy_name_edit = QLineEdit()
         self.strategy_name_edit.setPlaceholderText("e.g., 'My Hammer Strategy'")
         form_layout.addRow("Strategy Name:", self.strategy_name_edit)
+        
+        # Strategy Type Selection (determines final strategy type)
+        self.strategy_type_combo = QComboBox()
+        self.strategy_type_combo.addItems(['Pattern Strategy', 'Multi-Timeframe Strategy'])
+        self.strategy_type_combo.setToolTip("Choose final strategy type - Pattern strategies use actions and patterns, MTF strategies use advanced multi-timeframe logic")
+        form_layout.addRow("Strategy Type:", self.strategy_type_combo)
         
         self.combination_logic_combo = QComboBox()
         self.combination_logic_combo.addItems(['AND', 'OR'])
@@ -1217,6 +1429,25 @@ class StrategyBuilderWindow(QMainWindow):
         layout.addWidget(self.time_gate_check)
         layout.addWidget(self.correlation_gate_check)
         layout.addWidget(self.order_block_gate_check)
+        
+        # Multi-Timeframe gates
+        mtf_gates_label = QLabel("Multi-Timeframe Gates:")
+        mtf_gates_label.setStyleSheet("font-weight: bold; color: #ffffff; margin-top: 10px;")
+        layout.addWidget(mtf_gates_label)
+        
+        self.atr_ratio_gate_check = QCheckBox("ATR Ratio Gate")
+        self.keltner_alignment_gate_check = QCheckBox("Keltner Alignment Gate")
+        self.ema_rejection_gate_check = QCheckBox("EMA Rejection Gate")
+        self.location_density_gate_check = QCheckBox("Location Density Gate")
+        self.time_restriction_gate_check = QCheckBox("Time Restriction Gate")
+        self.mtf_execution_gate_check = QCheckBox("MTF Execution Gate")
+        
+        layout.addWidget(self.atr_ratio_gate_check)
+        layout.addWidget(self.keltner_alignment_gate_check)
+        layout.addWidget(self.ema_rejection_gate_check)
+        layout.addWidget(self.location_density_gate_check)
+        layout.addWidget(self.time_restriction_gate_check)
+        layout.addWidget(self.mtf_execution_gate_check)
 
         group.setLayout(layout)
         return group
@@ -1365,6 +1596,31 @@ class StrategyBuilderWindow(QMainWindow):
             filters.append({
                 'type': 'momentum',
                 'momentum_threshold': self.momentum_threshold_spin.value(),
+            })
+        
+        # Multi-Timeframe Filters
+        if self.atr_ratio_filter_check.isChecked():
+            filters.append({
+                'type': 'atr_ratio',
+                'min_ratio': self.atr_ratio_min_spin.value(),
+                'max_ratio': self.atr_ratio_max_spin.value()
+            })
+        if self.keltner_filter_check.isChecked():
+            filters.append({
+                'type': 'keltner_channel',
+                'multiplier': self.keltner_multiplier_filter_spin.value(),
+                'condition': self.keltner_condition_combo.currentText()
+            })
+        if self.ema_filter_check.isChecked():
+            filters.append({
+                'type': 'ema',
+                'period': self.ema_period_filter_spin.value(),
+                'condition': self.ema_condition_combo.currentText()
+            })
+        if self.momentum_filter_check.isChecked():
+            filters.append({
+                'type': 'momentum',
+                'momentum_threshold': self.momentum_threshold_spin.value(),
                 'lookback': self.momentum_lookback_spin.value(),
                 'rsi_range': [self.rsi_min_spin.value(), self.rsi_max_spin.value()]
             })
@@ -1419,8 +1675,10 @@ class StrategyBuilderWindow(QMainWindow):
             QMessageBox.warning(self, "Warning", "Please enter a strategy name.")
             return
 
-        if not self.actions:
-            QMessageBox.warning(self, "Warning", "A strategy must have at least one action.")
+        # Check if actions are required based on strategy type
+        strategy_type = self.strategy_type_combo.currentText()
+        if strategy_type == "Pattern Strategy" and not self.actions:
+            QMessageBox.warning(self, "Warning", "A pattern strategy must have at least one action.")
             return
 
         # Collect location parameters
@@ -1478,6 +1736,19 @@ class StrategyBuilderWindow(QMainWindow):
             'omega_mem': 1.0,
             'kernel_xi': 0.5,
             'kernel_alpha': 2.0,
+            
+            # Multi-Timeframe parameters (available for both strategy types)
+            'atr_15_5_threshold_low': self.atr_15_5_low_spin.value(),
+            'atr_15_5_threshold_high': self.atr_15_5_high_spin.value(),
+            'atr_2000_200_threshold': self.atr_2000_200_threshold_spin.value(),
+            'ema_period': self.ema_period_spin.value(),
+            'atr_period_15m': self.atr_period_15m_spin.value(),
+            'atr_period_5m': self.atr_period_5m_spin.value(),
+            'atr_period_2000t': self.atr_period_2000t_spin.value(),
+            'keltner_multiplier': self.keltner_multiplier_spin.value(),
+            'keltner_stop_multiplier': self.keltner_stop_multiplier_spin.value(),
+            'alignment_tolerance': self.alignment_tolerance_spin.value(),
+            'location_density_tolerance': self.location_density_tolerance_spin.value(),
         }
         
         # The main 'location_gate' is active if any action uses a zone type
@@ -1498,30 +1769,58 @@ class StrategyBuilderWindow(QMainWindow):
                 action.location_strategy = zone_type_mapping[action.location_strategy]
 
         # Always use the latest name from the QLineEdit
-        self.current_strategy = PatternStrategy(
-            id=f"strat_{datetime.now().strftime('%Y%m%d%H%M%S')}",
-            name=name,
-            actions=self.actions,
-            combination_logic=self.combination_logic_combo.currentText(),
-            gates_and_logic={
-                'location_gate': zone_in_use,
-                'volatility_gate': self.volatility_gate_check.isChecked(),
-                'regime_gate': self.regime_gate_check.isChecked(),
-                'bayesian_gate': self.bayesian_gate_check.isChecked(),
-                # Microstructure gates
-                'market_environment_gate': self.market_environment_gate_check.isChecked(),
-                'news_time_gate': self.news_time_gate_check.isChecked(),
-                'tick_validation_gate': self.tick_validation_gate_check.isChecked(),
-                # Advanced gates
-                'fvg_gate': self.fvg_gate_check.isChecked(),
-                'momentum_gate': self.momentum_gate_check.isChecked(),
-                'volume_gate': self.volume_gate_check.isChecked(),
-                'time_gate': self.time_gate_check.isChecked(),
-                'correlation_gate': self.correlation_gate_check.isChecked(),
-                'order_block_gate': self.order_block_gate_check.isChecked()
-            },
-            location_gate_params=location_params
-        )
+        strategy_type = self.strategy_type_combo.currentText()
+        
+        if strategy_type == "Multi-Timeframe Strategy":
+            # Create Advanced MTF Strategy
+            self.current_strategy = AdvancedMTFStrategy(
+                name=name,
+                timeframes=['15m', '5m', '2000T', '200T'],
+                atr_15_5_threshold_low=self.atr_15_5_low_spin.value(),
+                atr_15_5_threshold_high=self.atr_15_5_high_spin.value(),
+                atr_2000_200_threshold=self.atr_2000_200_threshold_spin.value(),
+                ema_period=self.ema_period_spin.value(),
+                atr_period_15m=self.atr_period_15m_spin.value(),
+                atr_period_5m=self.atr_period_5m_spin.value(),
+                atr_period_2000t=self.atr_period_2000t_spin.value(),
+                keltner_multiplier=self.keltner_multiplier_spin.value(),
+                keltner_stop_multiplier=self.keltner_stop_multiplier_spin.value(),
+                alignment_tolerance=self.alignment_tolerance_spin.value(),
+                location_density_tolerance=self.location_density_tolerance_spin.value()
+            )
+        else:
+            # Create Pattern Strategy
+            self.current_strategy = PatternStrategy(
+                id=f"strat_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                name=name,
+                actions=self.actions,
+                combination_logic=self.combination_logic_combo.currentText(),
+                gates_and_logic={
+                    'location_gate': zone_in_use,
+                    'volatility_gate': self.volatility_gate_check.isChecked(),
+                    'regime_gate': self.regime_gate_check.isChecked(),
+                    'bayesian_gate': self.bayesian_gate_check.isChecked(),
+                    # Microstructure gates
+                    'market_environment_gate': self.market_environment_gate_check.isChecked(),
+                    'news_time_gate': self.news_time_gate_check.isChecked(),
+                    'tick_validation_gate': self.tick_validation_gate_check.isChecked(),
+                    # Advanced gates
+                    'fvg_gate': self.fvg_gate_check.isChecked(),
+                    'momentum_gate': self.momentum_gate_check.isChecked(),
+                    'volume_gate': self.volume_gate_check.isChecked(),
+                    'time_gate': self.time_gate_check.isChecked(),
+                    'correlation_gate': self.correlation_gate_check.isChecked(),
+                    'order_block_gate': self.order_block_gate_check.isChecked(),
+                    # Multi-Timeframe gates
+                    'atr_ratio_gate': self.atr_ratio_gate_check.isChecked(),
+                    'keltner_alignment_gate': self.keltner_alignment_gate_check.isChecked(),
+                    'ema_rejection_gate': self.ema_rejection_gate_check.isChecked(),
+                    'location_density_gate': self.location_density_gate_check.isChecked(),
+                    'time_restriction_gate': self.time_restriction_gate_check.isChecked(),
+                    'mtf_execution_gate': self.mtf_execution_gate_check.isChecked()
+                },
+                location_gate_params=location_params
+            )
         
         self.test_strategy_button.setEnabled(True)
         self.accept_strategy_button.setEnabled(True)
@@ -1626,11 +1925,9 @@ class StrategyBuilderWindow(QMainWindow):
 
         # Load location parameters for the Definitive Zone
         if strategy.location_gate_params:
-            for name, widget in self.location_param_widgets.items():
-                if name in strategy.location_gate_params:
-                    widget.setValue(strategy.location_gate_params[name])
-                else:
-                    widget.setValue(DEFAULT_LOCATION_PARAMS[name])
+            # TODO: Load parameters into specific widgets
+            # Widget loading logic can be enhanced later
+            pass
         else:
             self._reset_location_params()
 

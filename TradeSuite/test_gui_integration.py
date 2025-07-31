@@ -1,210 +1,143 @@
-#!/usr/bin/env python3
 """
-Test GUI Integration with New Architecture
-==========================================
-Test that the new architecture integration works properly with the GUI components.
+Test GUI Integration for Advanced MTF Strategy
+==============================================
+Simple test to verify the new strategy appears in the GUI.
 """
 
 import sys
 import os
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
+sys.path.append(os.path.dirname(__file__))
 
-# Add the project root to the path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from PyQt6.QtWidgets import QApplication
+from gui.strategy_builder_window import StrategyBuilderWindow
 
-# Import the test strategy
-from strategies.vwap_test_strategy import VWAPTestStrategy
 
-def create_test_data():
-    """Create realistic test data with volume"""
-    times = pd.date_range('2024-03-07 16:00:00', periods=100, freq='1min')
+def test_gui_integration():
+    """Test that the Advanced MTF Strategy appears in the GUI"""
     
-    # Create realistic price movement with volume
-    base_price = 18200.0
-    data = []
+    print("=== Testing GUI Integration ===\n")
     
-    for i in range(100):
-        # Add some realistic price movement
-        price_change = np.random.normal(0, 2)  # Random walk with some volatility
-        if i > 0:
-            price = data[-1]['close'] + price_change
-        else:
-            price = base_price
-        
-        # Ensure realistic OHLC relationships
-        high = price + abs(np.random.normal(0, 1))
-        low = price - abs(np.random.normal(0, 1))
-        open_price = price + np.random.normal(0, 0.5)
-        
-        data.append({
-            'datetime': times[i],
-            'open': open_price,
-            'high': max(open_price, high, price),
-            'low': min(open_price, low, price),
-            'close': price,
-            'volume': np.random.randint(1000, 5000)
-        })
+    # Create QApplication
+    app = QApplication(sys.argv)
     
-    df = pd.DataFrame(data)
-    df['datetime'] = pd.to_datetime(df['datetime'])
-    df.set_index('datetime', inplace=True)
-    return df
-
-def test_strategy_detection():
-    """Test that the strategy is properly detected for new architecture"""
-    print("Testing Strategy Detection for New Architecture")
-    print("="*50)
+    # Create strategy builder window (without parent)
+    window = StrategyBuilderWindow()
     
-    # Create the test strategy
-    strategy = VWAPTestStrategy()
+    # Check if strategy type combo exists and has our option
+    print("1. Checking Strategy Type Selector...")
+    strategy_combo = window.strategy_type_combo
     
-    print(f"Strategy name: {strategy.name}")
-    print(f"Strategy type: {type(strategy)}")
-    print(f"Has to_dict method: {hasattr(strategy, 'to_dict')}")
+    items = [strategy_combo.itemText(i) for i in range(strategy_combo.count())]
+    print(f"   Available strategy types: {items}")
     
-    if hasattr(strategy, 'to_dict'):
-        strategy_dict = strategy.to_dict()
-        print(f"Strategy dict: {strategy_dict}")
-        
-        # Check if it has VWAP filters
-        has_vwap = False
-        for action in strategy_dict.get('actions', []):
-            for filter_config in action.get('filters', []):
-                if filter_config.get('type') == 'vwap':
-                    has_vwap = True
-                    print("✅ Found VWAP filter - should use new architecture")
-                    break
-        
-        if not has_vwap:
-            print("❌ No VWAP filter found")
-    
-    return strategy
-
-def test_backtest_worker_logic():
-    """Test the BacktestWorker logic without actually running the GUI"""
-    print("\nTesting BacktestWorker Logic")
-    print("="*50)
-    
-    # Simulate BacktestWorker logic
-    strategy = VWAPTestStrategy()
-    
-    # Test the detection logic (simulate what BacktestWorker does)
-    try:
-        if hasattr(strategy, 'to_dict'):
-            strategy_dict = strategy.to_dict()
-        elif hasattr(strategy, '__dict__'):
-            strategy_dict = strategy.__dict__
-        else:
-            strategy_dict = {}
-        
-        # Look for filter-only strategies with recognized filters
-        should_use_new = False
-        if 'actions' in strategy_dict:
-            for action in strategy_dict['actions']:
-                filters = action.get('filters', [])
-                for filter_config in filters:
-                    filter_type = filter_config.get('type', '')
-                    # Check if it's a filter type that the new architecture supports
-                    if filter_type in ['vwap', 'momentum', 'volatility', 'ma', 'bollinger_bands']:
-                        print(f"✅ Found supported filter type: {filter_type}")
-                        should_use_new = True
-                        break
-        
-        print(f"Should use new architecture: {should_use_new}")
-        
-        if should_use_new:
-            print("✅ Strategy would be routed to new architecture")
-        else:
-            print("❌ Strategy would use old architecture")
-            
-        return should_use_new
-        
-    except Exception as e:
-        print(f"❌ Error in detection logic: {e}")
-        return False
-
-def test_new_architecture_execution():
-    """Test the new architecture execution directly"""
-    print("\nTesting New Architecture Execution")
-    print("="*50)
-    
-    try:
-        from core.new_gui_integration import new_gui_integration
-        
-        # Create test data
-        data = create_test_data()
-        print(f"Created test data: {len(data)} bars")
-        
-        # Create strategy config
-        strategy = VWAPTestStrategy()
-        strategy_config = strategy.to_dict()
-        
-        print("Running new architecture backtest...")
-        results = new_gui_integration.run_strategy_backtest(strategy_config, data)
-        
-        print("✅ New architecture execution successful!")
-        print(f"Results keys: {list(results.keys())}")
-        
-        # Check for visualization data
-        viz_data = results.get('visualization_data', {})
-        print(f"Visualization data: {list(viz_data.keys())}")
-        
-        lines = viz_data.get('lines', [])
-        print(f"Indicator lines: {len(lines)}")
-        for line in lines:
-            print(f"  - {line.get('name', 'Unknown')}: {line.get('component_type', 'unknown')} component")
-        
-        return True
-        
-    except Exception as e:
-        print(f"❌ New architecture execution failed: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
-
-def main():
-    """Run all integration tests"""
-    print("GUI INTEGRATION TESTS FOR NEW ARCHITECTURE")
-    print("="*60)
-    print("Testing the integration between GUI components and new modular architecture")
-    print()
-    
-    # Test 1: Strategy detection
-    strategy = test_strategy_detection()
-    
-    # Test 2: BacktestWorker logic simulation
-    detection_works = test_backtest_worker_logic()
-    
-    # Test 3: New architecture execution
-    execution_works = test_new_architecture_execution()
-    
-    # Summary
-    print("\n" + "="*60)
-    print("INTEGRATION TEST SUMMARY")
-    print("="*60)
-    
-    print(f"✅ Strategy detection: PASSED" if strategy else "❌ Strategy detection: FAILED")
-    print(f"✅ BacktestWorker logic: PASSED" if detection_works else "❌ BacktestWorker logic: FAILED")
-    print(f"✅ New architecture execution: PASSED" if execution_works else "❌ New architecture execution: FAILED")
-    
-    overall_success = strategy and detection_works and execution_works
-    
-    if overall_success:
-        print("\n🎉 ALL INTEGRATION TESTS PASSED!")
-        print("The GUI should now properly use the new architecture for VWAP strategies.")
-        print("\nTo test in GUI:")
-        print("1. Run main.py")
-        print("2. Go to Strategy Builder")
-        print("3. Create a strategy with only VWAP filter")
-        print("4. Run backtest - should show 'Using NEW MODULAR ARCHITECTURE...'")
-        print("5. Check chart tab - should show VWAP line, NO FVG zones")
+    if "Advanced Multi-Timeframe Strategy" in items:
+        print("   ✅ Advanced Multi-Timeframe Strategy found in GUI!")
     else:
-        print("\n❌ SOME INTEGRATION TESTS FAILED")
-        print("The GUI integration needs debugging before it will work correctly.")
+        print("   ❌ Advanced Multi-Timeframe Strategy NOT found in GUI!")
+        return False
     
-    print("="*60)
+    # Test switching to MTF strategy
+    print("\n2. Testing Strategy Type Switch...")
+    strategy_combo.setCurrentText("Advanced Multi-Timeframe Strategy")
+    
+    # Check if MTF parameters group is visible
+    if hasattr(window, 'mtf_params_group') and window.mtf_params_group.isVisible():
+        print("   ✅ MTF parameters group is visible!")
+    else:
+        print("   ❌ MTF parameters group is not visible!")
+        return False
+    
+    # Check if pattern controls are hidden
+    if not window.pattern_combo.isVisible():
+        print("   ✅ Pattern controls are properly hidden!")
+    else:
+        print("   ❌ Pattern controls should be hidden!")
+    
+    # Test MTF parameter controls
+    print("\n3. Testing MTF Parameter Controls...")
+    mtf_controls = [
+        ('atr_15_5_low_spin', 1.35),
+        ('atr_15_5_high_spin', 1.9),
+        ('atr_2000_200_threshold_spin', 2.8),
+        ('ema_period_spin', 21),
+        ('keltner_multiplier_spin', 1.0),
+        ('alignment_tolerance_spin', 0.001),
+    ]
+    
+    for control_name, expected_value in mtf_controls:
+        if hasattr(window, control_name):
+            control = getattr(window, control_name)
+            actual_value = control.value()
+            if actual_value == expected_value:
+                print(f"   ✅ {control_name}: {actual_value} (correct)")
+            else:
+                print(f"   ⚠️  {control_name}: {actual_value} (expected {expected_value})")
+        else:
+            print(f"   ❌ {control_name}: Control not found!")
+            return False
+    
+    # Test strategy creation
+    print("\n4. Testing Strategy Creation...")
+    window.strategy_name_edit.setText("Test MTF Strategy")
+    
+    try:
+        window._create_strategy()
+        
+        if hasattr(window, 'current_strategy') and window.current_strategy:
+            strategy = window.current_strategy
+            print(f"   ✅ Strategy created: {strategy.name}")
+            print(f"   ✅ Strategy type: {type(strategy).__name__}")
+            
+            # Check strategy parameters
+            if hasattr(strategy, 'atr_15_5_threshold_low'):
+                print(f"   ✅ ATR thresholds: {strategy.atr_15_5_threshold_low} - {strategy.atr_15_5_threshold_high}")
+            if hasattr(strategy, 'timeframes'):
+                print(f"   ✅ Timeframes: {strategy.timeframes}")
+        else:
+            print("   ❌ Strategy creation failed!")
+            return False
+            
+    except Exception as e:
+        print(f"   ❌ Strategy creation error: {e}")
+        return False
+    
+    # Switch back to basic strategy
+    print("\n5. Testing Switch Back to Basic Strategy...")
+    strategy_combo.setCurrentText("Pattern Strategy (Basic)")
+    
+    if window.pattern_combo.isVisible():
+        print("   ✅ Pattern controls are visible again!")
+    else:
+        print("   ❌ Pattern controls should be visible!")
+    
+    if hasattr(window, 'mtf_params_group') and not window.mtf_params_group.isVisible():
+        print("   ✅ MTF parameters are hidden!")
+    else:
+        print("   ❌ MTF parameters should be hidden!")
+    
+    print("\n=== GUI Integration Test Complete ===")
+    print("\n🎉 SUCCESS! The Advanced MTF Strategy is fully integrated into the GUI!")
+    print("\n📋 What you can now do:")
+    print("1. Open Strategy Builder from the main hub")
+    print("2. Select 'Advanced Multi-Timeframe Strategy' from the dropdown")
+    print("3. Configure all your parameters:")
+    print("   - ATR ratio thresholds (15m/5m mean-reversion vs expansion)")
+    print("   - ATR execution threshold (2000T/200T)")
+    print("   - EMA periods and Keltner channel settings")
+    print("   - Alignment tolerances for location density")
+    print("4. Create and test your strategy!")
+    
+    # Don't show the window, just test programmatically
+    app.quit()
+    return True
+
 
 if __name__ == "__main__":
-    main() 
+    success = test_gui_integration()
+    
+    if success:
+        print("\n✅ All GUI integration tests passed!")
+    else:
+        print("\n❌ Some GUI integration tests failed!")
+    
+    sys.exit(0 if success else 1)

@@ -31,7 +31,11 @@ from core.feature_quantification import (
     combined_location_strength, directional_skew, z_space_aggregate,
     momentum_weighted_location, market_maker_reversion_enhanced,
     enhanced_execution_score, detect_fvg, fvg_location_score_advanced,
-    location_context_score, complete_master_equation, FVG_DEFAULT_PARAMS
+    location_context_score, complete_master_equation, FVG_DEFAULT_PARAMS,
+    # New technical indicators for advanced MTF strategy
+    calculate_ema, calculate_keltner_channels, calculate_atr_ratio,
+    detect_market_regime, check_keltner_ema_alignment, detect_location_density,
+    calculate_vwap
 )
 
 # Import advanced components
@@ -706,7 +710,10 @@ class PatternStrategy(BaseStrategy):
         # Filter valid zones where current price is inside
         valid_zones = [zone for zone in all_zones if zone['zone_min'] <= current_price <= zone['zone_max']]
         if not valid_zones:
-            logger.info(f"No valid zones for index {index}, price {current_price}")
+            try:
+                logger.info(f"No valid zones for index {index}, price {current_price}")
+            except:
+                pass  # Ignore logger errors during import
             print(f"[DEBUG] No valid zones for index {index}, price {current_price}")
             return False
         print(f"[DEBUG] Found {len(valid_zones)} valid zones at index {index}, price {current_price}")
@@ -958,12 +965,18 @@ class PatternStrategy(BaseStrategy):
         L_momentum_total_scalar = safe_float(L_momentum_total)
         M_enhanced_scalar = safe_float(M_enhanced)
         
-        logger.info(f"Index {index}: price={current_price}, S_adj={S_adj_scalar:.3f}, L_momentum_total={L_momentum_total_scalar:.3f}, M_enhanced={M_enhanced_scalar:.3f}, gate={'PASS' if is_valid else 'FAIL'}")
+        try:
+            logger.info(f"Index {index}: price={current_price}, S_adj={S_adj_scalar:.3f}, L_momentum_total={L_momentum_total_scalar:.3f}, M_enhanced={M_enhanced_scalar:.3f}, gate={'PASS' if is_valid else 'FAIL'}")
+        except:
+            pass  # Ignore logger errors during import
         
         # CRITICAL FIX: Only append zones if the gate passes
         if is_valid:
             self.calculated_zones.append(zone_data)
-            logger.info(f"Zones created and stored at index {index}: {len(per_zone_data)} subzones")
+            try:
+                logger.info(f"Zones created and stored at index {index}: {len(per_zone_data)} subzones")
+            except:
+                pass  # Ignore logger errors during import
             print(f"[DEBUG] Location gate PASSED at index {index}, S_adj={S_adj:.3f} > threshold={location_gate_threshold}, stored {len(per_zone_data)} zones")
             # PATCH: Create simple zones with comb_centers included
             if not hasattr(self, 'simple_zones'):
@@ -2190,17 +2203,29 @@ class MultiTimeframeBacktestEngine:
             if 'Date' in original_data.columns and 'Time' in original_data.columns:
                 original_data['datetime'] = pd.to_datetime(original_data['Date'].astype(str) + ' ' + original_data['Time'].astype(str))
                 original_data.set_index('datetime', inplace=True)
-                self.logger.info("Set index to combined 'Date' and 'Time' columns.")
+                try:
+                    self.logger.info("Set index to combined 'Date' and 'Time' columns.")
+                except:
+                    pass  # Ignore logger errors during import
             elif 'datetime' in original_data.columns:
                 original_data.set_index('datetime', inplace=True)
-                self.logger.info("Set index to 'datetime' column.")
+                try:
+                    self.logger.info("Set index to 'datetime' column.")
+                except:
+                    pass  # Ignore logger errors during import
             else:
                 original_data.index = pd.date_range('2023-01-01', periods=len(original_data), freq='1min')
-                self.logger.warning("No datetime columns found, using synthetic index.")
+                try:
+                    self.logger.warning("No datetime columns found, using synthetic index.")
+                except:
+                    pass  # Ignore logger errors during import
         # Remove duplicate indices
         if not original_data.index.is_unique:
             original_data = original_data[~original_data.index.duplicated(keep='first')]
-            self.logger.warning("Removed duplicate indices from data.")
+            try:
+                self.logger.warning("Removed duplicate indices from data.")
+            except:
+                pass  # Ignore logger errors during import
 
         # Get all unique timeframes from strategy actions
         required_timeframes = set()
@@ -2470,25 +2495,43 @@ class MultiTimeframeBacktestEngine:
         """Run multi-timeframe backtest (PATCHED for robustness and MTF event propagation)"""
         print("########## PATCHED run_backtest IS RUNNING ##########")
         print(f'[DEBUG] MultiTimeframeBacktestEngine.run_backtest called. Actions: {[a.pattern for a in getattr(strategy, "actions", [])]}')
-        self.logger.info("Starting multi-timeframe backtest...")
+        try:
+            self.logger.info("Starting multi-timeframe backtest...")
+        except:
+            pass  # Ignore logger errors during import
         max_bars = 10000
         if len(data) > max_bars:
             data = data.tail(max_bars).copy()
-            self.logger.warning(f"Limited backtest to {max_bars} bars for performance")
+            try:
+                self.logger.warning(f"Limited backtest to {max_bars} bars for performance")
+            except:
+                pass  # Ignore logger errors during import
         if not isinstance(data.index, pd.DatetimeIndex):
             if 'Date' in data.columns and 'Time' in data.columns:
                 data['datetime'] = pd.to_datetime(data['Date'].astype(str) + ' ' + data['Time'].astype(str))
                 data.set_index('datetime', inplace=True)
-                self.logger.info("Set index to combined 'Date' and 'Time' columns.")
+                try:
+                    self.logger.info("Set index to combined 'Date' and 'Time' columns.")
+                except:
+                    pass  # Ignore logger errors during import
             elif 'datetime' in data.columns:
                 data.set_index('datetime', inplace=True)
-                self.logger.info("Set index to 'datetime' column.")
+                try:
+                    self.logger.info("Set index to 'datetime' column.")
+                except:
+                    pass  # Ignore logger errors during import
             else:
                 data.index = pd.date_range('2023-01-01', periods=len(data), freq='1min')
-                self.logger.warning("No datetime columns found, using synthetic index.")
+                try:
+                    self.logger.warning("No datetime columns found, using synthetic index.")
+                except:
+                    pass  # Ignore logger errors during import
         if not data.index.is_unique:
             data = data[~data.index.duplicated(keep='first')]
-            self.logger.warning("Removed duplicate indices from data.")
+            try:
+                self.logger.warning("Removed duplicate indices from data.")
+            except:
+                pass  # Ignore logger errors during import
         multi_tf_data = self.prepare_multi_timeframe_data(data, strategy)
         execution_data = multi_tf_data.get('execution', data)
         # --- PATCH: Always run FVG detection for all bars and all FVG actions, regardless of other actions ---
@@ -2543,14 +2586,20 @@ class MultiTimeframeBacktestEngine:
         try:
             signals, action_details, mtf_zones, mtf_patterns = self.evaluate_strategy_multi_timeframe(strategy, multi_tf_data)
         except Exception as e:
-            self.logger.error(f"Strategy evaluation failed: {e}")
+            try:
+                self.logger.error(f"Strategy evaluation failed: {e}")
+            except:
+                pass  # Ignore logger errors during import
             signals = pd.Series(False, index=execution_data.index)
             action_details = {}
             mtf_zones = []
             mtf_patterns = []
         if not signals.index.equals(execution_data.index):
             signals = signals.reindex(execution_data.index, method='ffill').fillna(False)
-            self.logger.warning("Aligned signals to execution_data index.")
+            try:
+                self.logger.warning("Aligned signals to execution_data index.")
+            except:
+                pass  # Ignore logger errors during import
         
         # DEBUG: Print signal statistics
         print(f"[DEBUG] Signal generation complete:")
@@ -2615,7 +2664,10 @@ class MultiTimeframeBacktestEngine:
                         'mfe': mfe,
                         'exit_reason': exit_reason
                     })
-                    self.logger.info(f"Closed trade: {trades[-1]}")
+                    try:
+                        self.logger.info(f"Closed trade: {trades[-1]}")
+                    except Exception:
+                        pass  # Ignore logger errors during import
                     position = None
             # Only enter on rising edge of signal
             if not position and current_signal and not prev_signal:
@@ -2997,6 +3049,9 @@ class BacktestEngine:
         self.results = {}
         self.trades = []
         self.equity_curve = []
+        # Add logger
+        import logging
+        self.logger = logging.getLogger(__name__)
         
     def run_backtest(self, strategy: PatternStrategy, data: pd.DataFrame,
                     initial_capital: float = 100000,
@@ -3302,3 +3357,369 @@ class BacktestEngine:
             'trades': trades,
             'signals': signals.tolist() if hasattr(signals, 'tolist') else signals
         }
+
+
+# SECTION: Advanced Multi-Timeframe Strategy Implementation
+# =========================================================
+
+class AdvancedMTFStrategy(BaseStrategy):
+    """
+    Advanced Multi-Timeframe Strategy implementing the complex execution logic
+    specified in the user requirements.
+    
+    Supports:
+    - Time-based execution filters (9:30-9:50, 10:00)
+    - ATR ratio analysis for market regime detection
+    - Keltner channel alignment across multiple timeframes
+    - Complex execution and exit logic
+    """
+    
+    def __init__(self, 
+                 name: str = "Advanced MTF Strategy",
+                 timeframes: List[str] = ['15m', '5m', '2000T', '200T'],
+                 atr_15_5_threshold_low: float = 1.35,
+                 atr_15_5_threshold_high: float = 1.9,
+                 atr_2000_200_threshold: float = 2.8,
+                 ema_period: int = 21,
+                 atr_period_15m: int = 5,
+                 atr_period_5m: int = 21,
+                 atr_period_2000t: int = 5,
+                 keltner_multiplier: float = 1.0,
+                 keltner_stop_multiplier: float = 2.0,
+                 alignment_tolerance: float = 0.001,
+                 location_density_tolerance: float = 0.002,
+                 **kwargs):
+        
+        super().__init__(name=name, **kwargs)
+        self.timeframes = timeframes
+        self.atr_15_5_threshold_low = atr_15_5_threshold_low
+        self.atr_15_5_threshold_high = atr_15_5_threshold_high
+        self.atr_2000_200_threshold = atr_2000_200_threshold
+        self.ema_period = ema_period
+        self.atr_period_15m = atr_period_15m
+        self.atr_period_5m = atr_period_5m
+        self.atr_period_2000t = atr_period_2000t
+        self.keltner_multiplier = keltner_multiplier
+        self.keltner_stop_multiplier = keltner_stop_multiplier
+        self.alignment_tolerance = alignment_tolerance
+        self.location_density_tolerance = location_density_tolerance
+    
+    def is_trading_time_allowed(self, timestamp):
+        """
+        Check if trading is allowed at given timestamp
+        NO trade executions between 9:30-9:50, 10:00
+        """
+        try:
+            if hasattr(timestamp, 'time'):
+                time_obj = timestamp.time()
+            else:
+                # Convert to datetime if needed
+                import pandas as pd
+                time_obj = pd.to_datetime(timestamp).time()
+            
+            # Convert to minutes from market open (9:30)
+            minutes_from_open = (time_obj.hour - 9) * 60 + time_obj.minute - 30
+            
+            # Block 9:30-9:50 (0-20 minutes) and 10:00 (30 minutes)
+            if 0 <= minutes_from_open <= 20 or minutes_from_open == 30:
+                return False
+            
+            return True
+        except:
+            # If timestamp parsing fails, allow trading
+            return True
+    
+    def calculate_mtf_indicators(self, data_dict):
+        """
+        Calculate multi-timeframe indicators for all timeframes
+        
+        Args:
+            data_dict: Dictionary with data for each timeframe
+            
+        Returns:
+            Dictionary with calculated indicators for each timeframe
+        """
+        indicators = {}
+        
+        for tf in self.timeframes:
+            if tf not in data_dict:
+                continue
+                
+            df = data_dict[tf]
+            
+            # Determine ATR period based on timeframe
+            if tf == '15m':
+                atr_period = self.atr_period_15m
+            elif tf == '5m':
+                atr_period = self.atr_period_5m
+            elif tf == '2000T':
+                atr_period = self.atr_period_2000t
+            else:
+                atr_period = 21  # default
+            
+            # Calculate indicators
+            ema = calculate_ema(df['close'], self.ema_period)
+            vwap = calculate_vwap(df['close'], df['volume'])
+            atr_values = atr(df['high'], df['low'], df['close'], atr_period)
+            
+            keltner_bands = calculate_keltner_channels(
+                df['high'], df['low'], df['close'],
+                self.ema_period, atr_period, self.keltner_multiplier
+            )
+            
+            keltner_bands_stop = calculate_keltner_channels(
+                df['high'], df['low'], df['close'],
+                self.ema_period, atr_period, self.keltner_stop_multiplier
+            )
+            
+            indicators[tf] = {
+                'ema': ema,
+                'vwap': vwap,
+                'atr': atr_values,
+                'keltner_bands': keltner_bands,
+                'keltner_bands_stop': keltner_bands_stop,
+                'data': df
+            }
+        
+        return indicators
+    
+    def detect_execution_regime(self, indicators):
+        """
+        Detect market execution regime based on ATR ratios
+        
+        Returns:
+            'predictionary' (expansionary) or 'reactionary' (mean-reverting)
+        """
+        # Calculate ATR ratio 15m/5m
+        if '15m' in indicators and '5m' in indicators:
+            atr_15m = indicators['15m']['atr']
+            atr_5m = indicators['5m']['atr']
+            atr_ratio_15_5 = calculate_atr_ratio(atr_15m, atr_5m)
+            
+            # Get latest ratio value
+            latest_ratio = atr_ratio_15_5.iloc[-1] if hasattr(atr_ratio_15_5, 'iloc') else atr_ratio_15_5[-1]
+            
+            if latest_ratio < self.atr_15_5_threshold_low:
+                return 'reactionary'  # mean-reverting
+            elif latest_ratio > self.atr_15_5_threshold_high:
+                return 'predictionary'  # expansionary
+            else:
+                return 'neutral'
+        
+        return 'neutral'
+    
+    def check_atr_execution_condition(self, indicators):
+        """
+        Check ATR ratio condition for 2000T/200T execution
+        """
+        if '2000T' in indicators and '200T' in indicators:
+            atr_2000t = indicators['2000T']['atr']
+            atr_200t = indicators['200T']['atr']
+            atr_ratio_2000_200 = calculate_atr_ratio(atr_200t, atr_200t)
+            
+            # Get latest ratio value
+            latest_ratio = atr_ratio_2000_200.iloc[-1] if hasattr(atr_ratio_2000_200, 'iloc') else atr_ratio_2000_200[-1]
+            
+            return latest_ratio > self.atr_2000_200_threshold
+        
+        return False
+    
+    def check_keltner_alignment_predictionary(self, indicators, bar_idx):
+        """
+        Check Keltner band alignment for predictionary (expansionary) execution
+        """
+        if '2000T' not in indicators or '200T' not in indicators or '5m' not in indicators:
+            return False
+        
+        # Get current values at bar_idx
+        try:
+            # Check if 2000T & 200T Keltner bands align with 5m 21 EMA
+            keltner_2000t = indicators['2000T']['keltner_bands']
+            keltner_200t = indicators['200T']['keltner_bands']
+            ema_5m = indicators['5m']['ema']
+            
+            # Get values at current bar
+            ema_5m_val = ema_5m.iloc[bar_idx] if hasattr(ema_5m, 'iloc') else ema_5m[bar_idx]
+            
+            # Check if Keltner bands are near EMA
+            keltner_2000t_high = keltner_2000t['upper'].iloc[bar_idx] if hasattr(keltner_2000t['upper'], 'iloc') else keltner_2000t['upper'][bar_idx]
+            keltner_2000t_low = keltner_2000t['lower'].iloc[bar_idx] if hasattr(keltner_2000t['lower'], 'iloc') else keltner_2000t['lower'][bar_idx]
+            
+            keltner_200t_high = keltner_200t['upper'].iloc[bar_idx] if hasattr(keltner_200t['upper'], 'iloc') else keltner_200t['upper'][bar_idx]
+            keltner_200t_low = keltner_200t['lower'].iloc[bar_idx] if hasattr(keltner_200t['lower'], 'iloc') else keltner_200t['lower'][bar_idx]
+            
+            # Check alignment (band crossed or near EMA)
+            alignment_2000t = (abs(keltner_2000t_high - ema_5m_val) <= self.alignment_tolerance or 
+                             abs(keltner_2000t_low - ema_5m_val) <= self.alignment_tolerance)
+            
+            alignment_200t = (abs(keltner_200t_high - ema_5m_val) <= self.alignment_tolerance or 
+                            abs(keltner_200t_low - ema_5m_val) <= self.alignment_tolerance)
+            
+            return alignment_2000t and alignment_200t
+            
+        except (IndexError, KeyError):
+            return False
+    
+    def check_location_density_alignment(self, indicators, bar_idx):
+        """
+        Check if all Keltner bands align within location density
+        """
+        required_timeframes = ['15m', '5m', '2000T', '200T']
+        
+        if not all(tf in indicators for tf in required_timeframes):
+            return False
+        
+        try:
+            # Get EMA values for all timeframes at current bar
+            emas = {}
+            for tf in required_timeframes:
+                ema = indicators[tf]['ema']
+                emas[tf] = ema.iloc[bar_idx] if hasattr(ema, 'iloc') else ema[bar_idx]
+            
+            # Check if all EMAs are within tolerance of each other
+            ema_values = list(emas.values())
+            max_ema = max(ema_values)
+            min_ema = min(ema_values)
+            
+            return (max_ema - min_ema) <= self.location_density_tolerance
+            
+        except (IndexError, KeyError):
+            return False
+    
+    def generate_signals(self, data_dict):
+        """
+        Generate trading signals based on the advanced MTF strategy logic
+        """
+        if not data_dict:
+            return []
+        
+        # Calculate indicators for all timeframes
+        indicators = self.calculate_mtf_indicators(data_dict)
+        
+        # Use the execution timeframe (smallest) for signal generation
+        execution_tf = '200T' if '200T' in indicators else list(indicators.keys())[-1]
+        execution_data = indicators[execution_tf]['data']
+        
+        signals = []
+        
+        for i in range(len(execution_data)):
+            current_time = execution_data.index[i] if hasattr(execution_data, 'index') else i
+            
+            # Check time-based filter
+            if not self.is_trading_time_allowed(current_time):
+                continue
+            
+            # Check ATR execution condition (2000T/200T > 2.8)
+            if not self.check_atr_execution_condition(indicators):
+                continue
+            
+            # Detect execution regime
+            regime = self.detect_execution_regime(indicators)
+            
+            signal = None
+            
+            if regime == 'predictionary':
+                # Expansionary execution logic
+                if self.check_keltner_alignment_predictionary(indicators, i):
+                    # Determine direction based on price vs EMA
+                    current_price = execution_data['close'].iloc[i] if hasattr(execution_data['close'], 'iloc') else execution_data['close'][i]
+                    ema_val = indicators[execution_tf]['ema'].iloc[i] if hasattr(indicators[execution_tf]['ema'], 'iloc') else indicators[execution_tf]['ema'][i]
+                    
+                    direction = 'long' if current_price > ema_val else 'short'
+                    
+                    signal = {
+                        'timestamp': current_time,
+                        'bar_index': i,
+                        'signal_type': 'entry',
+                        'direction': direction,
+                        'regime': 'predictionary',
+                        'entry_price': current_price,
+                        'stop_loss': self._calculate_stop_loss(indicators, execution_tf, i, direction),
+                        'take_profit': self._calculate_take_profit(indicators, execution_tf, i)
+                    }
+            
+            elif regime == 'reactionary':
+                # Mean-reverting execution logic
+                if self.check_location_density_alignment(indicators, i):
+                    # Check 15m EMA rejection/holding
+                    if self._check_15m_ema_rejection(indicators, i):
+                        current_price = execution_data['close'].iloc[i] if hasattr(execution_data['close'], 'iloc') else execution_data['close'][i]
+                        ema_val = indicators[execution_tf]['ema'].iloc[i] if hasattr(indicators[execution_tf]['ema'], 'iloc') else indicators[execution_tf]['ema'][i]
+                        
+                        direction = 'long' if current_price < ema_val else 'short'  # Mean reversion
+                        
+                        signal = {
+                            'timestamp': current_time,
+                            'bar_index': i,
+                            'signal_type': 'entry',
+                            'direction': direction,
+                            'regime': 'reactionary',
+                            'entry_price': current_price,
+                            'stop_loss': self._calculate_stop_loss(indicators, execution_tf, i, direction),
+                            'take_profit': self._calculate_take_profit(indicators, execution_tf, i)
+                        }
+            
+            if signal:
+                signals.append(signal)
+        
+        return signals
+    
+    def _check_15m_ema_rejection(self, indicators, bar_idx):
+        """Check if 15M is rejecting/holding around 21 EMA"""
+        if '15m' not in indicators:
+            return False
+        
+        try:
+            ema_15m = indicators['15m']['ema']
+            data_15m = indicators['15m']['data']
+            
+            # Look back a few bars to check rejection pattern
+            lookback = min(3, bar_idx)
+            
+            for i in range(max(0, bar_idx - lookback), bar_idx + 1):
+                ema_val = ema_15m.iloc[i] if hasattr(ema_15m, 'iloc') else ema_15m[i]
+                close_val = data_15m['close'].iloc[i] if hasattr(data_15m['close'], 'iloc') else data_15m['close'][i]
+                high_val = data_15m['high'].iloc[i] if hasattr(data_15m['high'], 'iloc') else data_15m['high'][i]
+                low_val = data_15m['low'].iloc[i] if hasattr(data_15m['low'], 'iloc') else data_15m['low'][i]
+                
+                # Check if price tested and rejected EMA
+                if low_val <= ema_val <= high_val and abs(close_val - ema_val) > 0.001:
+                    return True
+            
+            return False
+            
+        except (IndexError, KeyError):
+            return False
+    
+    def _calculate_stop_loss(self, indicators, timeframe, bar_idx, direction):
+        """Calculate stop loss based on Keltner band extremes with 2x multiplier"""
+        try:
+            keltner_stop = indicators[timeframe]['keltner_bands_stop']
+            
+            if direction == 'long':
+                stop = keltner_stop['lower'].iloc[bar_idx] if hasattr(keltner_stop['lower'], 'iloc') else keltner_stop['lower'][bar_idx]
+            else:
+                stop = keltner_stop['upper'].iloc[bar_idx] if hasattr(keltner_stop['upper'], 'iloc') else keltner_stop['upper'][bar_idx]
+            
+            return stop
+            
+        except (IndexError, KeyError):
+            return None
+    
+    def _calculate_take_profit(self, indicators, timeframe, bar_idx):
+        """Calculate take profit - prefer VWAP, fallback to EMA midpoint"""
+        try:
+            # Try VWAP first
+            if 'vwap' in indicators[timeframe]:
+                vwap_val = indicators[timeframe]['vwap'].iloc[bar_idx] if hasattr(indicators[timeframe]['vwap'], 'iloc') else indicators[timeframe]['vwap'][bar_idx]
+                return vwap_val
+            
+            # Fallback to midpoint between Keltner bands
+            keltner = indicators[timeframe]['keltner_bands']
+            upper = keltner['upper'].iloc[bar_idx] if hasattr(keltner['upper'], 'iloc') else keltner['upper'][bar_idx]
+            lower = keltner['lower'].iloc[bar_idx] if hasattr(keltner['lower'], 'iloc') else keltner['lower'][bar_idx]
+            
+            return (upper + lower) / 2
+            
+        except (IndexError, KeyError):
+            return None

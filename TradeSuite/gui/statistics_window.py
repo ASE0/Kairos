@@ -440,9 +440,29 @@ class StatisticsWindow(QMainWindow):
         self.dataset_combo.addItem("-- Select Dataset --")
         # Populate from available datasets
         self._populate_datasets()
+        # Connect dataset selection to timeframe adjustment
+        self.dataset_combo.currentIndexChanged.connect(self._on_dataset_selected)
         dataset_layout.addWidget(self.dataset_combo)
         
         layout.addLayout(dataset_layout)
+        
+        # Timeframe selection
+        timeframe_layout = QHBoxLayout()
+        timeframe_layout.addWidget(QLabel("Timeframe Range:"))
+        
+        self.start_date = QDateTimeEdit()
+        self.start_date.setCalendarPopup(True)
+        self.start_date.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
+        timeframe_layout.addWidget(QLabel("From:"))
+        timeframe_layout.addWidget(self.start_date)
+        
+        self.end_date = QDateTimeEdit()
+        self.end_date.setCalendarPopup(True)
+        self.end_date.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
+        timeframe_layout.addWidget(QLabel("To:"))
+        timeframe_layout.addWidget(self.end_date)
+        
+        layout.addLayout(timeframe_layout)
         
         # Analysis parameters
         params_layout = QFormLayout()
@@ -510,6 +530,102 @@ class StatisticsWindow(QMainWindow):
             idx = self.dataset_combo.findText(last)
             if idx > 0:
                 self.dataset_combo.setCurrentIndex(idx)
+                
+    def _on_dataset_selected(self, idx):
+        """Set date pickers to the dataset's saved date range if available, otherwise use actual data range."""
+        if idx <= 0:
+            return
+        dataset_name = self.dataset_combo.currentText()
+        if self.parent_window and hasattr(self.parent_window, 'datasets'):
+            dataset_info = self.parent_window.datasets.get(dataset_name)
+            if dataset_info and 'data' in dataset_info:
+                data = dataset_info['data']
+                metadata = dataset_info.get('metadata', {})
+                
+                # Try to get date range from metadata first
+                date_range = None
+                if hasattr(metadata, 'selected_date_range'):
+                    date_range = metadata.selected_date_range
+                elif isinstance(metadata, dict) and 'selected_date_range' in metadata:
+                    date_range = metadata['selected_date_range']
+                
+                print(f"[DEBUG] Statistics: Dataset '{dataset_name}' date_range in metadata: {date_range}")
+                
+                # Try to parse metadata date range
+                if date_range and len(date_range) == 2:
+                    try:
+                        # Parse the ISO format strings manually to avoid timezone issues
+                        from PyQt6.QtCore import QDate, QTime, Qt
+                        
+                        # Parse start date
+                        start_str = date_range[0]
+                        if 'T' in start_str:
+                            date_part, time_part = start_str.split('T')
+                            time_part = time_part.split('.')[0]  # Remove microseconds if present
+                        else:
+                            date_part = start_str
+                            time_part = "00:00:00"
+                        
+                        start_date_parts = date_part.split('-')
+                        start_time_parts = time_part.split(':')
+                        
+                        start_date = QDate(int(start_date_parts[0]), int(start_date_parts[1]), int(start_date_parts[2]))
+                        start_time = QTime(int(start_time_parts[0]), int(start_time_parts[1]), int(start_time_parts[2]))
+                        from_date = QDateTime(start_date, start_time, Qt.TimeSpec.LocalTime)
+                        
+                        # Parse end date
+                        end_str = date_range[1]
+                        if 'T' in end_str:
+                            date_part, time_part = end_str.split('T')
+                            time_part = time_part.split('.')[0]  # Remove microseconds if present
+                        else:
+                            date_part = end_str
+                            time_part = "00:00:00"
+                        
+                        end_date_parts = date_part.split('-')
+                        end_time_parts = time_part.split(':')
+                        
+                        end_date = QDate(int(end_date_parts[0]), int(end_date_parts[1]), int(end_date_parts[2]))
+                        end_time = QTime(int(end_time_parts[0]), int(end_time_parts[1]), int(end_time_parts[2]))
+                        to_date = QDateTime(end_date, end_time, Qt.TimeSpec.LocalTime)
+                        
+                        print(f"[DEBUG] Statistics: Parsed from_date: {from_date.toString(Qt.DateFormat.ISODate)}, valid: {from_date.isValid()}")
+                        print(f"[DEBUG] Statistics: Parsed to_date: {to_date.toString(Qt.DateFormat.ISODate)}, valid: {to_date.isValid()}")
+                        
+                        # Only use metadata dates if they're valid
+                        if from_date.isValid() and to_date.isValid():
+                            self.start_date.setDateTime(from_date)
+                            self.end_date.setDateTime(to_date)
+                            print(f"[DEBUG] Statistics: Set date range from metadata: {from_date.toString(Qt.DateFormat.ISODate)} to {to_date.toString(Qt.DateFormat.ISODate)}")
+                            return
+                    except Exception as e:
+                        print(f"[DEBUG] Statistics: Exception parsing date range: {e}")
+                
+                # If metadata date range is not available or invalid, use actual data range
+                if isinstance(data.index, pd.DatetimeIndex):
+                    actual_start = data.index.min()
+                    actual_end = data.index.max()
+                    
+                    # Convert pandas timestamps to QDateTime using QDate and QTime to avoid timezone issues
+                    from PyQt6.QtCore import QDate, QTime, Qt
+                    
+                    # Extract date and time components
+                    start_date = QDate(actual_start.year, actual_start.month, actual_start.day)
+                    start_time = QTime(actual_start.hour, actual_start.minute, actual_start.second)
+                    from_date = QDateTime(start_date, start_time, Qt.TimeSpec.LocalTime)
+                    
+                    end_date = QDate(actual_end.year, actual_end.month, actual_end.day)
+                    end_time = QTime(actual_end.hour, actual_end.minute, actual_end.second)
+                    to_date = QDateTime(end_date, end_time, Qt.TimeSpec.LocalTime)
+                    
+                    if from_date.isValid() and to_date.isValid():
+                        self.start_date.setDateTime(from_date)
+                        self.end_date.setDateTime(to_date)
+                        print(f"[DEBUG] Statistics: Set date range from actual data: {from_date.toString(Qt.DateFormat.ISODate)} to {to_date.toString(Qt.DateFormat.ISODate)}")
+                    else:
+                        print(f"[DEBUG] Statistics: Failed to create valid QDateTime from actual data dates: {actual_start} to {actual_end}")
+                else:
+                    print(f"[DEBUG] Statistics: Dataset does not have DatetimeIndex, cannot set date range automatically")
                 
     def refresh_data(self):
         """Refresh strategy and dataset lists"""
@@ -667,6 +783,13 @@ class StatisticsWindow(QMainWindow):
                 return
             
             data = dataset_info['data']
+            
+            # Apply timeframe filtering
+            data = self._filter_data_by_timeframe(data)
+            if data is None or len(data) == 0:
+                QMessageBox.warning(self, "No Data", "No data available for the selected timeframe range.")
+                return
+            
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
             
             try:
@@ -709,6 +832,42 @@ class StatisticsWindow(QMainWindow):
     def _get_selected_strategy_objects(self):
         """Helper to get strategy objects from list widget selection."""
         return [item.data(Qt.ItemDataRole.UserRole) for item in self.strategy_list.selectedItems() if item.data(Qt.ItemDataRole.UserRole)]
+        
+    def _filter_data_by_timeframe(self, data):
+        """Filter data to the selected timeframe range, using the same logic as backtester."""
+        if not isinstance(data.index, pd.DatetimeIndex):
+            print("[DEBUG] Statistics: Data does not have DatetimeIndex, cannot filter by timeframe")
+            return data
+            
+        # Get the selected date range
+        start_dt = pd.to_datetime(self.start_date.dateTime().toString(Qt.DateFormat.ISODate))
+        end_dt = pd.to_datetime(self.end_date.dateTime().toString(Qt.DateFormat.ISODate))
+        
+        # Get actual data range
+        actual_start = data.index.min()
+        actual_end = data.index.max()
+        
+        print(f"[DEBUG] Statistics: Selected timeframe: {start_dt} to {end_dt}")
+        print(f"[DEBUG] Statistics: Actual data range: {actual_start} to {actual_end}")
+        
+        # Check if the selected range overlaps with available data
+        if start_dt > actual_end or end_dt < actual_start:
+            print(f"[DEBUG] Statistics: WARNING: Selected timeframe ({start_dt} to {end_dt}) is outside dataset range!")
+            print(f"[DEBUG] Statistics: Using full dataset range instead: {actual_start} to {actual_end}")
+            start_dt = actual_start
+            end_dt = actual_end
+        
+        # Filter the data
+        before_filter = len(data)
+        filtered_data = data[(data.index >= start_dt) & (data.index < end_dt)]
+        
+        print(f"[DEBUG] Statistics: Filtered to timeframe: {start_dt} to {end_dt} ({before_filter} -> {len(filtered_data)} bars)")
+        
+        if len(filtered_data) == 0:
+            print(f"[DEBUG] Statistics: ERROR: No data available for the selected timeframe range")
+            return None
+            
+        return filtered_data
 
     def _run_probability_analysis(self, source_results: Dict[str, Any]):
         """Run probability analysis using the provided results data."""
