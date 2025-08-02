@@ -16,6 +16,8 @@ from core.feature_quantification import (
     two_bar_strength, dual_layer_location, momentum_boost,
     realized_vol, atr, bayesian_update
 )
+from patterns.base_pattern import CandlestickPattern
+from patterns.fvg_pattern import FVGPattern
 
 
 def get_candle_metrics(data: pd.DataFrame) -> Dict[str, pd.Series]:
@@ -665,7 +667,8 @@ class PatternFactory:
             'double_wick': DoubleWickPattern,
             'hammer': HammerPattern,
             'engulfing': EngulfingPattern,
-            'custom': CustomPattern
+            'custom': CustomPattern,
+            'fvg': FVGPattern
         }
         
         pattern_class = patterns.get(pattern_type.lower())

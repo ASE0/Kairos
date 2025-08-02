@@ -1,0 +1,1421 @@
+{
+  "metrics": {
+    "total_trades": 0,
+    "win_rate": 0,
+    "total_pnl": 0,
+    "avg_win": 0,
+    "avg_loss": 0,
+    "max_drawdown": 0,
+    "sharpe_ratio": 0,
+    "trades_in_fvg": 0
+  },
+  "trades": [],
+  "zones": [
+    {
+      "timestamp": "2025-08-01 09:54:00",
+      "zone_min": 14768.84037523727,
+      "zone_max": 14839.393858067417,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14786.478745944807,
+        14804.117116652344,
+        14821.75548735988
+      ],
+      "initial_strength": 0.4176360780894545,
+      "creation_index": 24,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 09:57:00",
+      "zone_min": 14717.705789871554,
+      "zone_max": 14755.528134497064,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14727.161376027932,
+        14736.61696218431,
+        14746.072548340686
+      ],
+      "initial_strength": 0.21365872117285353,
+      "creation_index": 27,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 10:00:00",
+      "zone_min": 14682.717110885233,
+      "zone_max": 14736.538452157538,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14696.172446203309,
+        14709.627781521385,
+        14723.083116839462
+      ],
+      "initial_strength": 0.42738282185285276,
+      "creation_index": 30,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 10:01:00",
+      "zone_min": 14683.887979012034,
+      "zone_max": 14857.148409931779,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14727.20308674197,
+        14770.518194471906,
+        14813.833302201841
+      ],
+      "initial_strength": 0.4690574558933948,
+      "creation_index": 31,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 10:02:00",
+      "zone_min": 14828.312167683349,
+      "zone_max": 14855.58788362001,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14835.131096667514,
+        14841.95002565168,
+        14848.768954635845
+      ],
+      "initial_strength": 0.2248927336545032,
+      "creation_index": 32,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 10:03:00",
+      "zone_min": 14848.88360496858,
+      "zone_max": 14857.148409931779,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14850.949806209379,
+        14853.01600745018,
+        14855.08220869098
+      ],
+      "initial_strength": 0.18820415110300387,
+      "creation_index": 33,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 10:08:00",
+      "zone_min": 14750.373899968503,
+      "zone_max": 14823.86696009656,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14768.747165000517,
+        14787.120430032532,
+        14805.493695064546
+      ],
+      "initial_strength": 0.4848977143653035,
+      "creation_index": 38,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 10:13:00",
+      "zone_min": 14715.205880689204,
+      "zone_max": 14743.84863318322,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14722.366568812708,
+        14729.527256936211,
+        14736.687945059715
+      ],
+      "initial_strength": 0.40910063067216046,
+      "creation_index": 43,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 10:14:00",
+      "zone_min": 14716.308218458536,
+      "zone_max": 14767.759237292776,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14729.170973167096,
+        14742.033727875656,
+        14754.896482584216
+      ],
+      "initial_strength": 0.5006158766363561,
+      "creation_index": 44,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 10:15:00",
+      "zone_min": 14711.013116988712,
+      "zone_max": 14750.584063914097,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14720.905853720058,
+        14730.798590451404,
+        14740.69132718275
+      ],
+      "initial_strength": 0.4591631766806171,
+      "creation_index": 45,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 10:16:00",
+      "zone_min": 14741.774200492497,
+      "zone_max": 14746.70033351852,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14743.005733749003,
+        14744.237267005508,
+        14745.468800262013
+      ],
+      "initial_strength": 0.19058832866908929,
+      "creation_index": 46,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 10:32:00",
+      "zone_min": 14646.368104361152,
+      "zone_max": 14689.128909931835,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14657.058305753822,
+        14667.748507146494,
+        14678.438708539165
+      ],
+      "initial_strength": 0.40314049117958556,
+      "creation_index": 62,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 10:33:00",
+      "zone_min": 14610.53495628464,
+      "zone_max": 14674.50708127374,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14626.527987531916,
+        14642.521018779189,
+        14658.514050026464
+      ],
+      "initial_strength": 0.6173361216434822,
+      "creation_index": 63,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 10:34:00",
+      "zone_min": 14599.585083667334,
+      "zone_max": 14627.16653372479,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14606.480446181698,
+        14613.375808696062,
+        14620.271171210426
+      ],
+      "initial_strength": 0.4342396793573673,
+      "creation_index": 64,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 10:35:00",
+      "zone_min": 14610.53495628464,
+      "zone_max": 14686.974801889237,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14629.64491768579,
+        14648.754879086939,
+        14667.864840488088
+      ],
+      "initial_strength": 0.6688600906185087,
+      "creation_index": 65,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 10:36:00",
+      "zone_min": 14599.585083667334,
+      "zone_max": 14623.46886726299,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14605.556029566249,
+        14611.526975465164,
+        14617.497921364076
+      ],
+      "initial_strength": 0.3834605872305898,
+      "creation_index": 66,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 10:37:00",
+      "zone_min": 14705.44023938515,
+      "zone_max": 14709.71240491743,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14706.508280768221,
+        14707.57632215129,
+        14708.64436353436
+      ],
+      "initial_strength": 0.2657718718218128,
+      "creation_index": 67,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 10:41:00",
+      "zone_min": 14753.580048656644,
+      "zone_max": 14756.018203203232,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14754.189587293291,
+        14754.799125929938,
+        14755.408664566585
+      ],
+      "initial_strength": 0.22382734205176563,
+      "creation_index": 71,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 10:52:00",
+      "zone_min": 14710.283582263944,
+      "zone_max": 14722.394879925721,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14713.31140667939,
+        14716.339231094833,
+        14719.367055510276
+      ],
+      "initial_strength": 0.3670437436016538,
+      "creation_index": 82,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 11:11:00",
+      "zone_min": 14637.673800112792,
+      "zone_max": 14671.108827579847,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14646.032556979557,
+        14654.39131384632,
+        14662.750070713082
+      ],
+      "initial_strength": 0.47898821133070285,
+      "creation_index": 101,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 11:16:00",
+      "zone_min": 14607.870581692594,
+      "zone_max": 14612.30591467331,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14608.979414937774,
+        14610.088248182952,
+        14611.19708142813
+      ],
+      "initial_strength": 0.3249659583982959,
+      "creation_index": 106,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 11:21:00",
+      "zone_min": 14635.495507028527,
+      "zone_max": 14636.518559979719,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14635.751270266324,
+        14636.007033504124,
+        14636.262796741921
+      ],
+      "initial_strength": 0.24927639029763332,
+      "creation_index": 111,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 11:23:00",
+      "zone_min": 14635.495507028527,
+      "zone_max": 14674.233955730686,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14645.180119204066,
+        14654.864731379606,
+        14664.549343555147
+      ],
+      "initial_strength": 0.5111820448193085,
+      "creation_index": 113,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 11:24:00",
+      "zone_min": 14663.983067450865,
+      "zone_max": 14664.380270697748,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14664.082368262585,
+        14664.181669074307,
+        14664.280969886027
+      ],
+      "initial_strength": 0.30424185143364374,
+      "creation_index": 114,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 11:35:00",
+      "zone_min": 14756.530329118314,
+      "zone_max": 14766.046640748878,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14758.909407025954,
+        14761.288484933597,
+        14763.667562841238
+      ],
+      "initial_strength": 0.34546968449896354,
+      "creation_index": 125,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 11:37:00",
+      "zone_min": 14752.745084019634,
+      "zone_max": 14766.046640748878,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14756.070473201946,
+        14759.395862384255,
+        14762.721251566567
+      ],
+      "initial_strength": 0.3635538341421001,
+      "creation_index": 127,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 11:57:00",
+      "zone_min": 14635.846943918807,
+      "zone_max": 14675.778585242697,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14645.82985424978,
+        14655.81276458075,
+        14665.795674911724
+      ],
+      "initial_strength": 0.4128678638807369,
+      "creation_index": 147,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 11:59:00",
+      "zone_min": 14635.846943918807,
+      "zone_max": 14685.109983075792,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14648.162703708053,
+        14660.4784634973,
+        14672.794223286546
+      ],
+      "initial_strength": 0.5227095162358557,
+      "creation_index": 149,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 12:00:00",
+      "zone_min": 14680.183778639643,
+      "zone_max": 14706.534585939628,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14686.771480464638,
+        14693.359182289634,
+        14699.946884114632
+      ],
+      "initial_strength": 0.41975598046899887,
+      "creation_index": 150,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 12:02:00",
+      "zone_min": 14645.72882168504,
+      "zone_max": 14706.534585939628,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14660.930262748687,
+        14676.131703812334,
+        14691.33314487598
+      ],
+      "initial_strength": 0.4071835367868803,
+      "creation_index": 152,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 12:12:00",
+      "zone_min": 14663.88669382858,
+      "zone_max": 14676.048719709263,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14666.927200298749,
+        14669.96770676892,
+        14673.008213239093
+      ],
+      "initial_strength": 0.3568796954633506,
+      "creation_index": 162,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 12:16:00",
+      "zone_min": 14730.05631987776,
+      "zone_max": 14733.76382301548,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14730.98319566219,
+        14731.91007144662,
+        14732.836947231051
+      ],
+      "initial_strength": 0.25014983305387717,
+      "creation_index": 166,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 12:17:00",
+      "zone_min": 14729.520071081246,
+      "zone_max": 14774.334991506059,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14740.723801187449,
+        14751.927531293652,
+        14763.131261399856
+      ],
+      "initial_strength": 0.45475751696476313,
+      "creation_index": 167,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 12:21:00",
+      "zone_min": 14745.413648106038,
+      "zone_max": 14756.086562665456,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14748.081876745891,
+        14750.750105385747,
+        14753.418334025602
+      ],
+      "initial_strength": 0.21393134162952146,
+      "creation_index": 171,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 12:27:00",
+      "zone_min": 14789.463979556618,
+      "zone_max": 14801.084432423506,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14792.36909277334,
+        14795.274205990063,
+        14798.179319206783
+      ],
+      "initial_strength": 0.367201119540351,
+      "creation_index": 177,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 12:28:00",
+      "zone_min": 14813.442559370653,
+      "zone_max": 14839.841770879315,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14820.04236224782,
+        14826.642165124984,
+        14833.241968002148
+      ],
+      "initial_strength": 0.4459597847490948,
+      "creation_index": 178,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 12:30:00",
+      "zone_min": 14745.691393205934,
+      "zone_max": 14874.221382335634,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14777.823890488358,
+        14809.956387770784,
+        14842.08888505321
+      ],
+      "initial_strength": 0.9921628056028546,
+      "creation_index": 180,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 12:31:00",
+      "zone_min": 14821.077546580807,
+      "zone_max": 14865.538235929602,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14832.192718918006,
+        14843.307891255205,
+        14854.423063592403
+      ],
+      "initial_strength": 0.5072915696062391,
+      "creation_index": 181,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 12:33:00",
+      "zone_min": 14856.948014013278,
+      "zone_max": 14865.538235929602,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14859.09556949236,
+        14861.24312497144,
+        14863.39068045052
+      ],
+      "initial_strength": 0.2734201367639116,
+      "creation_index": 183,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 12:40:00",
+      "zone_min": 14811.345599801358,
+      "zone_max": 14812.868403228415,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14811.726300658122,
+        14812.107001514887,
+        14812.48770237165
+      ],
+      "initial_strength": 0.31006632138866264,
+      "creation_index": 190,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 12:55:00",
+      "zone_min": 14787.196352043224,
+      "zone_max": 14795.263181051088,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14789.21305929519,
+        14791.229766547156,
+        14793.246473799121
+      ],
+      "initial_strength": 0.3365309636778763,
+      "creation_index": 205,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 12:57:00",
+      "zone_min": 14787.196352043224,
+      "zone_max": 14801.883928143305,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14790.868246068243,
+        14794.540140093264,
+        14798.212034118285
+      ],
+      "initial_strength": 0.1650196494781669,
+      "creation_index": 207,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 12:59:00",
+      "zone_min": 14902.143145227305,
+      "zone_max": 14917.377001972984,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14905.951609413725,
+        14909.760073600144,
+        14913.568537786563
+      ],
+      "initial_strength": 0.3681430706430962,
+      "creation_index": 209,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 13:00:00",
+      "zone_min": 14873.625740128138,
+      "zone_max": 14917.804474082535,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14884.670423616737,
+        14895.715107105338,
+        14906.759790593936
+      ],
+      "initial_strength": 0.4935999523593458,
+      "creation_index": 210,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 13:10:00",
+      "zone_min": 15059.120479440335,
+      "zone_max": 15073.616612877782,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        15062.744512799696,
+        15066.368546159058,
+        15069.99257951842
+      ],
+      "initial_strength": 0.3508767085393125,
+      "creation_index": 220,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 13:12:00",
+      "zone_min": 15068.369790880823,
+      "zone_max": 15073.616612877782,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        15069.681496380063,
+        15070.993201879302,
+        15072.304907378542
+      ],
+      "initial_strength": 0.3234468470653922,
+      "creation_index": 222,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 13:14:00",
+      "zone_min": 15002.69053166411,
+      "zone_max": 15027.067008553222,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        15008.784650886388,
+        15014.878770108666,
+        15020.972889330944
+      ],
+      "initial_strength": 0.33466397466473824,
+      "creation_index": 224,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 13:18:00",
+      "zone_min": 14971.688742567663,
+      "zone_max": 14986.996200679016,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14975.515607095502,
+        14979.342471623338,
+        14983.169336151177
+      ],
+      "initial_strength": 0.27831505552846986,
+      "creation_index": 228,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 13:35:00",
+      "zone_min": 14981.989256497543,
+      "zone_max": 14986.917120174847,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14983.221222416869,
+        14984.453188336196,
+        14985.685154255521
+      ],
+      "initial_strength": 0.3207572044924529,
+      "creation_index": 245,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 13:42:00",
+      "zone_min": 14988.597198473775,
+      "zone_max": 15024.582391503596,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14997.593496731231,
+        15006.589794988686,
+        15015.58609324614
+      ],
+      "initial_strength": 0.45867238616887895,
+      "creation_index": 252,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 13:43:00",
+      "zone_min": 15001.053346176564,
+      "zone_max": 15035.84670730919,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        15009.75168645972,
+        15018.450026742878,
+        15027.148367026035
+      ],
+      "initial_strength": 0.4221751315843837,
+      "creation_index": 253,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 13:45:00",
+      "zone_min": 15021.217455099919,
+      "zone_max": 15035.84670730919,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        15024.874768152236,
+        15028.532081204554,
+        15032.189394256873
+      ],
+      "initial_strength": 0.3677689705296582,
+      "creation_index": 255,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 13:52:00",
+      "zone_min": 14966.151468905771,
+      "zone_max": 14976.887908414907,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14968.835578783055,
+        14971.519688660339,
+        14974.203798537623
+      ],
+      "initial_strength": 0.3442113691321321,
+      "creation_index": 262,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 13:53:00",
+      "zone_min": 14978.580401028103,
+      "zone_max": 14984.318727716416,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14980.01498270018,
+        14981.449564372258,
+        14982.884146044338
+      ],
+      "initial_strength": 0.2780839704348633,
+      "creation_index": 263,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 13:55:00",
+      "zone_min": 14872.353618659557,
+      "zone_max": 14897.882639545,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14878.735873880918,
+        14885.118129102279,
+        14891.500384323639
+      ],
+      "initial_strength": 0.3558772093708205,
+      "creation_index": 265,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 13:58:00",
+      "zone_min": 14850.268585618893,
+      "zone_max": 14879.724347554962,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14857.63252610291,
+        14864.996466586927,
+        14872.360407070944
+      ],
+      "initial_strength": 0.46633443157775273,
+      "creation_index": 268,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 14:00:00",
+      "zone_min": 14850.268585618893,
+      "zone_max": 14857.217456021264,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14852.005803219487,
+        14853.743020820079,
+        14855.48023842067
+      ],
+      "initial_strength": 0.3398397414546207,
+      "creation_index": 270,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 14:07:00",
+      "zone_min": 14862.4622548458,
+      "zone_max": 14869.73118804549,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14864.279488145723,
+        14866.096721445645,
+        14867.913954745567
+      ],
+      "initial_strength": 0.19359508565480094,
+      "creation_index": 277,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 14:12:00",
+      "zone_min": 14863.477826040455,
+      "zone_max": 14875.763498435841,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14866.549244139302,
+        14869.620662238147,
+        14872.692080336994
+      ],
+      "initial_strength": 0.37153281746367584,
+      "creation_index": 282,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 14:16:00",
+      "zone_min": 14895.470138574616,
+      "zone_max": 14922.787773730215,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14902.299547363516,
+        14909.128956152415,
+        14915.958364941314
+      ],
+      "initial_strength": 0.3934320958725192,
+      "creation_index": 286,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 14:18:00",
+      "zone_min": 14895.470138574616,
+      "zone_max": 14904.002125856503,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14897.603135395088,
+        14899.73613221556,
+        14901.869129036031
+      ],
+      "initial_strength": 0.34492420763260234,
+      "creation_index": 288,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 14:21:00",
+      "zone_min": 14897.118407656,
+      "zone_max": 14918.233844599537,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14902.397266891885,
+        14907.676126127768,
+        14912.954985363653
+      ],
+      "initial_strength": 0.31948928338423077,
+      "creation_index": 291,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 14:23:00",
+      "zone_min": 14936.330529505176,
+      "zone_max": 14946.426509352974,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14938.854524467126,
+        14941.378519429076,
+        14943.902514391024
+      ],
+      "initial_strength": 0.3552013002832601,
+      "creation_index": 293,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 14:25:00",
+      "zone_min": 14934.869102861923,
+      "zone_max": 14946.426509352974,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14937.758454484687,
+        14940.647806107449,
+        14943.53715773021
+      ],
+      "initial_strength": 0.24083751289839053,
+      "creation_index": 295,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 14:28:00",
+      "zone_min": 14906.747177982073,
+      "zone_max": 14913.481729004681,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14908.430815737725,
+        14910.114453493377,
+        14911.79809124903
+      ],
+      "initial_strength": 0.32145501770595064,
+      "creation_index": 298,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 14:40:00",
+      "zone_min": 14984.470998273866,
+      "zone_max": 14985.829982117411,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        14984.810744234752,
+        14985.15049019564,
+        14985.490236156525
+      ],
+      "initial_strength": 0.30734074533284156,
+      "creation_index": 310,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 14:42:00",
+      "zone_min": 14984.470998273866,
+      "zone_max": 15014.478059854258,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        14991.972763668964,
+        14999.474529064062,
+        15006.97629445916
+      ],
+      "initial_strength": 0.2773747516246573,
+      "creation_index": 312,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 15:01:00",
+      "zone_min": 15231.178171396556,
+      "zone_max": 15244.687547451998,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        15234.555515410417,
+        15237.932859424276,
+        15241.310203438137
+      ],
+      "initial_strength": 0.35961678480394266,
+      "creation_index": 331,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 15:18:00",
+      "zone_min": 15048.679182480268,
+      "zone_max": 15086.89198915877,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        15058.232384149893,
+        15067.785585819518,
+        15077.338787489145
+      ],
+      "initial_strength": 0.415190907435354,
+      "creation_index": 348,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 15:22:00",
+      "zone_min": 15024.959559818413,
+      "zone_max": 15102.529541731306,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        15044.352055296637,
+        15063.74455077486,
+        15083.137046253083
+      ],
+      "initial_strength": 0.3942305843986396,
+      "creation_index": 352,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 15:31:00",
+      "zone_min": 15042.814222163168,
+      "zone_max": 15080.335459094404,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        15052.194531395977,
+        15061.574840628786,
+        15070.955149861595
+      ],
+      "initial_strength": 0.3473835581366899,
+      "creation_index": 361,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 15:52:00",
+      "zone_min": 15292.70853191393,
+      "zone_max": 15342.042012388845,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        15305.041902032659,
+        15317.375272151388,
+        15329.708642270116
+      ],
+      "initial_strength": 0.36397258649460096,
+      "creation_index": 382,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 15:53:00",
+      "zone_min": 15293.796035532365,
+      "zone_max": 15324.855790201775,
+      "zone_type": "FVG",
+      "zone_direction": "bearish",
+      "comb_centers": [
+        15301.560974199718,
+        15309.325912867069,
+        15317.090851534422
+      ],
+      "initial_strength": 0.37352608554549943,
+      "creation_index": 383,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    },
+    {
+      "timestamp": "2025-08-01 15:58:00",
+      "zone_min": 15309.028474473864,
+      "zone_max": 15334.45027505843,
+      "zone_type": "FVG",
+      "zone_direction": "bullish",
+      "comb_centers": [
+        15315.383924620006,
+        15321.739374766148,
+        15328.094824912288
+      ],
+      "initial_strength": 0.33286228419290126,
+      "creation_index": 388,
+      "gamma": 0.95,
+      "tau_bars": 50,
+      "drop_threshold": 0.01,
+      "bar_interval_minutes": 1,
+      "zone_days_valid": 0.034722222222222224
+    }
+  ]
+}

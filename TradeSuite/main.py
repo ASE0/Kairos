@@ -88,12 +88,12 @@ def main():
                     debug_msg = "Set index to 'Date' column."
                 except Exception as e:
                     debug_msg = f"Failed to parse 'Date' column: {e}\nUsing synthetic index."
-                    df.index = pd.date_range(start='2000-01-01', periods=len(df), freq='T')
+                    df.index = pd.date_range(start='2000-01-01', periods=len(df), freq='min')
             elif 'timestamp' in df.columns:
                 df.index = pd.to_datetime(df['timestamp'])
                 debug_msg = "Set index to 'timestamp' column."
             else:
-                df.index = pd.date_range(start='2000-01-01', periods=len(df), freq='T')
+                df.index = pd.date_range(start='2000-01-01', periods=len(df), freq='min')
                 debug_msg = "No datetime column found, using synthetic date range index."
             # Debug: Show index info
             debug_msg += f"\nIndex type: {type(df.index)}\nNum rows: {len(df)}\nNum unique index: {df.index.nunique()}\nIndex min: {df.index.min()}\nIndex max: {df.index.max()}\nFirst 10: {list(df.index[:10])}"

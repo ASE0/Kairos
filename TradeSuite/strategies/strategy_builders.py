@@ -38,6 +38,56 @@ from core.feature_quantification import (
     calculate_vwap
 )
 
+def detect_support_resistance(high: np.ndarray, low: np.ndarray, window: int = 20, threshold: float = 0.02) -> Tuple[List[float], List[float]]:
+    """Detect support and resistance levels"""
+    supports = []
+    resistances = []
+    
+    # Calculate rolling min/max
+    for i in range(window, len(high)):
+        window_high = high[i-window:i]
+        window_low = low[i-window:i]
+        
+        # Find local extremes
+        if low[i] == min(window_low):
+            supports.append(low[i])
+        if high[i] == max(window_high):
+            resistances.append(high[i])
+    
+    return supports, resistances
+
+def rolling_support_resistance(high: np.ndarray, low: np.ndarray, window: int = 20) -> Tuple[List[float], List[float]]:
+    """Calculate rolling support/resistance levels"""
+    supports = []
+    resistances = []
+    
+    # Calculate rolling min/max
+    for i in range(window, len(high)):
+        window_high = high[i-window:i]
+        window_low = low[i-window:i]
+        
+        # Find local extremes
+        supports.append(min(window_low))
+        resistances.append(max(window_high))
+    
+    return supports, resistances
+
+def garch_volatility_forecast(returns: np.ndarray) -> float:
+    """Calculate GARCH forecast"""
+    # Simplified GARCH(1,1) forecast
+    omega = 0.001
+    alpha = 0.1
+    beta = 0.8
+    
+    # Initialize variance
+    var = np.var(returns) if len(returns) > 0 else 0.0001
+    
+    # Update variance
+    for r in returns:
+        var = omega + alpha * r * r + beta * var
+        
+    return np.sqrt(var)
+
 # Import advanced components
 from core.data_structures import ZSpaceMatrix, BayesianStateTracker
 from core.feature_quantification import ImbalanceMemorySystem
@@ -482,83 +532,93 @@ class PatternStrategy(BaseStrategy):
         
     def evaluate(self, data: pd.DataFrame) -> Tuple[pd.Series, pd.DataFrame]:
         """
-        Evaluate strategy on data with simplified execution logic
+        Evaluate strategy on data with improved FVG zone handling
         Returns: (signals, action_details)
         """
         if not self.actions:
             return pd.Series(False, index=data.index), pd.DataFrame()
+        
         # Ensure data has proper index
         if not isinstance(data.index, pd.DatetimeIndex):
             data.index = pd.date_range('2023-01-01', periods=len(data), freq='1min')
         
-        self.calculated_zones = [] # Clear zones at the start of each evaluation
-        self.simple_zones = []  # PATCH: Clear simple zones at the start of each evaluation
+        # Clear zones at the start of each evaluation
+        self.calculated_zones = []
+        self.simple_zones = []
 
-        # Get signals for each action (simplified)
+        # Initialize signal containers
         action_signals = pd.DataFrame(index=data.index)
         action_strengths = pd.DataFrame(index=data.index)
+        final_signals = pd.Series(False, index=data.index)
+        
+        # Process each action
         for action in self.actions:
             try:
+                # Special handling for FVG actions
+                if (hasattr(action, 'pattern') and hasattr(action.pattern, 'name') and 
+                    action.pattern.name and action.pattern.name.lower() == 'fvg'):
+                    
+                    # Process each bar for FVG detection
+                    fvg_signals = pd.Series(False, index=data.index)
+                    for i in range(2, len(data)):
+                        # Detect FVG zones
+                        zones = self._detect_fvg_zones(data, i)
+                        
+                        if zones:
+                            for zone in zones:
+                                # Store zone for visualization
+                                self.simple_zones.append(zone)
+                                
+                                # Check if price crosses zone boundaries
+                                current_price = data.iloc[i]['close']
+                                prev_price = data.iloc[i-1]['close']
+                                
+                                # Long entry: Price crosses up through lower boundary
+                                if zone['direction'] == 'bullish':
+                                    if prev_price < zone['zone_min'] and current_price >= zone['zone_min']:
+                                        fvg_signals.iloc[i] = True
+                                        action_strengths[action.name] = pd.Series(zone['strength'], index=data.index)
+                                
+                                # Short entry: Price crosses down through upper boundary
+                                elif zone['direction'] == 'bearish':
+                                    if prev_price > zone['zone_max'] and current_price <= zone['zone_max']:
+                                        fvg_signals.iloc[i] = True
+                                        action_strengths[action.name] = pd.Series(zone['strength'], index=data.index)
+                    
+                    action_signals[action.name] = fvg_signals
+                
+                                                                                                                                                                # Standard processing for other actions
+                else:
                 action_result = action.apply(data)
                 if not isinstance(action_result, pd.Series):
                     action_result = pd.Series(action_result, index=data.index)
                 action_signals[action.name] = action_result
-                # Simplified strength calculation
-                action_strengths[action.name] = 0.5  # Default strength
+                    action_strengths[action.name] = pd.Series(0.5, index=data.index)
             except Exception as e:
-                # Check for ambiguous Series error
-                if 'The truth value of a Series is ambiguous' in str(e):
-                    print(f"[ERROR] Action {action.name} failed due to ambiguous Series truth value. Use .any() or .all() as appropriate. Full error: {e}")
-                else:
                     print(f"Action {action.name} failed: {e}")
                 action_signals[action.name] = pd.Series(False, index=data.index)
                 action_strengths[action.name] = pd.Series(0.0, index=data.index)
-        # Combine signals based on logic (simplified)
+        
+        # Combine signals based on strategy logic
         if self.combination_logic == 'AND':
             combined_signals = action_signals.all(axis=1)
         elif self.combination_logic == 'OR':
             combined_signals = action_signals.any(axis=1)
         elif self.combination_logic == 'WEIGHTED' and self.weights:
-            # Weighted combination
             weighted_sum = sum(action_signals[action.name] * weight 
                              for action, weight in zip(self.actions, self.weights))
-            threshold = sum(self.weights) * 0.5  # 50% threshold
+            threshold = sum(self.weights) * 0.5
             combined_signals = weighted_sum >= threshold
         else:
             combined_signals = action_signals.sum(axis=1) >= self.min_actions_required
         
-        # --- Full Gate Logic ---
-        final_signals = pd.Series(False, index=data.index)
-        
-        # Check if this is a pure filter-only strategy (no location strategies)
-        has_pure_filter_actions = any(
-            not action.pattern and action.filters and not action.location_strategy 
-            for action in self.actions
-        )
-        
-        if has_pure_filter_actions:
-            print("[DEBUG] Pure filter-only strategy detected - bypassing location gates")
-            final_signals = combined_signals
-        elif self.gates_and_logic:
-            # Get indices where there is a potential signal
-            potential_signal_indices = combined_signals[combined_signals].index
-            
-            # DEBUG: Temporarily bypass gates to test signal generation
-            print(f"[DEBUG] Found {len(potential_signal_indices)} potential signals before gates")
-            
-            for i in potential_signal_indices:
-                # Check all gates for this index, using integer location
-                gates_passed = self._check_gates(data, data.index.get_loc(i))
+        # Apply gates if configured
+        if self.gates_and_logic:
+            for i in range(len(data)):
+                if combined_signals.iloc[i]:
+                    gates_passed = self._check_gates(data, i)
                 if all(gates_passed):
-                    final_signals[i] = True
-                    print(f"[DEBUG] Signal passed gates at index {i}")
-                else:
-                    print(f"[DEBUG] Signal failed gates at index {i}: {gates_passed}")
-            
-            # TEMPORARY PATCH: If no signals pass gates, use combined_signals directly
-            if final_signals.sum() == 0 and combined_signals.sum() > 0:
-                print(f"[DEBUG] No signals passed gates, using combined_signals directly")
-                final_signals = combined_signals
+                        final_signals.iloc[i] = True
         else:
             final_signals = combined_signals
         
@@ -1678,7 +1738,7 @@ class PatternStrategy(BaseStrategy):
         return zones
     
     def _detect_fvg_zones(self, data: pd.DataFrame, index: int) -> List[Dict]:
-        """Detect Fair Value Gap zones"""
+        """Detect Fair Value Gap zones with improved signal generation"""
         zones = []
         
         if index < 2:
@@ -1686,44 +1746,49 @@ class PatternStrategy(BaseStrategy):
             
         # Get parameters from strategy
         params = getattr(self, 'location_gate_params', {})
-        epsilon = params.get('fvg_epsilon', 0.1)  # PATCH: Reduced from 2.0 to 0.1 for better positioning
-        N = params.get('fvg_N', 3)
-        sigma = params.get('fvg_sigma', 0.1)
-        beta1 = params.get('fvg_beta1', 0.7)
-        beta2 = params.get('fvg_beta2', 0.3)
-        phi = params.get('fvg_phi', 0.2)
-        lambda_skew = params.get('fvg_lambda', 0.0)
-        gamma = params.get('fvg_gamma', 0.95)
-        tau_bars = params.get('fvg_tau_bars', 50)
-        drop_threshold = params.get('fvg_drop_threshold', 0.01)
-        
-        # Debug logging
-        print(f"[FVG DEBUG] Checking for FVG at index {index}")
+        epsilon = params.get('fvg_epsilon', 0.1)  # Gap threshold
+        N = params.get('fvg_N', 3)  # Number of peaks
+        sigma = params.get('fvg_sigma', 0.1)  # Peak width
+        beta1 = params.get('fvg_beta1', 0.7)  # Base weight
+        beta2 = params.get('fvg_beta2', 0.3)  # Comb weight
+        phi = params.get('fvg_phi', 0.2)  # Expansion factor
+        lambda_skew = params.get('fvg_lambda', 0.0)  # Skew parameter
+        gamma = params.get('fvg_gamma', 0.95)  # Decay rate
+        tau_bars = params.get('fvg_tau_bars', 50)  # Zone lifetime
+        drop_threshold = params.get('fvg_drop_threshold', 0.01)  # Minimum strength
             
         # Get three consecutive candles
         candle1 = data.iloc[index-2]  # t-1
         candle2 = data.iloc[index-1]  # t (gap bar)
         candle3 = data.iloc[index]    # t+1
         
-        # Debug: Log candle data
-        print(f"[FVG DEBUG] Candle1 (t-1): H={candle1['high']:.2f}, L={candle1['low']:.2f}")
-        print(f"[FVG DEBUG] Candle2 (t): H={candle2['high']:.2f}, L={candle2['low']:.2f}")
-        print(f"[FVG DEBUG] Candle3 (t+1): H={candle3['high']:.2f}, L={candle3['low']:.2f}")
+        # Calculate volume and volatility metrics
+        recent_data = data.iloc[max(0, index-20):index+1]
+        avg_volume = recent_data['volume'].mean()
+        volume_ratio = candle2['volume'] / avg_volume if avg_volume > 0 else 1.0
+        
+        # Calculate volatility using ATR
+        high_low = recent_data['high'] - recent_data['low']
+        high_close = np.abs(recent_data['high'] - recent_data['close'].shift())
+        low_close = np.abs(recent_data['low'] - recent_data['close'].shift())
+        true_range = np.maximum(high_low, np.maximum(high_close, low_close))
+        atr = true_range.mean()
         
         # Bullish FVG: H_{t-1} < L_{t+1}
         if candle1['high'] < candle3['low']:
             gap_size = candle3['low'] - candle1['high']
-            print(f"[FVG DEBUG] Bullish FVG gap found: {gap_size:.2f}")
-            # Lower threshold for testing
-            if gap_size > 0.1:  # Reduced from requiring positive gap to just 0.1
-                print(f"[FVG DEBUG] Gap size {gap_size:.2f} > 0.1, creating bullish FVG")
-                # PATCH: Use exact candle bounds without epsilon buffer for better positioning
+            if gap_size > epsilon:  # Valid gap size
                 x0 = candle1['high']  # Previous candle high
                 x1 = candle3['low']   # Next candle low
                 
                 if x0 < x1:  # Valid zone
-                    print(f"[FVG DEBUG] Valid zone: x0={x0:.2f}, x1={x1:.2f}")
-                    # Micro-comb peaks
+                    # Calculate zone strength based on multiple factors
+                    gap_ratio = gap_size / atr if atr > 0 else 1.0
+                    volume_score = min(1.0, volume_ratio)
+                    momentum_score = (candle3['close'] - candle1['close']) / candle1['close']
+                    zone_strength = 0.4 * gap_ratio + 0.3 * volume_score + 0.3 * abs(momentum_score)
+                    
+                    # Generate micro-comb peaks
                     comb_centers = []
                     for k in range(1, N + 1):
                         xk = x0 + k * (x1 - x0) / (N + 1)
@@ -1737,7 +1802,7 @@ class PatternStrategy(BaseStrategy):
                         'zone_max': x1,
                         'comb_centers': comb_centers,
                         'gap_size': gap_size,
-                        'strength': gap_size / candle1['high'],  # Relative gap size
+                        'strength': zone_strength,
                         'creation_index': index,
                         'timestamp': data.index[index],
                         'epsilon': epsilon,
@@ -1750,28 +1815,27 @@ class PatternStrategy(BaseStrategy):
                         'gamma': gamma,
                         'tau_bars': tau_bars,
                         'drop_threshold': drop_threshold,
-                        'zone_direction': 'bullish'
+                        'zone_direction': 'bullish',
+                        'volume_ratio': volume_ratio,
+                        'atr': atr,
+                        'momentum': momentum_score
                     })
-                    print(f"[FVG DEBUG] Created bullish FVG zone")
-                else:
-                    print(f"[FVG DEBUG] Invalid zone: x0={x0:.2f} >= x1={x1:.2f}")
-            else:
-                print(f"[FVG DEBUG] Gap size {gap_size:.2f} <= 0.1, skipping")
         
         # Bearish FVG: L_{t-1} > H_{t+1}
         elif candle1['low'] > candle3['high']:
             gap_size = candle1['low'] - candle3['high']
-            print(f"[FVG DEBUG] Bearish FVG gap found: {gap_size:.2f}")
-            # Lower threshold for testing
-            if gap_size > 0.1:  # Reduced from requiring positive gap to just 0.1
-                print(f"[FVG DEBUG] Gap size {gap_size:.2f} > 0.1, creating bearish FVG")
-                # PATCH: Use exact candle bounds without epsilon buffer for better positioning
+            if gap_size > epsilon:  # Valid gap size
                 x0 = candle3['high']  # Next candle high
                 x1 = candle1['low']   # Previous candle low
                 
                 if x0 < x1:  # Valid zone
-                    print(f"[FVG DEBUG] Valid zone: x0={x0:.2f}, x1={x1:.2f}")
-                    # Micro-comb peaks
+                    # Calculate zone strength based on multiple factors
+                    gap_ratio = gap_size / atr if atr > 0 else 1.0
+                    volume_score = min(1.0, volume_ratio)
+                    momentum_score = (candle3['close'] - candle1['close']) / candle1['close']
+                    zone_strength = 0.4 * gap_ratio + 0.3 * volume_score + 0.3 * abs(momentum_score)
+                    
+                    # Generate micro-comb peaks
                     comb_centers = []
                     for k in range(1, N + 1):
                         xk = x0 + k * (x1 - x0) / (N + 1)
@@ -1785,7 +1849,7 @@ class PatternStrategy(BaseStrategy):
                         'zone_max': x1,
                         'comb_centers': comb_centers,
                         'gap_size': gap_size,
-                        'strength': gap_size / candle3['high'],  # Relative gap size
+                        'strength': zone_strength,
                         'creation_index': index,
                         'timestamp': data.index[index],
                         'epsilon': epsilon,
@@ -1798,17 +1862,12 @@ class PatternStrategy(BaseStrategy):
                         'gamma': gamma,
                         'tau_bars': tau_bars,
                         'drop_threshold': drop_threshold,
-                        'zone_direction': 'bearish'
+                        'zone_direction': 'bearish',
+                        'volume_ratio': volume_ratio,
+                        'atr': atr,
+                        'momentum': momentum_score
                     })
-                    print(f"[FVG DEBUG] Created bearish FVG zone")
-                else:
-                    print(f"[FVG DEBUG] Invalid zone: x0={x0:.2f} >= x1={x1:.2f}")
-            else:
-                print(f"[FVG DEBUG] Gap size {gap_size:.2f} <= 0.1, skipping")
-        else:
-            print(f"[FVG DEBUG] No FVG gap found at index {index}")
         
-        print(f"[FVG DEBUG] Returning {len(zones)} FVG zones")
         return zones
     
     def _detect_vwap_zones(self, data: pd.DataFrame, index: int) -> List[Dict]:
@@ -1921,7 +1980,6 @@ class PatternStrategy(BaseStrategy):
 @dataclass
 class RiskStrategy(BaseStrategy):
     """Strategy for risk management (entry, stop, exit) with advanced features"""
-    name: str = ""  # Explicitly define name field
     entry_method: str = 'market'  # 'market', 'limit', 'stop'
     stop_method: str = 'fixed'    # 'fixed', 'atr', 'pattern', 'kelly'
     exit_method: str = 'fixed_rr' # 'fixed_rr', 'trailing', 'pattern'
@@ -1946,7 +2004,6 @@ class RiskStrategy(BaseStrategy):
     exit_patterns: List[CandlestickPattern] = field(default_factory=list)
     
     def __post_init__(self):
-        super().__init__()
         self.type = 'risk'
         
     def calculate_entry_price(self, signal_bar: pd.Series, 
@@ -2110,8 +2167,77 @@ class CombinedStrategy(BaseStrategy):
     volatility_filter: Optional[VolatilityProfile] = None
     
     def __post_init__(self):
-        super().__init__()
         self.type = 'combined'
+    
+    @property
+    def actions(self) -> List[Action]:
+        """Get actions from pattern strategy component"""
+        if self.pattern_strategy:
+            return self.pattern_strategy.actions
+        return []
+    
+    @property
+    def combination_logic(self) -> str:
+        """Get combination logic from pattern strategy component"""
+        if self.pattern_strategy:
+            return self.pattern_strategy.combination_logic
+        return 'AND'
+    
+    @property
+    def min_actions_required(self) -> int:
+        """Get min actions required from pattern strategy component"""
+        if self.pattern_strategy:
+            return self.pattern_strategy.min_actions_required
+        return 1
+    
+    def _check_location_gate(self, data: pd.DataFrame, index: int) -> bool:
+        """Delegate location gate check to pattern strategy component"""
+        if self.pattern_strategy:
+            return self.pattern_strategy._check_location_gate(data, index)
+        return True  # Default to True if no pattern strategy
+    
+    def _detect_fvg_zones(self, data: pd.DataFrame, index: int) -> List[Dict]:
+        """Delegate FVG zone detection to pattern strategy component"""
+        if self.pattern_strategy:
+            return self.pattern_strategy._detect_fvg_zones(data, index)
+        return []  # Default to empty list if no pattern strategy
+    
+    def evaluate(self, data: pd.DataFrame) -> Tuple[pd.Series, pd.DataFrame]:
+        """Delegate evaluation to pattern strategy component"""
+        if self.pattern_strategy:
+            return self.pattern_strategy.evaluate(data)
+        # Return empty series and dataframe if no pattern strategy
+        empty_series = pd.Series(False, index=data.index)
+        empty_df = pd.DataFrame(index=data.index)
+        return empty_series, empty_df
+    
+    @property
+    def simple_zones(self) -> List[Dict]:
+        """Get simple zones from pattern strategy component"""
+        if self.pattern_strategy and hasattr(self.pattern_strategy, 'simple_zones'):
+            return self.pattern_strategy.simple_zones
+        return []
+    
+    @property
+    def location_gate_params(self) -> Dict[str, float]:
+        """Get location gate params from pattern strategy component"""
+        if self.pattern_strategy and hasattr(self.pattern_strategy, 'location_gate_params'):
+            return self.pattern_strategy.location_gate_params
+        return {}
+    
+    @property
+    def gates_and_logic(self) -> Dict[str, Any]:
+        """Get gates and logic from pattern strategy component"""
+        if self.pattern_strategy and hasattr(self.pattern_strategy, 'gates_and_logic'):
+            return self.pattern_strategy.gates_and_logic
+        return {}
+    
+    @property
+    def weights(self) -> Optional[List[float]]:
+        """Get weights from pattern strategy component"""
+        if self.pattern_strategy:
+            return self.pattern_strategy.weights
+        return None
         
     def set_pattern_strategy(self, strategy: PatternStrategy):
         """Set the pattern strategy component"""
@@ -2492,49 +2618,189 @@ class MultiTimeframeBacktestEngine:
     def run_backtest(self, strategy: PatternStrategy, data: pd.DataFrame,
                     initial_capital: float = 100000,
                     risk_per_trade: float = 0.02) -> Dict[str, Any]:
-        """Run multi-timeframe backtest (PATCHED for robustness and MTF event propagation)"""
-        print("########## PATCHED run_backtest IS RUNNING ##########")
-        print(f'[DEBUG] MultiTimeframeBacktestEngine.run_backtest called. Actions: {[a.pattern for a in getattr(strategy, "actions", [])]}')
-        try:
-            self.logger.info("Starting multi-timeframe backtest...")
-        except:
-            pass  # Ignore logger errors during import
-        max_bars = 10000
-        if len(data) > max_bars:
-            data = data.tail(max_bars).copy()
-            try:
-                self.logger.warning(f"Limited backtest to {max_bars} bars for performance")
-            except:
-                pass  # Ignore logger errors during import
+        """Run multi-timeframe backtest with improved FVG zone handling"""
+        print("########## IMPROVED BACKTEST ENGINE RUNNING ##########")
+        
+        # Initialize tracking variables
+        trades = []
+        equity_curve = [initial_capital]
+        current_position = None
+        active_zones = []
+        
+        # Prepare data
         if not isinstance(data.index, pd.DatetimeIndex):
-            if 'Date' in data.columns and 'Time' in data.columns:
-                data['datetime'] = pd.to_datetime(data['Date'].astype(str) + ' ' + data['Time'].astype(str))
-                data.set_index('datetime', inplace=True)
-                try:
-                    self.logger.info("Set index to combined 'Date' and 'Time' columns.")
-                except:
-                    pass  # Ignore logger errors during import
-            elif 'datetime' in data.columns:
-                data.set_index('datetime', inplace=True)
-                try:
-                    self.logger.info("Set index to 'datetime' column.")
-                except:
-                    pass  # Ignore logger errors during import
-            else:
                 data.index = pd.date_range('2023-01-01', periods=len(data), freq='1min')
-                try:
-                    self.logger.warning("No datetime columns found, using synthetic index.")
-                except:
-                    pass  # Ignore logger errors during import
-        if not data.index.is_unique:
-            data = data[~data.index.duplicated(keep='first')]
-            try:
-                self.logger.warning("Removed duplicate indices from data.")
-            except:
-                pass  # Ignore logger errors during import
-        multi_tf_data = self.prepare_multi_timeframe_data(data, strategy)
-        execution_data = multi_tf_data.get('execution', data)
-        # --- PATCH: Always run FVG detection for all bars and all FVG actions, regardless of other actions ---
+        
+        # Get signals from strategy
+        signals, action_details = strategy.evaluate(data)
+        
+        # Process each bar
+        for i in range(1, len(data)):
+            current_bar = data.iloc[i]
+            prev_bar = data.iloc[i-1]
+            
+            # Update active zones
+            for zone in getattr(strategy, 'simple_zones', []):
+                if zone.get('zone_type', '').lower() == 'fvg':
+                    zone_min = zone.get('zone_min')
+                    zone_max = zone.get('zone_max')
+                    zone_dir = zone.get('direction')
+                    
+                    if zone_min is not None and zone_max is not None:
+                        # Check for zone entry conditions
+                        if not current_position:
+                            if zone_dir == 'bullish':
+                                # Long entry: Price crosses up through lower boundary
+                                if prev_bar['close'] < zone_min and current_bar['close'] >= zone_min:
+                                    # Calculate position size
+                                    stop_loss = zone_min - (zone_max - zone_min) * 0.1  # 10% below zone
+                                    risk_amount = abs(current_bar['close'] - stop_loss)
+                                    position_size = (initial_capital * risk_per_trade) / risk_amount
+                                    
+                                    current_position = {
+                                        'entry_time': current_bar.name,
+                                        'entry_price': current_bar['close'],
+                                        'size': position_size,
+                                        'stop_loss': stop_loss,
+                                        'take_profit': zone_max,  # Target zone high
+                                        'zone_id': id(zone),
+                                        'direction': 'long'
+                                    }
+                                    
+                            elif zone_dir == 'bearish':
+                                # Short entry: Price crosses down through upper boundary
+                                if prev_bar['close'] > zone_max and current_bar['close'] <= zone_max:
+                                    # Calculate position size
+                                    stop_loss = zone_max + (zone_max - zone_min) * 0.1  # 10% above zone
+                                    risk_amount = abs(current_bar['close'] - stop_loss)
+                                    position_size = (initial_capital * risk_per_trade) / risk_amount
+                                    
+                                    current_position = {
+                                        'entry_time': current_bar.name,
+                                        'entry_price': current_bar['close'],
+                                        'size': position_size,
+                                        'stop_loss': stop_loss,
+                                        'take_profit': zone_min,  # Target zone low
+                                        'zone_id': id(zone),
+                                        'direction': 'short'
+                                    }
+            
+            # Check for exit if in position
+            if current_position:
+                exit_price = None
+                exit_reason = None
+                
+                if current_position['direction'] == 'long':
+                    # Check stop loss
+                    if current_bar['low'] <= current_position['stop_loss']:
+                        exit_price = current_position['stop_loss']
+                        exit_reason = 'Stop Loss'
+                    # Check take profit
+                    elif current_bar['high'] >= current_position['take_profit']:
+                        exit_price = current_position['take_profit']
+                        exit_reason = 'Take Profit'
+                    # Check zone invalidation
+                    elif any(z.get('zone_type', '').lower() == 'fvg' and 
+                           z.get('direction') == 'bearish' and
+                           z.get('zone_min') <= current_bar['close'] <= z.get('zone_max')
+                           for z in getattr(strategy, 'simple_zones', [])):
+                        exit_price = current_bar['close']
+                        exit_reason = 'Zone Invalidated'
+                
+                else:  # short position
+                    # Check stop loss
+                    if current_bar['high'] >= current_position['stop_loss']:
+                        exit_price = current_position['stop_loss']
+                        exit_reason = 'Stop Loss'
+                    # Check take profit
+                    elif current_bar['low'] <= current_position['take_profit']:
+                        exit_price = current_position['take_profit']
+                        exit_reason = 'Take Profit'
+                    # Check zone invalidation
+                    elif any(z.get('zone_type', '').lower() == 'fvg' and 
+                           z.get('direction') == 'bullish' and
+                           z.get('zone_min') <= current_bar['close'] <= z.get('zone_max')
+                           for z in getattr(strategy, 'simple_zones', [])):
+                        exit_price = current_bar['close']
+                        exit_reason = 'Zone Invalidated'
+                
+                if exit_price is not None:
+                    pnl = (exit_price - current_position['entry_price']) * current_position['size']
+                    if current_position['direction'] == 'short':
+                        pnl = -pnl
+                    
+                    trades.append({
+                        'entry_time': current_position['entry_time'],
+                        'exit_time': current_bar.name,
+                        'entry_price': current_position['entry_price'],
+                        'exit_price': exit_price,
+                        'size': current_position['size'],
+                        'pnl': pnl,
+                        'exit_reason': exit_reason,
+                        'direction': current_position['direction']
+                    })
+                    current_position = None
+            
+            # Update equity curve
+            current_equity = initial_capital
+            for trade in trades:
+                current_equity += trade['pnl']
+            if current_position:
+                unrealized_pnl = (current_bar['close'] - current_position['entry_price']) * current_position['size']
+                if current_position['direction'] == 'short':
+                    unrealized_pnl = -unrealized_pnl
+                current_equity += unrealized_pnl
+            equity_curve.append(current_equity)
+        
+        # Calculate final results
+        cumulative_pnl = sum(trade['pnl'] for trade in trades)
+        final_capital = initial_capital + cumulative_pnl
+        total_return = cumulative_pnl / initial_capital if initial_capital != 0 else 0
+        returns = pd.Series(equity_curve).pct_change().dropna()
+        
+        # Get all FVG zones
+        all_fvg_zones = []
+        seen_fvg = set()
+        
+        # Collect FVG zones from all actions' simple_zones
+        for action in getattr(strategy, 'actions', []):
+            if hasattr(action, 'simple_zones'):
+                for zone in getattr(action, 'simple_zones', []):
+                    if zone.get('zone_type', '').lower() == 'fvg':
+                        key = (zone.get('timestamp'), zone.get('zone_min'), zone.get('zone_max'))
+                        if key not in seen_fvg:
+                            all_fvg_zones.append(zone)
+                            seen_fvg.add(key)
+        
+        # Also include FVG zones from strategy.simple_zones
+        for zone in getattr(strategy, 'simple_zones', []):
+            if zone.get('zone_type', '').lower() == 'fvg':
+                key = (zone.get('timestamp'), zone.get('zone_min'), zone.get('zone_max'))
+                if key not in seen_fvg:
+                    all_fvg_zones.append(zone)
+                    seen_fvg.add(key)
+        
+        # Return results
+        results = {
+            'initial_capital': initial_capital,
+            'final_capital': final_capital,
+            'cumulative_pnl': cumulative_pnl,
+            'total_return': total_return,
+            'sharpe_ratio': np.sqrt(252) * returns.mean() / returns.std() if returns.std() > 0 else 0,
+            'max_drawdown': self._calculate_max_drawdown(equity_curve),
+            'win_rate': self._calculate_win_rate(trades),
+            'profit_factor': self._calculate_profit_factor(trades),
+            'total_trades': len(trades),
+            'equity_curve': equity_curve,
+            'trades': trades,
+            'zones': all_fvg_zones,
+            'data': data.copy(),
+            'action_details': action_details,
+            'strategy_params': getattr(strategy, 'location_gate_params', {}),
+            'gates_enabled': getattr(strategy, 'gates_and_logic', {})
+        }
+        
+        return results
         all_fvg_zones = []
         for action in getattr(strategy, 'actions', []):
             if hasattr(action, 'pattern') and hasattr(action.pattern, 'name') and action.pattern.name and action.pattern.name.lower() == 'fvg':

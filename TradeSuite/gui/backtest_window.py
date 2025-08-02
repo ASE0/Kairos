@@ -1043,11 +1043,18 @@ class BacktestWindow(QMainWindow):
                 if 'vwap' in [f.lower() for f in filters]:
                     has_vwap = True
             
-            if not has_vwap and action_details:
-                for action_name in action_details.keys():
-                    if 'vwap' in action_name.lower():
+            if not has_vwap and action_details is not None:
+                if isinstance(action_details, pd.DataFrame):
+                    # Check DataFrame columns for VWAP
+                    vwap_cols = [col for col in action_details.columns if 'vwap' in col.lower()]
+                    if vwap_cols:
                         has_vwap = True
-                        break
+                elif isinstance(action_details, dict):
+                    # Check dictionary keys for VWAP
+                    for action_name in action_details.keys():
+                        if 'vwap' in action_name.lower():
+                            has_vwap = True
+                            break
             
             # Only add VWAP if it's actually part of the strategy
             if has_vwap and 'volume' in df.columns and len(df) > 20:
@@ -1943,11 +1950,18 @@ Avg Holding Time: {avg_holding}
                     if 'vwap' in [f.lower() for f in filters]:
                         has_vwap = True
                 
-                if not has_vwap and action_details:
-                    for action_name in action_details.keys():
-                        if 'vwap' in action_name.lower():
+                if not has_vwap and action_details is not None:
+                    if isinstance(action_details, pd.DataFrame):
+                        # Check DataFrame columns for VWAP
+                        vwap_cols = [col for col in action_details.columns if 'vwap' in col.lower()]
+                        if vwap_cols:
                             has_vwap = True
-                            break
+                    elif isinstance(action_details, dict):
+                        # Check dictionary keys for VWAP
+                        for action_name in action_details.keys():
+                            if 'vwap' in action_name.lower():
+                                has_vwap = True
+                                break
                 
                 # Only add VWAP if it's actually part of the strategy
                 if has_vwap and 'volume' in df.columns and len(df) > 20:
@@ -1979,11 +1993,18 @@ Avg Holding Time: {avg_holding}
                 if 'vwap' in [f.lower() for f in filters]:
                     has_vwap = True
             
-            if not has_vwap and action_details:
-                for action_name in action_details.keys():
-                    if 'vwap' in action_name.lower():
+            if not has_vwap and action_details is not None:
+                if isinstance(action_details, pd.DataFrame):
+                    # Check DataFrame columns for VWAP
+                    vwap_cols = [col for col in action_details.columns if 'vwap' in col.lower()]
+                    if vwap_cols:
                         has_vwap = True
-                        break
+                elif isinstance(action_details, dict):
+                    # Check dictionary keys for VWAP
+                    for action_name in action_details.keys():
+                        if 'vwap' in action_name.lower():
+                            has_vwap = True
+                            break
             
             # Only add VWAP if it's actually part of the strategy
             if has_vwap and 'volume' in df.columns and len(df) > 20:

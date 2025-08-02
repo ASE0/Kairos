@@ -61,6 +61,10 @@ class TradingStrategyHub(QMainWindow):
         # Windows
         self.open_windows = []
         
+        # Session management
+        self.last_session_file = 'last_session.json'
+        self.last_loaded_dataset = None
+        
         # Setup
         self._setup_ui()
         self._setup_menu()
@@ -74,8 +78,6 @@ class TradingStrategyHub(QMainWindow):
         self._load_workspace()
         self._load_strategies_and_results()
         
-        self.last_session_file = 'last_session.json'
-        self.last_loaded_dataset = None
         self._load_last_session()
         
     def _setup_ui(self):

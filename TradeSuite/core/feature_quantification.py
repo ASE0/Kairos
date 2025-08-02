@@ -83,29 +83,74 @@ def detect_fvg(highs, lows, closes, min_gap_size=0.001):
         # Bullish FVG: Current low > Previous high
         if lows[i] > highs[i-1]:
             gap_size = lows[i] - highs[i-1]
-            if gap_size >= min_gap_size:
+            if gap_size >= min_gap_size * highs[i-1]:  # Make min_gap_size relative to price
+                strength = gap_size / highs[i-1]  # Relative gap size
                 fvgs.append({
                     'type': 'bullish',
+                    'zone_type': 'FVG',
                     'start_idx': i-1,
                     'end_idx': i,
                     'gap_low': highs[i-1],
                     'gap_high': lows[i],
                     'gap_size': gap_size,
-                    'strength': gap_size / highs[i-1]  # Relative gap size
+                    'strength': strength,
+                    'zone_min': highs[i-1],
+                    'zone_max': lows[i],
+                    'zone_direction': 'bullish',
+                    'creation_index': i-1,
+                    'initial_strength': strength,
+                    'gamma': 0.95,  # Decay rate for zone strength
+                    'tau_bars': 20,  # Time constant for strength decay
+                    'drop_threshold': 0.2  # Threshold for removing weak zones
                 })
         
         # Bearish FVG: Current high < Previous low
-        elif highs[i] < lows[i-1]:
+        if highs[i] < lows[i-1]:
             gap_size = lows[i-1] - highs[i]
-            if gap_size >= min_gap_size:
+            if gap_size >= min_gap_size * lows[i-1]:  # Make min_gap_size relative to price
+                strength = gap_size / lows[i-1]  # Relative gap size
                 fvgs.append({
                     'type': 'bearish',
+                    'zone_type': 'FVG',
                     'start_idx': i-1,
                     'end_idx': i,
                     'gap_low': highs[i],
                     'gap_high': lows[i-1],
                     'gap_size': gap_size,
-                    'strength': gap_size / lows[i-1]  # Relative gap size
+                    'strength': strength,
+                    'zone_min': highs[i],
+                    'zone_max': lows[i-1],
+                    'zone_direction': 'bearish',
+                    'creation_index': i-1,
+                    'initial_strength': strength,
+                    'gamma': 0.95,  # Decay rate for zone strength
+                    'tau_bars': 20,  # Time constant for strength decay
+                    'drop_threshold': 0.2  # Threshold for removing weak zones
+                })
+        
+        # Bearish FVG: Current high < Previous low
+        elif highs[i] < lows[i-1]:
+            gap_size = lows[i-1] - highs[i]
+            if gap_size >= min_gap_size * lows[i-1]:  # Make min_gap_size relative to price
+                fvgs.append({
+                    'type': 'bearish',
+                    'zone_type': 'FVG',
+                    'start_idx': i-1,
+                    'end_idx': i,
+                    'gap_low': highs[i],
+                    'gap_high': lows[i-1],
+                    'gap_size': gap_size,
+                    'strength': gap_size / lows[i-1],  # Relative gap size
+                    'zone_min': highs[i],
+                    'zone_max': lows[i-1],
+                    'zone_direction': 'bearish',
+                    'creation_index': i-1,
+                    'initial_strength': gap_size / lows[i-1],
+                    'gamma': 0.95,
+                    'tau_bars': 50,
+                    'drop_threshold': 0.01,
+                    'bar_interval_minutes': 1,
+                    'zone_days_valid': 1
                 })
     
     return fvgs

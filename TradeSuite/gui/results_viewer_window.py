@@ -1786,7 +1786,7 @@ Total Trades: {result_data.get('total_trades', 0)}
             
             # Step 1: Extract ONLY real building blocks
             building_blocks = []
-            action_details = result_data.get('action_details', {})
+        action_details = result_data.get('action_details', {})
             trades = result_data.get('trades', [])
             
             # Get building blocks with actual signals
@@ -1803,17 +1803,17 @@ Total Trades: {result_data.get('total_trades', 0)}
             if trades:
                 building_blocks.append('trades')
                 print(f"[DEBUG] Added trades block")
-            
-            if not building_blocks:
+        
+        if not building_blocks:
                 self.heatmap_info.setText("No building blocks found")
-                return
+            return
             
             # Step 2: Get time index from data
             data = result_data.get('data')
             if data is None or not isinstance(data, pd.DataFrame) or data.empty:
                 print("[DEBUG] No valid data")
                 self.heatmap_info.setText("No data available")
-                return
+            return
             
             time_index = data.index
             print(f"[DEBUG] Time range: {time_index[0]} to {time_index[-1]} ({len(time_index)} points)")
@@ -1913,8 +1913,8 @@ Total Trades: {result_data.get('total_trades', 0)}
                 
                 print(f"[DEBUG] SIMPLE HEATMAP: Created {matrix.shape[0]}x{matrix.shape[1]} matrix")
                 print(f"[DEBUG] SIMPLE HEATMAP: Signal counts - {matrix.sum():.1f} total signals")
-                
-                self.heatmap_info.setText(
+        
+        self.heatmap_info.setText(
                     f"Simple Heatmap: {len(building_blocks)} blocks, {len(time_labels)} time windows, "
                     f"{matrix.sum():.0f} total signals. White = More Active."
                 )
@@ -2031,8 +2031,8 @@ Total Trades: {result_data.get('total_trades', 0)}
             self._plot_state_heatmap(state_matrix, building_blocks, time_labels, state_legend)
             
             print(f"[DEBUG] STATE HEATMAP: Successfully updated")
-            
-        except Exception as e:
+                                            
+                                    except Exception as e:
             print(f"[DEBUG] STATE HEATMAP ERROR: {e}")
             import traceback
             traceback.print_exc()
@@ -2070,13 +2070,13 @@ Total Trades: {result_data.get('total_trades', 0)}
                     try:
                         parsed_series = pd.read_json(block_data, typ='series')
                         states = self._convert_signals_to_states(parsed_series, block_name)
-                    except:
+                                                    except:
                         print(f"[DEBUG] STATE HEATMAP: Failed to parse {block_name} as Series")
                         continue
                 else:
                     print(f"[DEBUG] STATE HEATMAP: Unknown data type for {block_name}: {type(block_data)}")
-                    continue
-                
+                                                        continue
+                                        
                 # Align states with time index
                 if len(states) != len(time_index):
                     states = states.reindex(time_index, fill_value=0)
@@ -2084,9 +2084,9 @@ Total Trades: {result_data.get('total_trades', 0)}
                 state_data[block_name] = states
                 print(f"[DEBUG] STATE HEATMAP: {block_name} has {len(states)} state values")
                 
-            except Exception as e:
+                                except Exception as e:
                 print(f"[DEBUG] STATE HEATMAP: Error processing {block_name}: {e}")
-                continue
+                                    continue
         
         # Add trades as a special building block
         trades = result_data.get('trades', [])
@@ -2106,7 +2106,7 @@ Total Trades: {result_data.get('total_trades', 0)}
         if signals.dtype == bool:
             # Simple boolean signals: 0 = inactive, 1 = active
             states = signals.astype(int)
-        else:
+                                    else:
             # Numeric signals: convert to state levels
             # State 0: Inactive (value == 0 or False)
             # State 1: Low Activity (0 < value <= 0.3)  
@@ -2146,8 +2146,8 @@ Total Trades: {result_data.get('total_trades', 0)}
                     trade_states.iloc[entry_idx:exit_idx] = 1  # Position active
                     trade_states.iloc[entry_idx] = 2  # Re-mark entry
                     trade_states.iloc[exit_idx] = 3   # Re-mark exit
-                    
-            except Exception as e:
+            
+        except Exception as e:
                 print(f"[DEBUG] STATE HEATMAP: Error processing trade: {e}")
                 continue
         
@@ -2180,7 +2180,7 @@ Total Trades: {result_data.get('total_trades', 0)}
         time_windows = pd.date_range(start=start_time, end=end_time, freq=time_delta)
         if len(time_windows) == 0:
             time_windows = [start_time, end_time]
-        
+            
         # Create matrix
         matrix = np.zeros((len(building_blocks), len(time_windows)))
         

@@ -1,0 +1,103 @@
+{
+  "OFM": {
+    "strategy_name": "Order_Flow_Momentum",
+    "test_passed": false,
+    "entry_tests": {
+      "has_entry_conditions": true
+    },
+    "exit_tests": {
+      "has_exit_conditions": true
+    },
+    "risk_tests": {
+      "has_risk_parameters": false
+    },
+    "errors": [
+      "Missing signal generation method",
+      "Missing risk parameters"
+    ],
+    "parameter_tests": {
+      "cvd_period": true,
+      "imbalance_threshold": true
+    },
+    "signal_generation": false
+  },
+  "MMR": {
+    "strategy_name": "Microstructure_Mean_Reversion",
+    "test_passed": false,
+    "entry_tests": {
+      "has_entry_conditions": true
+    },
+    "exit_tests": {
+      "has_exit_conditions": true
+    },
+    "risk_tests": {
+      "has_risk_parameters": false
+    },
+    "errors": [
+      "Missing signal generation method",
+      "Missing risk parameters"
+    ],
+    "parameter_tests": {},
+    "signal_generation": false
+  },
+  "LVB": {
+    "strategy_name": "Liquidity_Vacuum_Breakout",
+    "test_passed": false,
+    "entry_tests": {
+      "has_entry_conditions": true
+    },
+    "exit_tests": {
+      "has_exit_conditions": true
+    },
+    "risk_tests": {
+      "has_risk_parameters": false
+    },
+    "errors": [
+      "Missing signal generation method",
+      "Missing risk parameters"
+    ],
+    "parameter_tests": {},
+    "signal_generation": false
+  },
+  "RISK": {
+    "strategy_name": "Tick_Based_Risk_Management",
+    "test_passed": false,
+    "entry_tests": {
+      "has_entry_conditions": false
+    },
+    "exit_tests": {
+      "has_exit_conditions": false
+    },
+    "risk_tests": {
+      "has_risk_parameters": false
+    },
+    "errors": [
+      "Missing entry conditions",
+      "Missing exit conditions",
+      "Missing signal generation method",
+      "Missing risk parameters"
+    ],
+    "parameter_tests": {},
+    "signal_generation": false
+  },
+  "COMBINED": {
+    "strategy_name": "Combined_Tick_Based_Strategy",
+    "test_passed": false,
+    "entry_tests": {
+      "has_entry_conditions": false
+    },
+    "exit_tests": {
+      "has_exit_conditions": false
+    },
+    "risk_tests": {
+      "has_risk_parameters": true
+    },
+    "errors": [
+      "Missing entry conditions",
+      "Missing exit conditions",
+      "Missing parameters",
+      "Missing signal generation method"
+    ],
+    "signal_generation": false
+  }
+}
